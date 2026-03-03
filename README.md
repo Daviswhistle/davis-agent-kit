@@ -23,4 +23,5 @@ AGENT.md of codex cli for Korean
 19. 네트워크에 접근하는 실행은 모두 sandbox_permissions: "require_escalated"로 실행해.
 20. 불필요 코드와 그 사용처는 정리해.
 21. git merge 중 발생하는 충돌을 해결할 경우에는 파일별로 부모들의 커밋 내역을 확인해서 의도에 맞게 회귀가 발생하지 않도록 해.
+22. python 파일을 작업할 때는 기존 들여쓰기 형식을 먼저 확인한 뒤 해당 형식에 맞춰서 작업해.
 ```

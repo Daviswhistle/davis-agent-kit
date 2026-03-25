@@ -89,6 +89,32 @@ AGENT.md of codex cli for Korean
 2. merge 충돌 해결 시 파일별 부모 커밋 의도를 확인하고 회귀가 없도록 처리한다.
 3. 익숙하지 않은 변경이 보여도 먼저 의미를 파악하고, 되돌리기 전에 반드시 사용자 허가를 받는다.
 
+## CRA 루프
+사용자가 `CRA 루프`를 명시적으로 요청한 경우에만 아래 절차를 수행한다.
+
+1. 작업 완료 후 변경사항을 commit 한다.
+2. commit 직후 기본적으로 서브에이전트 1명에게 코드 리뷰를 요청한다.
+   - CRA 루프 요청 시에는 서브에이전트 사용이 승인된 것으로 간주한다.
+   - 모델은 `gpt-5.4`, reasoning effort는 `xhigh`를 사용한다.
+3. 리뷰 프롬프트는 아래 형식을 기본으로 한다.
+   - `Review the code changes introduced by commit <COMMIT_SHA> ("<COMMIT_MESSAGE>"). Provide prioritized, actionable findings. Focus on correctness, behavioral regressions, synchronization across code/docs/config, reproducibility issues, and unsupported claims. Do not suggest style nits. If there are no substantive findings, say so explicitly.`
+4. 리뷰에서 substantive finding이 나오면 타당성을 먼저 검토한다.
+   - 유효한 지적이면 수정한다.
+   - 수정이 있으면 기존 commit을 `git commit --amend --no-edit`로 갱신한다.
+   - 같은 방식으로 다시 리뷰를 요청한다.
+   - 무효라고 판단한 지적은 왜 무효인지 최종 보고에 간단히 남긴다.
+5. `no substantive findings`가 나오거나, 남은 지적이 모두 무효라고 합리적으로 설명된 상태가 될 때까지 `amend -> re-review`를 반복한다.
+6. 최종 보고에는 아래를 포함한다.
+   - 최종 commit hash
+   - 반영한 리뷰 지적 요약
+   - 무효라고 판단한 지적이 있으면 그 사유
+   - 마지막 리뷰가 `no substantive findings`인지 여부
+
+주의
+1. CRA 루프는 기본 동작이 아니다.
+2. 사용자가 명시적으로 `CRA 루프`를 요청한 경우에만 수행한다.
+3. 이 경우에만 `commit/amend`가 기본 원칙의 `commit 금지`보다 우선한다.
+
 ## 네트워크 및 권한
 1. 네트워크 접근이 필요한 실행은 모두 사전에 식별하고, 필요 시 권한 상승으로 실행한다.
 2. sudo 명령은 사용자가 직접 실행해야 한다.

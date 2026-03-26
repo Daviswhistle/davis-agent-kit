@@ -101,7 +101,7 @@ AGENT.md of codex cli for Korean
    - `Review the code changes introduced by commit <COMMIT_SHA> ("<COMMIT_MESSAGE>"). Provide prioritized, actionable findings. Focus on correctness, behavioral regressions, synchronization across code/docs/config, reproducibility issues, and unsupported claims. Do not suggest style nits. If there are no substantive findings, say so explicitly.`
 4. 리뷰에서 substantive finding이 나오면 타당성을 먼저 검토한다.
    - 유효한 지적이면 수정한다.
-   - 수정이 있으면 기존 commit을 `git commit --amend --no-edit`로 갱신한다.
+   - 수정이 있으면 기존 commit을 `git commit --amend --no-edit`로 갱신한다(필요시 커밋 메시지 수정).
    - 같은 방식으로 다시 리뷰를 요청한다.
    - 무효라고 판단한 지적은 왜 무효인지 최종 보고에 간단히 남긴다.
 5. `no substantive findings`가 나오거나, 남은 지적이 모두 무효라고 합리적으로 설명된 상태가 될 때까지 `amend -> re-review`를 반복한다.

@@ -96,7 +96,7 @@ AGENT.md of codex cli for Korean
 2. commit 직후 서브에이전트에게 코드 리뷰를 요청한다.
    - CRA 루프 요청 시에는 서브에이전트 사용이 승인된 것으로 간주한다.
    - 모델은 `gpt-5.4`, reasoning effort는 `xhigh`를 사용한다.
-   - 매 리뷰마다 다른 서브에이전트에게 맡긴다.
+   - 매 리뷰마다 다른 서브에이전트에게 맡기며, 리뷰가 끝난 에이전트는 닫아 다음 작업에서 사용할 에이전트 슬롯을 회수한다.
 3. 리뷰 프롬프트는 아래 형식을 기본으로 한다.
    - `Review the code changes introduced by commit <COMMIT_SHA> ("<COMMIT_MESSAGE>"). Provide prioritized, actionable findings. Focus on correctness, behavioral regressions, synchronization across code/docs/config, reproducibility issues, and unsupported claims. Do not suggest style nits. If there are no substantive findings, say so explicitly.`
 4. 리뷰에서 substantive finding이 나오면 타당성을 먼저 검토한다.

@@ -93,32 +93,20 @@ AGENT.md of codex cli for Korean
 사용자가 `CRA 루프`를 명시적으로 요청한 경우에만 아래 절차를 수행한다.
 
 1. 작업 완료 후 변경사항을 commit 한다.
-2. commit 직후 서브에이전트에게 코드 리뷰를 요청한다.
-   - 모델은 `gpt-5.4`, reasoning effort는 `xhigh`를 사용한다.
-   - 매 리뷰마다 다른 서브에이전트에게 맡기며, 리뷰가 끝난 에이전트는 닫아 다음 작업에서 사용할 에이전트 슬롯을 회수한다.
+2. commit 직후 코드 리뷰를 요청한다.
+   - `codex review --commit <COMMIT_SHA> -c model="gpt-5.4" -c model_reasoning_effort="xhigh"` 명령으로 리뷰를 요청한다.
    - 에러 등 비정상 요인이 아니라면 리뷰가 오래 걸리더라도 끈기있게 기다린다.
-3. 리뷰 프롬프트는 아래 형식을 기본으로 한다.
-   - `Review the code changes introduced by commit <COMMIT_SHA> ("<COMMIT_MESSAGE>"). Provide prioritized, actionable findings. Focus on correctness, behavioral regressions, synchronization across code/docs/config, reproducibility issues, and unsupported claims. Do not suggest style nits. If there are no substantive findings, say so explicitly.`
-4. 리뷰에서 substantive finding이 나오면 타당성을 먼저 검토한다.
+3. 리뷰에서 substantive finding이 나오면 타당성을 먼저 검토한다.
    - 유효한 지적이면 수정한다.
    - 수정이 있으면 기존 commit을 `git commit --amend --no-edit`로 갱신한다(필요시 커밋 메시지 수정).
    - 같은 방식으로 다시 리뷰를 요청한다.
    - 무효라고 판단한 지적은 왜 무효인지 최종 보고에 간단히 남긴다.
-5. `no substantive findings`가 나오거나, 남은 지적이 모두 무효라고 합리적으로 설명된 상태가 될 때까지 `amend -> re-review`를 반복한다.
-6. 최종 보고에는 아래를 포함한다.
+4. `no substantive findings`가 나오거나, 남은 지적이 모두 무효라고 합리적으로 설명된 상태가 될 때까지 `amend -> re-review`를 반복한다.
+5. 최종 보고에는 아래를 포함한다.
    - 최종 commit hash 및 최종 commit 기준 작업 사항
    - 반영한 리뷰 지적 요약
    - 무효라고 판단한 지적이 있으면 그 사유
    - 마지막 리뷰가 `no substantive findings`인지 여부
-
-### CRA 루프 중 서브에이전트 사용 원칙
-1. 서브에이전트는 명시적으로 위임된 범위만 수행한다.
-2. 서브에이전트가 `리뷰`를 요청받은 경우에는 리뷰 결과만 반환한다.
-3. CRA 루프의 실행 책임은 메인 에이전트에 있다.
-4. 메인 에이전트는 CRA 루프 리뷰 요청 시 아래 제한을 프롬프트에 함께 명시한다.
-   - 당신의 역할은 코드 리뷰어다.
-   - CRA 루프를 수행하지 않는다.
-   - 리뷰 결과만 우선순위와 근거를 포함해 반환한다.
 
 주의
 1. CRA 루프는 기본 동작이 아니다.

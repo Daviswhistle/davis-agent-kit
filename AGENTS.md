@@ -1,7 +1,3 @@
-# codex-AGENT.md-for-Korean
-AGENT.md of codex cli for Korean
-
-```
 # 전역 AGENTS.md
 
 ## 기본 원칙
@@ -133,4 +129,3 @@ AGENT.md of codex cli for Korean
 ## 미래의 작업자를 위한 개선
 1. 프로젝트 경로의 AGENTS.md는 미래의 작업자에게도 유용해야 한다.
 2. 반복적으로 발생하는 실수, 배포 함정, 운영 제약이 확인되면 AGENTS.md 업데이트를 제안하거나 반영한다.
-```

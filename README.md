@@ -41,13 +41,9 @@ mkdir -p ~/.codex
 cp AGENTS.md ~/.codex/AGENTS.md
 ```
 
-확인:
+Codex는 기본적으로 `~/.codex/AGENTS.md`를 전역 지시문으로 읽습니다. `CODEX_HOME`을 따로 지정했다면 해당 경로 아래의 `AGENTS.md` 또는 `AGENTS.override.md`가 기준이 됩니다.
 
-```bash
-codex --ask-for-approval never "Summarize the current instructions."
-```
-
-Codex는 기본적으로 `~/.codex/AGENTS.md`를 전역 지시문으로 읽습니다. `CODEX_HOME`을 따로 지정했다면 해당 경로 아래의 `AGENTS.md`가 기준이 됩니다.
+현재 세션에서 실제로 지시문이 적용됐는지는 Codex에게 현재 적용 중인 instruction source 또는 AGENTS 내용을 요약해 달라고 요청해 확인하는 편이 안전합니다. CLI 옵션 이름은 버전에 따라 달라질 수 있으므로, 특정 옵션에 의존하기보다 현재 설치된 버전의 `codex --help`를 먼저 확인하세요.
 
 ### Gemini CLI 전역 지시문으로 사용
 
@@ -56,19 +52,25 @@ mkdir -p ~/.gemini
 cp GEMINI.md ~/.gemini/GEMINI.md
 ```
 
-Gemini CLI 안에서 확인:
+Gemini CLI 안에서 현재 로드된 지시문을 확인합니다.
 
 ```text
 /memory show
 ```
 
-지시 파일을 수정한 뒤 다시 로드하려면 다음을 사용합니다.
+로드된 지시 파일 목록을 확인합니다.
+
+```text
+/memory list
+```
+
+지시 파일을 수정한 뒤 다시 로드하려면 아래 명령을 사용합니다.
 
 ```text
 /memory refresh
 ```
 
-일부 문서나 버전에서는 `/memory reload`라는 표현도 보일 수 있습니다. 현재 공식 명령 문서 기준으로는 `/memory refresh`가 계층형 메모리를 다시 로드하는 명령입니다.
+버전에 따라 `/memory reload`가 제공되거나 문서에 병기될 수 있습니다. 동작하지 않으면 `/help` 또는 `/memory` 도움말에서 현재 설치된 Gemini CLI의 명령 이름을 확인하세요.
 
 ## 프로젝트별 지시문으로 사용
 
@@ -95,8 +97,8 @@ cp GEMINI.md /path/to/project/GEMINI.md
 | 기본 지시 파일 | `AGENTS.md` | `GEMINI.md` |
 | 전역 위치 | `~/.codex/AGENTS.md` | `~/.gemini/GEMINI.md` |
 | 프로젝트 위치 | 프로젝트 루트와 하위 디렉터리의 `AGENTS.md` 또는 `AGENTS.override.md` | 프로젝트 루트, 상위/하위 디렉터리의 `GEMINI.md` |
-| 활성 지시 확인 | Codex에게 현재 instruction source 요약을 요청하거나 로그 확인 | `/memory show`, `/memory list` |
-| 지시문 재로드 | 새 세션 또는 새 실행에서 다시 탐색 | `/memory refresh` |
+| 활성 지시 확인 | Codex에게 현재 instruction source 요약 요청 또는 로그 확인 | `/memory show`, `/memory list` |
+| 지시문 재로드 | 새 세션 또는 새 실행에서 다시 탐색 | `/memory refresh` 또는 버전에 따라 `/memory reload` |
 | 리뷰 루프 | `codex review`를 사용할 수 있음 | `gemini -p` 기반의 읽기 전용 리뷰 프롬프트로 구성 |
 
 ## Gemini를 추가할 때 단순히 리뷰 예시만 바꾸면 되는가
@@ -107,7 +109,7 @@ cp GEMINI.md /path/to/project/GEMINI.md
 
 1. `GEMINI.md`는 Gemini CLI의 계층형 메모리로 로드됩니다.
 2. 현재 로드된 지시는 `/memory show`와 `/memory list`로 확인하는 편이 안전합니다.
-3. 파일을 수정한 뒤에는 `/memory refresh`로 다시 로드해야 합니다.
+3. 파일을 수정한 뒤에는 `/memory refresh` 또는 현재 버전에서 제공하는 reload 명령으로 다시 로드해야 합니다.
 4. Codex의 `codex review`와 같은 전용 리뷰 명령을 그대로 전제하지 말고, `gemini -p`에 읽기 전용 리뷰 프롬프트를 명시하는 방식으로 운영합니다.
 5. 리뷰어 역할의 Gemini가 파일을 수정하지 않도록 프롬프트에 “읽기 전용” 제약을 반복해서 명시해야 합니다.
 6. `--model`이나 `/model`이 모든 하위 실행이나 sub-agent까지 강제한다고 가정하지 않는 편이 안전합니다.

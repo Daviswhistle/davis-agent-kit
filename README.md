@@ -26,45 +26,12 @@ mkdir -p ~/.codex
 cp AGENTS.md ~/.codex/AGENTS.md
 ```
 
-프로젝트별로만 적용하려면 프로젝트 루트에 둡니다.
-
-```bash
-cp AGENTS.md /path/to/project/AGENTS.md
-```
-
 ### Gemini CLI
 
 ```bash
 mkdir -p ~/.gemini
 cp GEMINI.md ~/.gemini/GEMINI.md
 ```
-
-프로젝트별로만 적용하려면 프로젝트 루트에 둡니다.
-
-```bash
-cp GEMINI.md /path/to/project/GEMINI.md
-```
-
-Gemini CLI에서 로드된 지시문은 아래 명령으로 확인할 수 있습니다.
-
-```text
-/memory show
-/memory list
-```
-
-수정 후에는 아래 명령으로 다시 로드합니다.
-
-```text
-/memory refresh
-```
-
-## Codex와 Gemini를 함께 쓸 때
-
-Gemini용 파일은 Codex용 `AGENTS.md`에서 리뷰 예시만 바꾼 것이 아닙니다.
-
-- Codex는 `codex review` 중심으로 CRA 루프를 구성합니다.
-- Gemini는 `gemini -p`에 읽기 전용 리뷰 프롬프트를 넣는 방식으로 CRA 루프를 구성합니다.
-- Gemini에서는 `/memory show`, `/memory list`, `/memory refresh`로 지시문 적용 상태를 확인하는 절차가 중요합니다.
 
 ## 라이선스
 

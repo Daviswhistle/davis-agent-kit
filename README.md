@@ -3,7 +3,7 @@
 한국어로 작업하는 AI 코딩 에이전트용 지시문 모음입니다.
 
 - `AGENTS.md`: Codex CLI용
-- `GEMINI.md`: Gemini CLI용
+- `GEMINI.md`: Deprecated. 2026-05-20 KST 기준, Gemini CLI의 개인 사용자 지원 종료 흐름에 따라 더 이상 유지보수하지 않습니다.
 
 두 파일은 같은 작업 철학을 공유하지만, CLI별 지시문 로딩 방식과 리뷰 명령 방식이 달라 별도 파일로 관리합니다.
 

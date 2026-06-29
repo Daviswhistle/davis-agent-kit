@@ -18,8 +18,8 @@
 davis-agent-kit/
   PHILOSOPHY.md # 에이전트가 따라야 할 최상위 사고방식
   STRATEGY.md   # 변하지 않을 소수의 판단 기준
-  AGENTS.md     # Codex 전역 지침 원본
-  GEMINI.md     # AGY/Gemini 전역 지침 원본
+  AGENTS.md     # 전역 지침 원본
+  GEMINI.md     # 전역 지침 원본
   principles/   # 전략에서 내려온 원칙
   checklists/   # 완료 전 검수 기준
   templates/    # 글, 리서치, 리뷰 등 출력 형식 템플릿
@@ -36,7 +36,7 @@ davis-agent-kit/
 
 1. `PHILOSOPHY.md`에는 에이전트가 따라야 할 최상위 사고방식을 둡니다.
 2. `STRATEGY.md`에는 변하지 않을 소수의 판단 기준만 둡니다.
-3. `AGENTS.md`와 `GEMINI.md`는 전역 지침 원본이자 기준 원본을 읽게 하는 부트로더로 관리합니다.
+3. 전역 지침 파일은 각 파일이 스스로 정의한 역할을 먼저 읽고 관리합니다.
 4. 실제 Codex 스킬은 `skills/<skill-name>/SKILL.md` 형태로 독립 유지합니다.
 5. 반복해서 지적된 문제는 먼저 철학, 전략, 원칙, 실행물 중 어디에 속하는지 분류합니다.
 6. 전략으로 올릴 수 없는 항목은 `principles/`, `checklists/`, `skills/`, `templates/`, `inbox/` 중 맞는 곳에 둡니다.
@@ -44,6 +44,33 @@ davis-agent-kit/
 8. 좋은 결과물만 저장하지 말고 반복 실수를 막는 나쁜 예시와 검수 기준도 함께 남깁니다.
 9. 사용자와 작업하며 새로 파악한 선호와 품질 기준은 작업 재현성에 직접 도움이 될 때만 `user-model/`에 근거와 함께 기록합니다.
 10. commit, push, 원격 레포 rename처럼 상태를 바꾸는 작업은 현재 적용 중인 전역 지침과 사용자의 명시 요청을 따릅니다.
+
+## 수정 전 safe sync
+
+에이전트가 이 레포를 수정하기 전에는 원격 변경을 먼저 확인합니다. 목표는 로컬 변경과 원격 변경을 모두 보존한 상태로 수정 가능한 기준점을 만드는 것입니다.
+
+```bash
+cd "$HOME/.codex/davis-agent-kit"
+
+if [ -n "$(git status --porcelain)" ]; then
+  git status --short
+  printf '%s\n' "local changes exist; inspect and commit intended changes first"
+else
+  git fetch origin main
+  git pull --ff-only origin main
+fi
+```
+
+로컬 변경이 있으면 먼저 `git diff`와 `git diff --cached`로 내용을 확인합니다. 의도된 변경은 관련 파일만 stage해서 커밋 가능한 단위로 보호한 뒤 원격 변경을 가져옵니다.
+
+```bash
+git add <intended-files>
+git commit -m "<message>"
+git fetch origin main
+git rebase origin/main
+```
+
+원격과 로컬이 갈라져 fast-forward가 불가능하면 rebase로 로컬 커밋을 원격 최신 커밋 위에 다시 적용합니다. 충돌이 나면 양쪽 변경 의도를 확인해 해소하고, 검증한 뒤 `git rebase --continue`로 진행합니다. push는 명시 요청이 있을 때 수행합니다.
 
 ## 설치
 

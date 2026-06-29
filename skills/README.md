@@ -23,4 +23,4 @@
 ~/.codex/skills/<skill-name>/SKILL.md
 ```
 
-이 레포의 root는 라우터 스킬이 아니라 전역 지침과 스킬 원본을 함께 관리하는 source of truth입니다.
+이 레포의 root는 전역 지침과 스킬 원본을 함께 관리하는 source of truth입니다. 각 스킬의 동작 지침은 해당 하위 폴더에서 관리합니다.

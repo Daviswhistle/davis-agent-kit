@@ -1,22 +1,26 @@
 # Davis Agent Kit
 
-한국어로 작업하는 에이전트가 사용자의 판단 기준과 작업 습관을 따라 사고하고 행동하도록 만드는 공개 운영 키트입니다.
+한국어로 작업하는 에이전트가 사용자의 판단 기준과 작업 습관을 따라 사고하고 행동하도록 만드는 철학과 전략 중심 운영 키트입니다.
 
-최종 목적은 특정 대화 기억에 머물지 않고, 반복 작업에서 드러난 판단 기준, 우선순위, 품질 기준, 검증 습관을 새 환경에서도 재현 가능한 파일 구조로 남기는 것입니다. 전역 지침, 작업 철학, 체크리스트, 템플릿, Codex 스킬 원본은 모두 이 목적을 위해 관리합니다.
+최종 목적은 반복 작업에서 드러난 사고방식, 판단 기준, 우선순위, 품질 기준, 검증 습관을 새 환경에서도 재현 가능한 형태로 남기는 것입니다.
 
-## 핵심 철학
+## 철학과 전략
 
-이 레포에서 가장 중요한 산출물은 언제나 철학입니다. 에이전트가 어떤 기준으로 판단하고 어디까지 확인하며 어떤 품질을 끝으로 볼지 정하는 일이 중심입니다.
+이 레포의 최상위 기준은 [PHILOSOPHY.md](PHILOSOPHY.md)입니다. 철학은 에이전트가 사용자의 판단 개념을 새 상황에 적용하게 만드는 사고방식입니다.
 
-스킬, 체크리스트, 템플릿은 이 철학을 실행하기 위한 구현입니다. 구현은 바뀔 수 있지만, 철학은 새 작업과 새 환경에서도 같은 판단이 나오도록 잡아주는 기준이어야 합니다.
+[STRATEGY.md](STRATEGY.md)는 철학을 작업에 적용하기 위한 변하지 않을 소수의 판단 기준입니다.
+
+스킬, 체크리스트, 템플릿, 테스트, 폴백 규칙은 전략을 현재 환경에 적용하는 실행물입니다. 실행물은 실제 작업과 검증 결과에 따라 계속 수정합니다.
 
 ## 기본 구조
 
 ```text
 davis-agent-kit/
+  PHILOSOPHY.md # 에이전트가 따라야 할 최상위 사고방식
+  STRATEGY.md   # 변하지 않을 소수의 판단 기준
   AGENTS.md     # Codex 전역 지침 원본
   GEMINI.md     # AGY/Gemini 전역 지침 원본
-  principles/   # 모든 작업에 공통으로 적용되는 원칙
+  principles/   # 전략에서 내려온 원칙
   checklists/   # 완료 전 검수 기준
   templates/    # 글, 리서치, 리뷰 등 출력 형식 템플릿
   skills/       # 독립 Codex skill 원본
@@ -30,23 +34,42 @@ davis-agent-kit/
 
 ## 운영 방식
 
-1. `AGENTS.md`와 `GEMINI.md`는 전역 지침의 원본으로 관리합니다.
-2. 실제 Codex 스킬은 `skills/<skill-name>/SKILL.md` 형태로 독립 유지합니다.
-3. 반복해서 지적된 문제는 `inbox/`에 먼저 적고, 재발 방지 절차가 보이면 `principles/`, `checklists/`, `skills/`, `templates/` 중 맞는 곳으로 승격합니다.
-4. 스킬은 실제 작업에 적용하고 실패 지점을 반영한 뒤 고정합니다.
-5. 좋은 결과물만 저장하지 말고 반복 실수를 막는 나쁜 예시와 검수 기준도 함께 남깁니다.
-6. 사용자와 작업하며 새로 파악한 선호와 품질 기준은 작업 재현성에 직접 도움이 될 때만 `user-model/`에 근거와 함께 기록합니다.
-7. commit, push, 원격 레포 rename처럼 상태를 바꾸는 작업은 현재 적용 중인 전역 지침과 사용자의 명시 요청을 따릅니다.
+1. `PHILOSOPHY.md`에는 에이전트가 따라야 할 최상위 사고방식을 둡니다.
+2. `STRATEGY.md`에는 변하지 않을 소수의 판단 기준만 둡니다.
+3. `AGENTS.md`와 `GEMINI.md`는 전역 지침 원본이자 기준 원본을 읽게 하는 부트로더로 관리합니다.
+4. 실제 Codex 스킬은 `skills/<skill-name>/SKILL.md` 형태로 독립 유지합니다.
+5. 반복해서 지적된 문제는 먼저 철학, 전략, 원칙, 실행물 중 어디에 속하는지 분류합니다.
+6. 전략으로 올릴 수 없는 항목은 `principles/`, `checklists/`, `skills/`, `templates/`, `inbox/` 중 맞는 곳에 둡니다.
+7. 스킬은 실제 작업에 적용하고 실패 지점을 반영한 뒤 고정합니다.
+8. 좋은 결과물만 저장하지 말고 반복 실수를 막는 나쁜 예시와 검수 기준도 함께 남깁니다.
+9. 사용자와 작업하며 새로 파악한 선호와 품질 기준은 작업 재현성에 직접 도움이 될 때만 `user-model/`에 근거와 함께 기록합니다.
+10. commit, push, 원격 레포 rename처럼 상태를 바꾸는 작업은 현재 적용 중인 전역 지침과 사용자의 명시 요청을 따릅니다.
 
 ## 설치
 
-이 레포를 받은 뒤 필요한 파일을 Codex 설정 디렉터리에 직접 복사합니다. macOS, Linux, WSL에서는 아래 명령을 사용합니다.
+권장 설치 방식은 레포 전체를 Codex 설정 디렉터리에 연결하는 것입니다. 이렇게 설치하면 `AGENTS.md`가 기준 원본의 `PHILOSOPHY.md`, `STRATEGY.md`, `principles/`, `checklists/`까지 참조할 수 있습니다.
+
+기존 `~/.codex/AGENTS.md`나 같은 이름의 스킬 폴더를 보존해야 한다면 설치 전에 백업하세요.
 
 ```bash
+KIT_DIR="$(pwd)"
+
 mkdir -p "$HOME/.codex/skills"
-cp AGENTS.md "$HOME/.codex/AGENTS.md"
-rsync -a --delete skills/translation-quality/ "$HOME/.codex/skills/translation-quality/"
-rsync -a --delete skills/handoff-agent-builder/ "$HOME/.codex/skills/handoff-agent-builder/"
+
+if [ -e "$HOME/.codex/davis-agent-kit" ] && [ ! -L "$HOME/.codex/davis-agent-kit" ]; then
+  printf '%s\n' "$HOME/.codex/davis-agent-kit exists and is not a symlink"
+  exit 1
+fi
+
+rm -f "$HOME/.codex/davis-agent-kit"
+rm -f "$HOME/.codex/AGENTS.md"
+rm -rf "$HOME/.codex/skills/translation-quality"
+rm -rf "$HOME/.codex/skills/handoff-agent-builder"
+
+ln -s "$KIT_DIR" "$HOME/.codex/davis-agent-kit"
+ln -s "$HOME/.codex/davis-agent-kit/AGENTS.md" "$HOME/.codex/AGENTS.md"
+ln -s "$HOME/.codex/davis-agent-kit/skills/translation-quality" "$HOME/.codex/skills/translation-quality"
+ln -s "$HOME/.codex/davis-agent-kit/skills/handoff-agent-builder" "$HOME/.codex/skills/handoff-agent-builder"
 ```
 
 이전 구조에서 쓰던 legacy 스킬이 남아 있는 기기에서는 아래 명령으로 정리합니다. 처음 설치하는 기기에서는 필요 없습니다.
@@ -55,30 +78,16 @@ rsync -a --delete skills/handoff-agent-builder/ "$HOME/.codex/skills/handoff-age
 rm -rf "$HOME/.codex/skills/davis-operating-system"
 ```
 
-설치 후에는 Codex를 재시작하거나 새 세션을 시작해 스킬 목록이 다시 로드되도록 합니다.
+설치 후에는 Codex를 재시작하거나 새 세션을 시작해 전역 지침과 스킬 목록이 다시 로드되도록 합니다.
 
-### 관리용 연결 설치
+AGENTS.md만 복사하는 방식은 전역 기본 원칙 적용에 한정됩니다. 레포 전체 기준을 적용하려면 위 연결 설치를 사용합니다.
 
-이 레포를 직접 관리하면서 여러 기기에서 같은 기준을 유지하려면 복사 대신 심링크로 연결할 수 있습니다. 이렇게 설치하면 `~/.codex`에서 보이는 전역 지침과 스킬이 이 레포의 파일을 직접 가리키므로, 에이전트가 내용을 수정했을 때 git 변경으로 바로 잡힙니다.
-
-기존 `~/.codex/AGENTS.md`나 같은 이름의 스킬 폴더를 보존해야 한다면 먼저 백업하세요.
-
-```bash
-KIT_DIR="$(pwd)"
-
-mkdir -p "$HOME/.codex/skills"
-rm -f "$HOME/.codex/AGENTS.md"
-rm -rf "$HOME/.codex/skills/translation-quality"
-rm -rf "$HOME/.codex/skills/handoff-agent-builder"
-
-ln -s "$KIT_DIR/AGENTS.md" "$HOME/.codex/AGENTS.md"
-ln -s "$KIT_DIR/skills/translation-quality" "$HOME/.codex/skills/translation-quality"
-ln -s "$KIT_DIR/skills/handoff-agent-builder" "$HOME/.codex/skills/handoff-agent-builder"
-```
+### 연결 상태 확인
 
 연결 상태는 아래처럼 확인합니다.
 
 ```bash
+readlink "$HOME/.codex/davis-agent-kit"
 readlink "$HOME/.codex/AGENTS.md"
 readlink "$HOME/.codex/skills/translation-quality"
 readlink "$HOME/.codex/skills/handoff-agent-builder"
@@ -93,7 +102,7 @@ readlink "$HOME/.codex/skills/handoff-agent-builder"
 
 첫 기준점은 번역 작업입니다. `translation-quality` 스킬은 긴 실적발표 transcript 번역에서 요구되는 자연스러운 한국어, 화자/문단 형식, 주석, 링크, 이태릭체, 숫자 QA, 최종 검수를 절차화한 사례입니다.
 
-이 사례에서 끌어낸 상위 철학은 [재현 가능한 품질](principles/reproducible-quality.md)에 정리해 두었습니다.
+이 사례에서 끌어낸 재현 가능한 품질 원칙은 [재현 가능한 품질](principles/reproducible-quality.md)에 정리해 두었습니다.
 
 ## 공개/비공개 경계
 

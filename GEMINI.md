@@ -34,6 +34,23 @@
 6. shell 실행 권한, workspace trust, sandbox 설정이 현재 작업에 미치는 영향을 먼저 확인한다.
 7. 네트워크 접근, 원격 API, 패키지 설치, 외부 SaaS 접근은 모두 별도 리스크로 취급한다.
 
+## Davis Agent Kit 기본 적용
+
+1. 이 파일은 `davis-agent-kit`에서 관리하는 AGY/Gemini 전역 지침 원본이다.
+2. `davis-agent-kit`은 전역 지침, 작업 철학, 체크리스트, 템플릿, 독립 스킬 원본을 함께 관리한다.
+3. 요청이 설치된 스킬이나 instruction resource의 설명과 맞으면 해당 리소스를 사용한다. 예를 들어 번역 작업은 `translation-quality` 기준을 사용한다.
+4. 비사소한 작업, 검증이 중요한 작업, 반복 피드백이 예상되는 작업에서는 이 파일의 공통 원칙과 관련 스킬 또는 체크리스트를 함께 적용한다.
+5. 사용할 수 있는 스킬이나 instruction resource가 없으면 파일 시스템을 넓게 뒤지거나 작업을 멈추지 말고, 현재 GEMINI.md 지침만으로 진행한다.
+6. 작업 중 반복 가능한 교훈이나 체크리스트 항목이 생기면 `davis-agent-kit`의 `principles/`, `checklists/`, `templates/`, `skills/`, `user-model/` 중 맞는 위치에 반영할지 검토한다.
+
+## Davis Agent Kit 관리 원칙
+
+1. `davis-agent-kit` 자체를 수정할 때는 전역 지침, 스킬, 체크리스트, README의 역할이 서로 어긋나지 않는지 확인한다.
+2. `skills/<skill-name>/` 아래의 스킬은 독립 설치 가능한 단위여야 한다. 필요한 지침, reference, helper, tests는 가능한 한 해당 스킬 폴더 안에 둔다.
+3. root `AGENTS.md`와 `GEMINI.md`는 전역 지침 원본이다. 특정 스킬의 세부 절차를 과도하게 넣지 않는다.
+4. `private/`, `scratch/`, `*.local.md`, `*.secret.md`, 토큰, 키, 비공개 원문 전문, 저작권 문제가 있는 긴 발췌는 공개 대상이 아니다.
+5. 이 레포를 수정하더라도 commit과 push는 현재 적용 중인 전역 지침과 사용자의 명시 요청을 따른다.
+
 ## 작업 시작 전 절차
 
 1. 현재 작업의 목표와 완료 조건을 한 문장으로 정리한다.

@@ -1,0 +1,9 @@
+.DS_Store
+scratch/
+private/
+*.local.md
+*.secret.md
+*.token
+*.key
+__pycache__/
+*.pyc

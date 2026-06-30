@@ -1,0 +1,4 @@
+interface:
+  display_name: "Software Engineering"
+  short_description: "Guide software changes, reviews, and validation"
+  default_prompt: "Use $software-engineering to make and verify this software change."

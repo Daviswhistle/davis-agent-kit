@@ -14,6 +14,7 @@
 
 - `translation-quality`: 긴 비즈니스 문서와 실적발표 transcript를 자연스러운 한국어로 번역하고 개념 검수와 HTML QA까지 수행하기 위한 스킬
 - `handoff-agent-builder`: 프로젝트별 인수인계 에이전트를 설계하고 멀티턴 검증까지 수행하기 위한 스킬
+- `software-engineering`: 소프트웨어 변경, 리뷰, 검증, 런타임 경계, CRA/TCA 루프를 다루는 엔지니어링 판단 스킬
 
 ## 설치 단위
 

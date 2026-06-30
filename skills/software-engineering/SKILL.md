@@ -1,0 +1,150 @@
+---
+name: software-engineering
+description: Davis software-engineering discipline for software changes, debugging, review handling, validation boundaries, commit boundaries, CRA/TCA loops, runtime/cache/generated-artifact checks, vendor contract review, and interrupted workstream recovery. Use when a task needs Davis-style engineering judgment across code, tests, docs, config, deployment-adjacent validation, or source-of-truth analysis. Complements specialized GitHub, Vercel, frontend, framework, API, or docs skills; use those for domain details.
+---
+
+# Software Engineering
+
+Use this skill to finish software work as a coherent engineering change, not as a loose patch.
+
+This is an engineering judgment skill, not a framework skill. If another skill covers the domain, such as GitHub PR handling, frontend implementation, Next.js, Vercel, OpenAI docs, or skill creation, use that domain skill for the technical details and use this skill for scope, validation, review, commit, and finish criteria.
+
+## Core Contract
+
+1. Work from the current checkout, not memory or intention.
+2. Keep the scope tight, but include directly connected code, tests, docs, config, generated contract, and deployment-surface consistency.
+3. Protect user and coworker changes. Do not revert, overwrite, or hide unfamiliar changes.
+4. Prefer root-cause fixes over fallback, masking, or test-only appeasement.
+5. Make names match current responsibility. Function, file, module, test, setting, log, metric, and doc names are maintenance interfaces.
+6. Distinguish verification from approval or external state change.
+
+## Commit Boundary
+
+Record a commit only when all of these are true:
+
+1. The change is one clear task unit.
+2. The included files were checked with `git status --short` and, when needed, `git diff`.
+3. Generated files, logs, review logs, sentinel files, caches, secrets, and unrelated user changes are excluded.
+4. Reasonable local verification has run, or skipped verification is recorded with a concrete reason.
+5. The user did not ask to avoid commits.
+
+Do not record a commit when the scope is unclear, unrelated changes cannot be separated, the task is review-only, or the change needs user approval before being recorded.
+
+Never push, deploy, migrate, approve snapshots, update production data, or otherwise change external state unless the user explicitly asks.
+
+## Start The Work
+
+1. State the goal and completion condition in one sentence for non-trivial work.
+2. Check branch and worktree state before editing.
+3. Read the relevant entry points, call flow, data flow, failure paths, docs, config, and tests before choosing the fix.
+4. For a bug, find all callers or producers with `rg` before patching one visible path.
+5. Identify deployment, database, permissions, environment variables, caches, generated artifacts, and runtime state that may affect the answer.
+6. If external behavior or a library contract is uncertain, verify it from official or primary sources first.
+
+## Find The Source Of Truth
+
+Do not answer current-state questions from docs alone. For questions like "is this active?", "can I deploy now?", "is this the default?", "what does this log mean?", or "does this script refresh it?", identify the current source of truth:
+
+1. loader or runtime branch actually used
+2. generated artifact contents and coverage
+3. deploy script behavior and current environment boundary
+4. persisted state, cache, database, or object-store role
+5. log line origin and the condition that emits it
+6. tests or validators that prove the contract
+
+Separate axes before answering. Runtime dependency, layer rebuild, env rewrite, code deploy, data backfill, cache refresh, and report generation may be different operations even when they share files.
+
+For vendor or official API comparison, read vendor-provided navigation first when present: `llms.txt`, agent guidance, docs index, examples index, or API reference table. Use broad grep after narrowing the reference subtree.
+
+## Implement
+
+1. Follow local style, framework conventions, package boundaries, and existing helper APIs.
+2. Add an abstraction only when it reduces real duplication or clarifies a real responsibility boundary.
+3. Add fallback only when the failure mode, selection condition, observable signal, and maintenance owner are clear.
+4. Preserve defensive or risk-reduction operations when later optional data loading can fail.
+5. Keep compatibility paths when existing persisted records or old payloads still need to be read.
+6. When public behavior changes, update the closest docs, examples, generated-contract descriptions, or reproduction commands.
+7. Do not expose secrets through source, logs, command lines, exceptions, or final output.
+
+## Validate
+
+1. Start with the smallest verification that proves the changed contract.
+2. Expand to lint, typecheck, build, integration, or end-to-end checks only when risk or public surface requires it.
+3. For non-trivial logic, leave the smallest durable regression test that would fail if the bug returns.
+4. Test public behavior and operational contracts, not incidental object shape.
+5. If a test fails, classify it before changing code or expectations: implementation issue, test expectation issue, environment issue, or stale fixture.
+6. Wait for long-running silent validators to finish before interpreting success or failure.
+7. Record commands run, checks skipped, skip reasons, and remaining risk.
+
+## Review Findings
+
+Treat review output as evidence to evaluate, not as authority.
+
+For each finding, check:
+
+1. Is the fact true in the current checkout?
+2. Is it in scope for this task?
+3. Is there real runtime, data, security, user-facing, or maintenance risk?
+4. Would the proposed fix create a larger regression?
+5. Does it improve code, docs, tests, config, and naming consistency?
+
+If a reviewer finding conflicts with runtime evidence or an explicit user clarification, re-check the control flow or run evidence, then follow the stronger current contract. Leave a concise comment, doc note, test, or final explanation when that prevents the same invalid finding from recurring.
+
+## CRA Loop
+
+Use only when the user explicitly requests `CRA 루프`.
+
+1. Commit the completed task unit.
+2. Run the review as a blocking batch job. Do not background it with `&`.
+3. Do not repeatedly tail or interpret in-progress logs.
+4. Determine status after process exit from exit code, optional sentinel, and the last 50-100 log lines.
+5. Review substantive findings only after the reviewer has finished.
+6. If a finding is valid, fix it, rerun local verification from the changed point, `git commit --amend --no-edit`, and run review again.
+7. Stop when the final review reports no substantive findings, or when all remaining findings are explicitly rebuttable with current evidence.
+
+Final CRA reporting must include final commit hash, validation, review status, accepted fixes, rejected findings with reasons, and any naming/docs/file movement rationale.
+
+## TCA Loop
+
+Use only when the user explicitly requests `TCA 루프`.
+
+Split the requested work into independently reviewable task units. Do not start the next implementation until the current task has a commit, local verification, CRA completion, and an updated task queue.
+
+Task queue format:
+
+```text
+[ ] T1. Task name
+    - Goal:
+    - Scope:
+    - Dependency:
+    - Expected validation:
+    - Commit boundary:
+    - CRA need:
+```
+
+If review fixes change the task premise, update the queue before continuing.
+
+## Interrupted Workstream Recovery
+
+After context compaction, interruption, parallel reviews, or user correction that the thread drifted, stop and restate:
+
+1. active branch and commit
+2. intended task
+3. already completed validation
+4. still-open work
+5. running or stale processes
+6. files with unrelated user changes
+
+Do not continue editing until the active workstream is clear.
+
+## Finish
+
+Before final response or commit, check:
+
+1. no critical or high-risk issue remains in scope
+2. validation appropriate to the change has run
+3. skipped validation and remaining risk are known
+4. names, docs, tests, settings, and generated artifacts are not materially inconsistent with current behavior
+5. `git status --short` shows only intended changes, or a commit has cleanly recorded them
+
+Final response should name the changed files, summarize the behavioral effect, list validation, mention skipped checks and risk, and include commit hash when committed.

@@ -44,7 +44,7 @@
 
 관찰은 처음에는 `observations.md`에 남깁니다. 반복 확인되거나 작업 규칙으로 굳힐 만하면 다음 위치로 승격합니다.
 
-- 전역 원칙: `principles/`
+- 전역 적용 지침: `guidelines/`
 - 완료 전 검수: `checklists/`
 - 반복 작업 절차: `skills/`
 - 출력 형식: `templates/`

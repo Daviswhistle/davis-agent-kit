@@ -102,6 +102,31 @@ Use only when the user explicitly requests `CRA 루프`.
 6. If a finding is valid, fix it, rerun local verification from the changed point, `git commit --amend --no-edit`, and run review again.
 7. Stop when the final review reports no substantive findings, or when all remaining findings are explicitly rebuttable with current evidence.
 
+Recommended blocking review command:
+
+```bash
+COMMIT_SHA="$(git rev-parse HEAD)"
+rm -f review.done review.log
+
+codex review --commit "$COMMIT_SHA" \
+  -c review_model="gpt-5.5" \
+  -c model_reasoning_effort="xhigh" \
+  > review.log 2>&1 && touch review.done
+```
+
+After the process exits, check the result:
+
+```bash
+REVIEW_EXIT=$?
+echo "review_exit=$REVIEW_EXIT"
+test -f review.done && echo "review_done=yes" || echo "review_done=no"
+tail -100 review.log
+```
+
+Do not treat a transport, auth, quota, CLI, or model-selection failure as a completed review. If `codex review --commit` is unavailable in the installed CLI version, use the closest supported review flow, record the exact command or interactive path used, and preserve the completed review output.
+
+Do not commit `review.log`, `review.done`, temporary review transcripts, caches, credentials, or unrelated user changes.
+
 Final CRA reporting must include final commit hash, validation, review status, accepted fixes, rejected findings with reasons, and any naming/docs/file movement rationale.
 
 ## TCA Loop

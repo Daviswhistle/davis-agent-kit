@@ -69,11 +69,6 @@ class AgentKitContractTests(unittest.TestCase):
             expected[1],
             expected[2],
         ])
-        self.assertEqual(numbered_items(read("GEMINI.md"), "## 작동 철학"), [
-            "필요한 것을 잃지 않는 가장 단순한 형태를 찾는다.",
-            expected[1],
-            expected[2],
-        ])
 
         philosophy_surface = "\n".join(
             numbered_items(read("PHILOSOPHY.md"), "## 핵심 명제")
@@ -119,17 +114,14 @@ class AgentKitContractTests(unittest.TestCase):
         skill = read("skills/software-engineering/SKILL.md")
         metadata = read("skills/software-engineering/agents/openai.yaml")
         agents = read("AGENTS.md")
-        gemini = read("GEMINI.md")
         skills_readme = read("skills/README.md")
 
         self.assertIn("name: software-engineering", skill)
         self.assertIn("display_name: \"Software Engineering\"", metadata)
         self.assertIn("$software-engineering", metadata)
         self.assertIn("`software-engineering` 스킬", agents)
-        self.assertIn("`software-engineering` 기준", gemini)
         self.assertIn("`software-engineering`", skills_readme)
         self.assertNotIn("coding-workflow", agents)
-        self.assertNotIn("coding-workflow", gemini)
         self.assertNotIn("coding-workflow", skills_readme)
 
 

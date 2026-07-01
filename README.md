@@ -19,7 +19,6 @@ davis-agent-kit/
   PHILOSOPHY.md # 에이전트가 따라야 할 최상위 사고방식
   PRINCIPLES.md # 변하지 않을 소수의 판단 기준
   AGENTS.md     # 전역 지침 원본
-  GEMINI.md     # 전역 지침 원본
   guidelines/   # 원칙에서 내려온 적용 지침
   checklists/   # 완료 전 검수 기준
   templates/    # 글, 리서치, 리뷰 등 출력 형식 템플릿

@@ -36,6 +36,8 @@ Use these principles before considering surface wording:
 11. Polarity and modality: do not convert source opportunities, enablement, confidence, or optionality into constraints, problems, or obligations.
 12. Source-to-output flow: a finding in one paragraph may indicate a source-unit, chunking, assembly, speaker-map, or QA-helper failure. Inspect the workflow layer where the issue could recur.
 13. Readiness evidence: distinguish review findings, mechanical validation, skipped checks, and residual risks. Do not treat a passing helper as publication readiness when source coverage or conceptual review is incomplete.
+14. Visual emphasis semantics: `<em>` should not become a catch-all marker for English terms. Translator notes, source titles/names, and ordinary finance acronyms should be visually distinguishable by purpose; common acronyms usually stay plain unless the source or reader purpose supports emphasis.
+15. Source correction transparency: if the translation corrects an apparent transcript, extraction, period, speaker, or numeric error, the correction must be justified by internal source consistency or an external primary source and disclosed with a concise note when reader-visible.
 
 ## What To Inspect
 
@@ -57,7 +59,10 @@ Review at least these areas:
 9. Strategic relationships: If two programs, events, or terms may be confused, does the output clarify the relationship only when justified by source or verified context?
 10. Notes and emphasis: Are notes placed at first occurrence, concise, visually distinct, and not repeated?
    - Does QA record each note's basis as source, generic definition, or externally verified?
+   - Does any note for a source correction identify the corrected source issue without over-explaining?
+   - Does the output avoid making translator notes, product names, document titles, and ordinary acronyms all look like the same annotation layer?
 11. Source fidelity: Are any source claims omitted, duplicated, softened, strengthened, or assigned to the wrong speaker?
+   - If the output intentionally departs from the source because the transcript appears wrong, is the departure justified and disclosed?
 12. Publication polish: Would the user plausibly object that this still feels machine-translated, over-literal, or like a transcript dump?
 13. Domain terminology: Are terms such as `merchant`, `seller`, `first-party brand`, `marketplace`, `direct retail`, `franchise`, and `self-operated` translated according to their actual business relationship?
 14. Verification evidence: If files named like `evaluation_*.md`, `*_rubric.md`, `evaluate_*.py`, `check_*.py`, or `test_*.py` are present, did the QA run the applicable checks and record the result?

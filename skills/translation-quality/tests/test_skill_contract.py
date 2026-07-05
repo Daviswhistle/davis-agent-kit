@@ -5,9 +5,12 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = ROOT.parents[1]
 SKILL = ROOT / "SKILL.md"
 REVIEWER = ROOT / "agents" / "korean_translation_reviewer.md"
+REPORT_REVIEWER = ROOT / "agents" / "korean_report_reviewer.md"
 BENCHMARK = ROOT / "references" / "quality_benchmark.md"
+REFERENCE_SUITE = REPO_ROOT / "examples" / "translation" / "good" / "reference-quality-suite.md"
 
 
 class SkillContractTests(unittest.TestCase):
@@ -22,6 +25,12 @@ class SkillContractTests(unittest.TestCase):
             "Korean honorifics imply hierarchy",
             "Financial units shape the reader's economic intuition",
             "If the user points out a phrase, infer the underlying class of failure",
+            "Mechanical QA guards objective defects",
+            "apparent source/extraction/transcript error",
+            "ordinary Korean words as forbidden",
+            "Visual emphasis is semantic",
+            "ordinary finance acronyms such as `GAAP`, `SG&A`, `EPS`, `SKU`, `APAC`, and `EMEA` usually should remain plain body text",
+            "Separate translator notes from source emphasis",
             "2027 회계연도 1분기",
             "Domain terms must preserve business relationships",
             "Before translating, scan the current task directory for explicit local evaluation files",
@@ -29,6 +38,7 @@ class SkillContractTests(unittest.TestCase):
             "positive enablement phrase",
             "Record conceptual review findings as a ledger",
             "For every explanatory note, record a basis field in QA",
+            "`source correction`",
             "Do not let a note repeat the adjacent sentence",
             "## Portable Quality Contract",
             "fresh git install",
@@ -44,12 +54,22 @@ class SkillContractTests(unittest.TestCase):
             "For opaque initiative or program names",
             "When a named program and a nearby investment plan share the same large monetary scale",
             "## Work Discipline",
+            "## Review Fanout For Long Documents",
+            "## Equivalence Evidence Gate",
+            "agents/korean_report_reviewer.md",
+            "reviewer mode for each pass",
+            "scripts/evaluate_report_equivalence.py",
+            "--profile report",
+            "reference-quality-suite.md",
+            "Metrics prove shape and artifact cleanup",
+            "applicable exemplar axes",
             "State the task objective and completion conditions in one sentence",
             "Trace the source-to-output flow before editing",
             "Identify affected resources before changing the skill itself",
             "Separate verification from approval or publication",
             "A passing helper alone is not enough",
             "Check naming and visible labels as part of quality",
+            "table alignment classes",
         ]
         missing = [phrase for phrase in required_phrases if phrase not in text]
         self.assertEqual(missing, [])
@@ -64,6 +84,8 @@ class SkillContractTests(unittest.TestCase):
             "Speaker truth",
             "Register and hierarchy",
             "Financial scale",
+            "Visual emphasis semantics",
+            "Source correction transparency",
             "Systemic learning",
             "Evidence discipline",
             "Domain relationship",
@@ -100,6 +122,7 @@ class SkillContractTests(unittest.TestCase):
             "positive enablement language",
             "Conceptual Review Ledger",
             "Notes do not duplicate adjacent prose",
+            "Reader-visible source corrections are transparent",
             "Numeric QA checks every material occurrence in the final assembled output",
             "Long-document chunking is real",
             "Numeric Range QA",
@@ -112,6 +135,58 @@ class SkillContractTests(unittest.TestCase):
             "Skill updates are consistent",
             "Verification Ledger",
             "Do not collapse verification, approval, and publication readiness",
+            "Annual Report Structure",
+            "Review Fanout",
+            "Equivalence Evidence",
+            "Reference-quality claims require reference evidence",
+            "Reference quality is multi-axis",
+            "Lexical checks are not a blacklist",
+            "Visual emphasis has meaning",
+            "Lululemon represents transcript packaging",
+            "PDD Holdings represents interpreted-call",
+            "YesAsia represents long formal-report publication",
+            "evaluate_report_equivalence.py --require-core-counts-match",
+            "report QA profile",
+            "table alignment classes",
+        ]
+        missing = [phrase for phrase in required_phrases if phrase not in text]
+        self.assertEqual(missing, [])
+
+    def test_reference_quality_suite_records_three_reference_axes(self) -> None:
+        text = REFERENCE_SUITE.read_text(encoding="utf-8")
+
+        required_phrases = [
+            "Mechanical metrics are only one gate",
+            "Lululemon earnings-call transcript",
+            "Blog-ready transcript flow",
+            "PDD Holdings earnings-call transcript",
+            "Interpreted-call fidelity",
+            "YesAsia annual report",
+            "Long formal-report publication",
+            "Observed result: `PASS`",
+            "do not by themselves prove natural Korean",
+            "candidate must not inherit them silently",
+            "Known stricter-rule caveat",
+            "distinguish translator notes from source terms",
+        ]
+        missing = [phrase for phrase in required_phrases if phrase not in text]
+        self.assertEqual(missing, [])
+
+    def test_report_reviewer_prompt_targets_formal_report_risks(self) -> None:
+        text = REPORT_REVIEWER.read_text(encoding="utf-8")
+
+        required_phrases = [
+            "annual reports",
+            "financial statements",
+            "Table fidelity",
+            "Legal and governance labels",
+            "Bilingual naming",
+            "Extraction cleanup",
+            "Publication usability",
+            "page and section map",
+            "table inventory",
+            "table alignment",
+            "Do not flag a formal legal/reporting phrase",
         ]
         missing = [phrase for phrase in required_phrases if phrase not in text]
         self.assertEqual(missing, [])

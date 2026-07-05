@@ -76,15 +76,22 @@ class QaHtmlTranslationTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("speaker block is followed by .blank, not .para", result.stdout)
 
-    def test_strict_style_fails_remaining_translationese(self) -> None:
-        bad_html = GOOD_HTML.replace("부탁드립니다.", "말씀해 주십시오.")
+    def test_context_sensitive_words_do_not_fail_without_context(self) -> None:
+        html = GOOD_HTML.replace("부탁드립니다.", "말씀해 주십시오.")
+        result = self.run_qa(html, "--strict-style")
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("PASS", result.stdout)
+
+    def test_strict_style_fails_exact_literal_template(self) -> None:
+        bad_html = GOOD_HTML.replace("부탁드립니다.", "이상으로 준비한 말씀을 마치겠습니다.")
         loose = self.run_qa(bad_html)
         strict = self.run_qa(bad_html, "--strict-style")
 
         self.assertEqual(loose.returncode, 0, loose.stdout + loose.stderr)
         self.assertIn("PASS WITH STYLE REVIEW", loose.stdout)
         self.assertNotEqual(strict.returncode, 0)
-        self.assertIn("generic honorific speech", strict.stdout)
+        self.assertIn("literal prepared-remarks closing", strict.stdout)
 
     def test_expected_title_and_date_are_checked(self) -> None:
         result = self.run_qa(GOOD_HTML, "--expect-title", "다른 제목", "--expect-date", "2026.06.04.")
@@ -104,15 +111,12 @@ class QaHtmlTranslationTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("visible workflow metadata", result.stdout)
 
-    def test_platform_terms_are_strict_style_reviews(self) -> None:
-        bad_html = GOOD_HTML.replace("사회자", "사회자 직영 브랜드 가맹상인", 1)
+    def test_domain_terms_need_conceptual_review_not_mechanical_failure(self) -> None:
+        html = GOOD_HTML.replace("사회자", "사회자 직영 브랜드 가맹상인", 1)
 
-        loose = self.run_qa(bad_html)
-        strict = self.run_qa(bad_html, "--strict-style")
+        strict = self.run_qa(html, "--strict-style")
 
-        self.assertEqual(loose.returncode, 0, loose.stdout + loose.stderr)
-        self.assertNotEqual(strict.returncode, 0)
-        self.assertIn("platform domain term needs context review", strict.stdout)
+        self.assertEqual(strict.returncode, 0, strict.stdout + strict.stderr)
 
     def test_raw_extracted_speaker_label_as_visible_speaker_fails_hard(self) -> None:
         bad_html = GOOD_HTML.replace('data-speaker="Executive B"', 'data-speaker="Speaker 12"')
@@ -160,6 +164,55 @@ class QaHtmlTranslationTests(unittest.TestCase):
 
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("unit 048 mistranslates mid-to-high teens range", result.stdout)
+
+    def test_mismatched_table_columns_fail(self) -> None:
+        bad_html = GOOD_HTML + "\n<table><tr><td>1</td><td>2</td></tr><tr><td>1</td></tr></table>"
+        result = self.run_qa(bad_html)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("table row has 1 columns, expected 2", result.stdout)
+
+    def test_table_cells_require_alignment_class(self) -> None:
+        bad_html = GOOD_HTML + "\n<table><tr><th>구분</th><th>2025년</th></tr><tr><td>매출</td><td>1,000</td></tr></table>"
+        result = self.run_qa(bad_html)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("missing left-cell/right-cell/center-cell alignment class", result.stdout)
+
+    def test_aligned_table_passes(self) -> None:
+        good_html = (
+            GOOD_HTML
+            + "\n<table><tr><th class=\"left-cell\">구분</th><th class=\"right-cell\">2025년</th></tr>"
+            + "<tr><td class=\"left-cell\">매출</td><td class=\"right-cell\">1,000</td></tr></table>"
+        )
+        result = self.run_qa(good_html, "--strict-style")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_leftover_markdown_markers_fail(self) -> None:
+        bad_html = GOOD_HTML.replace("Analyst A", "**Analyst A**")
+        result = self.run_qa(bad_html)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("leftover raw markdown formatting markers", result.stdout)
+
+    def test_duplicate_name_translation_fails(self) -> None:
+        bad_html = GOOD_HTML.replace("Analyst A", "(홍길동, 홍길동)")
+        result = self.run_qa(bad_html)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("duplicate name/phrase translation artifact", result.stdout)
+
+    def test_unlinked_website_urls_flagged_style(self) -> None:
+        bad_html = GOOD_HTML.replace("Analyst A", "www.example.com")
+        result = self.run_qa(bad_html, "--strict-style")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unlinked website URL", result.stdout)
+
+    def test_report_profile_skips_transcript_specific_style_patterns(self) -> None:
+        report_html = GOOD_HTML.replace("Analyst A", "RMB 이니셔티브 관련 말씀", 1)
+
+        transcript = self.run_qa(report_html, "--strict-style")
+        report = self.run_qa(report_html, "--strict-style", "--profile", "report")
+
+        self.assertNotEqual(transcript.returncode, 0)
+        self.assertIn("raw RMB currency code", transcript.stdout)
+        self.assertEqual(report.returncode, 0, report.stdout + report.stderr)
 
 
 if __name__ == "__main__":

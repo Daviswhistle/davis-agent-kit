@@ -1,7 +1,7 @@
 ---
 name: translation-quality
 description: |
-  Use this skill whenever the user asks for a non-trivial translation, transcript translation, financial/earnings-call translation, blog-ready translation, or review/revision of an existing Korean translation. It preserves source structure while producing natural Korean, applies the user's preferred speaker/paragraph formatting, and requires a full-document QA pass before delivery.
+  Use this skill whenever the user asks for a non-trivial translation, transcript translation, annual-report or financial-report translation, financial/earnings-call translation, blog-ready translation, or review/revision of an existing Korean translation. It preserves source structure while producing natural Korean, applies the user's preferred formatting, and requires a full-document QA pass before delivery.
 ---
 
 # Translation Quality
@@ -11,19 +11,19 @@ This skill defines the user's expected translation workflow and output standard.
 ## Core Standard
 
 1. Translate meaning, not English syntax. Korean must read like polished Korean business prose, not a literal transcript.
-2. Preserve the original document's information, order, speaker flow, emphasis, links, and explanatory context.
+2. Preserve the original document's information, order, speaker flow, section hierarchy, tables, emphasis, links, and explanatory context.
 3. Do not treat the first draft as final. A full-document review and revision pass is mandatory.
 4. Do not rely on the user to catch obvious translationese. Search for recurring weak phrases mechanically and revise them before delivery.
 5. If a term needs explanation, place the note at the first occurrence of the term, not later.
 6. If rich formatting matters, prefer HTML over plain text so bold, italics, links, and copy-paste line breaks survive.
-7. The final standard is a reader-facing Korean transcript, not an annotated extraction dump. Do not expose internal extraction labels, duplicate metadata, interpreter placeholders, or source-cleanup artifacts unless the user explicitly asks for them.
+7. The final standard is a reader-facing Korean document, not an annotated extraction dump. Do not expose internal extraction labels, duplicate metadata, interpreter placeholders, or source-cleanup artifacts unless the user explicitly asks for them.
 
 ## Portable Quality Contract
 
 This skill must work from a fresh git install with no prior chat history, no remembered examples, and no local completed translations. Treat this `SKILL.md`, its bundled resources, the user's request, and the source document as the complete quality standard.
 
 1. Do not rely on phrases such as "the previous translation" or "the last accepted result" as hidden requirements. Convert any such reference into explicit checks from this skill and its resources.
-2. For long transcripts, earnings calls, blog-ready translations, or quality-sensitive revision work, read `references/quality_benchmark.md` during intake. Use it as the portable benchmark for what "good enough" means.
+2. For long transcripts, annual reports, financial reports, earnings calls, blog-ready translations, or quality-sensitive revision work, read `references/quality_benchmark.md` during intake. Use it as the portable benchmark for what "good enough" means.
 3. If the user references unavailable prior work, state that the prior artifact is unavailable and apply the benchmark criteria instead of pretending to know it.
 4. Record in `work/qa_report.md` that the portable benchmark was used, and list any benchmark item that was intentionally not applicable.
 5. Resolve bundled resources relative to the directory containing this `SKILL.md` first. If the skill is installed in the default location, `${CODEX_HOME:-$HOME/.codex}/skills/translation-quality` is the expected root.
@@ -41,7 +41,10 @@ Use these higher-level principles to decide what must be fixed. Mechanical bad-p
 7. Repetition, greetings, self-identification, and call boilerplate may be shortened only when the information remains clear from speaker labels and flow. Do not erase substance; do remove ceremony that makes the Korean read like raw simultaneous interpretation.
 8. If the user points out a phrase, infer the underlying class of failure and update the translation or skill at that level. Do not only add that exact phrase to a blacklist.
 9. Period labels are part of financial meaning. If the call date and the period year differ, assume a fiscal-year issue may exist and preserve it explicitly, for example `2027 회계연도 1분기`, rather than silently converting it to a calendar-year phrase.
-10. Domain terms must preserve business relationships. In platform transcripts, `merchant` is usually `판매자`, not `가맹상인`, unless the source is actually a franchise context. `first-party brand/business/model` is often `자체 브랜드` or `자체 브랜드 사업`, not `직영 브랜드`, unless the source is about directly operated retail stores.
+10. If a transcript or extracted source appears to contain a period, number, speaker, or label error, correct it only when internal source consistency or an external primary source supports the correction. Add a concise translator note at the corrected location unless the correction is purely invisible cleanup, and record the basis in QA.
+11. Domain terms must preserve business relationships. In platform transcripts, `merchant` is usually `판매자`, not `가맹상인`, unless the source is actually a franchise context. `first-party brand/business/model` is often `자체 브랜드` or `자체 브랜드 사업`, not `직영 브랜드`, unless the source is about directly operated retail stores.
+12. Mechanical QA guards objective defects: broken structure, visible artifacts, missing links, numeric drift, and exact recurring mistranslation templates. It must not treat ordinary Korean words as forbidden. Words such as `말씀`, `측면에서`, and `비교됩니다` are acceptable when they fit the communicative role, register, and financial meaning; their appropriateness belongs to conceptual review.
+13. Visual emphasis is semantic. Do not use `<em>` as a general marker for every English-looking token. Translator notes, source-emphasized titles, product/campaign/event names, and rare terms may need visual distinction; ordinary finance acronyms such as `GAAP`, `SG&A`, `EPS`, `SKU`, `APAC`, and `EMEA` usually should remain plain body text unless the source formatting or reader purpose justifies emphasis.
 
 ## Work Discipline
 
@@ -49,7 +52,7 @@ This skill is not only a style guide. It is a workflow contract for producing an
 
 1. State the task objective and completion conditions in one sentence before substantial work. For long or file-based jobs, record that sentence in `work/translation_progress.md` or `work/qa_report.md`.
 2. Trace the source-to-output flow before editing: source extraction, source units, speaker map, chunk files, assembly script, final output, QA helper, and task-local evaluators. Do not patch only the visible symptom if the same failure can recur in another unit, chunk, or generated file.
-3. Identify affected resources before changing the skill itself. If a rule changes, check whether `SKILL.md`, `agents/korean_translation_reviewer.md`, `references/quality_benchmark.md`, helper scripts, tests, and README need matching updates.
+3. Identify affected resources before changing the skill itself. If a rule changes, check whether `SKILL.md`, `agents/korean_translation_reviewer.md`, `agents/korean_report_reviewer.md`, `references/quality_benchmark.md`, helper scripts, tests, and README need matching updates.
 4. Keep scope tight. Do not rewrite unrelated sections, modify unrelated user files, or include generated logs/caches in the skill contract unless they are intentional deliverables.
 5. User corrections are evidence of a failure class. Convert them into a principle, reviewer check, benchmark example, helper check, or test when that prevents recurrence. Do not only add the exact corrected phrase to a blacklist.
 6. Separate verification from approval or publication. Before claiming readiness, list the commands or reviews run, checks skipped with reasons, and residual risks. A passing helper alone is not enough if conceptual review, source coverage, or a relevant local evaluator is missing.
@@ -61,8 +64,10 @@ This skill is not only a style guide. It is a workflow contract for producing an
 Before translating or revising:
 
 1. Identify the source file or pasted text and confirm whether it is a PDF, plain text, HTML, or another format.
-2. Extract text with a structure-preserving method when possible. For PDFs, keep speaker names, question/answer sections, links, footnotes, and page-break artifacts separate.
-3. Determine the intended output:
+2. Extract text with a structure-preserving method when possible. For PDFs, keep speaker names, question/answer sections, page/section hierarchy, tables, links, footnotes, and page-break artifacts separate.
+3. Determine the document type and intended output:
+   - Transcript or earnings call: preserve speaker flow and Q&A mechanics.
+   - Annual report, prospectus, audit report, or financial report: preserve page/section hierarchy, tables, defined terms, statutory/legal labels, footnotes, signatures, and financial statement structure.
    - If the user asks for `.txt`, use plain text unless formatting requirements make that insufficient.
    - If the user needs bold speakers, italics, live links, or copy-paste-safe spacing, produce HTML.
    - If the user says blog-ready, produce copy-paste-safe HTML by default.
@@ -73,12 +78,15 @@ Before translating or revising:
 
 ## Large Document Execution Contract
 
-For long transcripts, PDFs, earnings calls, interviews, or any source longer than roughly 3,000 words, do not attempt to translate the entire document in one uninterrupted model response. That often leads to stalls, omissions, or half-finished files. Use a chunked file-based workflow.
+For long transcripts, annual reports, financial reports, PDFs, earnings calls, interviews, or any source longer than roughly 3,000 words, do not attempt to translate the entire document in one uninterrupted model response. That often leads to stalls, omissions, or half-finished files. Use a chunked file-based workflow.
 
 1. Build a source outline first:
    - title/date
+   - document type and reader-facing output format
    - speaker list
    - language/interpreter flow, if the call contains non-English remarks or interpreted answers
+   - page/section structure, if the source is a report
+   - table inventory, especially financial statements and governance/director tables
    - currency and large-number units
    - fiscal year versus calendar date relationships
    - domain-specific terms whose literal translation may change the business model
@@ -99,9 +107,34 @@ For long transcripts, PDFs, earnings calls, interviews, or any source longer tha
 9. Run QA on the assembled file, then revise the source chunks or final assembly as needed.
 10. Do not report completion until the final output file exists and the mandatory QA pass has run.
 
-For long transcripts, `work/translation_progress.md`, `work/translation_chunks/`, and `work/qa_report.md` are required deliverables, not optional examples. If the source is long but chunk files are intentionally skipped because the user supplied an already-final translation to review, record the reason in `work/qa_report.md` and still provide a unit-to-output coverage check before final delivery.
+For long transcripts and long reports, `work/translation_progress.md`, `work/translation_chunks/`, and `work/qa_report.md` are required deliverables, not optional examples. If the source is long but chunk files are intentionally skipped because the user supplied an already-final translation to review, record the reason in `work/qa_report.md` and still provide a unit-to-output coverage check before final delivery.
 
-When delegating to another Codex process or working non-interactively, make the prompt require this chunked workflow explicitly. A single monolithic "translate the whole PDF and write one HTML" instruction is not sufficient for long documents.
+When delegating to another Codex process, sub-agent, or non-interactive runner, make the prompt require this chunked workflow explicitly. A single monolithic "translate the whole PDF and write one HTML" instruction is not sufficient for long documents.
+
+## Review Fanout For Long Documents
+
+For long or high-value translations, split review responsibilities when an actual sub-agent or parallel agent facility is available. If no such facility is available, run the same prompts yourself as separate passes and record that in QA.
+
+1. Main translator owns extraction, source-unit/chunk creation, terminology decisions, final assembly, and fixing accepted findings.
+2. Conceptual reviewer uses `agents/korean_translation_reviewer.md` for transcripts, earnings calls, interviews, and other speaker-driven documents.
+3. Report reviewer uses `agents/korean_report_reviewer.md` for annual reports, prospectuses, audit reports, and financial statement-heavy documents.
+4. HTML/publication review may be a separate pass for long HTML outputs. It should inspect visible page structure, table alignment, links, search/TOC usability, leftover markdown, raw extraction artifacts, and copy-paste-sensitive spacing.
+5. Numeric/source-fidelity review should be separate from prose polish when the document contains many financial tables or repeated guidance metrics. It must sample across the full document and inspect all material repeated figures that are easy to drift.
+6. Do not let sub-agents edit the same output range concurrently unless their write scopes are explicitly separated. Prefer reviewer findings over parallel rewrites for final prose.
+7. QA must name the reviewer mode for each pass: `sub-agent`, `separate Codex process`, `external runner`, or `self-run`. It must also record accepted findings, rejected findings, and remaining risk.
+
+## Equivalence Evidence Gate
+
+When the task goal is to match an accepted reference translation, do not stop after updating prompts, rules, or helper tests. Produce or rerun a candidate output and prove that it reaches the reference bar.
+
+1. Identify the accepted reference artifact, candidate artifact, source file, and the document type.
+2. Identify which accepted reference axes apply. Use `examples/translation/good/reference-quality-suite.md` when available: Lululemon for transcript packaging and polished blog flow, PDD Holdings for interpreted-call/source-fidelity handling, and YesAsia for long formal-report publication structure.
+3. Do not claim that structural metrics alone prove quality. Metrics prove shape and artifact cleanup; conceptual review, source fidelity, numeric checks, and reader-facing Korean prove translation quality.
+4. For annual reports and formal financial reports, run `scripts/qa_html_translation.py --profile report --strict-style` on the candidate.
+5. When a reference HTML exists, run `scripts/evaluate_report_equivalence.py` against candidate and reference. For report publication quality, require exact match for page, table, row, header-cell, and data-cell counts unless the QA explicitly explains a source-backed structural change.
+6. For transcript or earnings-call references, use the transcript QA helper, source-unit numeric checks, and conceptual reviewer ledger. If no dedicated equivalence script exists yet, write a task-local evaluator before claiming equal quality.
+7. Record the command, pass/fail result, metric table, reviewer/source-fidelity sampling, skipped checks, and residual risk in `work/qa_report.md` or an `examples/translation/good/*equivalence*.md` evidence note.
+8. A passing unit-test suite proves the tools; it does not prove equivalent output quality. Equivalent quality requires a candidate artifact passing the relevant reference gates and the applicable exemplar axes.
 
 ## Working File Pattern
 
@@ -116,6 +149,7 @@ work/
     001_prepared_remarks.html
     002_financial_guidance.html
     003_qna_01.html
+    010_report_page_001.md
     ...
   qa_report.md
 outputs/
@@ -218,11 +252,14 @@ For financial transcripts, convert currency and large-number units before finali
 13. When a named program and a nearby investment plan share the same large monetary scale, explicitly decide whether the reader may confuse them. If the relationship is clear from source or verified context, the first note should clarify both currency scale and relationship/context, not only the currency unit. If the relationship is not clear, do not guess; record the uncertainty in QA.
 14. Do not use notes to hide uncertainty. If the relationship is uncertain, state the uncertainty in QA or omit the note from the reader-facing output.
 15. Do not let a note repeat the adjacent sentence. If the source sentence already states the relationship clearly, either translate it cleanly without a note or replace the adjacent explanation with a shorter note that adds only the missing reader context.
-16. For every explanatory note, record a basis field in QA:
+16. When correcting an apparent source/extraction/transcript error in a reader-visible way, keep the corrected Korean in the body and add a short note such as "원문에는 Q2로 되어 있으나, 같은 문서의 수치 관계상 1분기 수치로 보정했습니다." Do not silently overwrite the source when the correction affects a period, number, speaker, or financial relationship.
+17. For every explanatory note, record a basis field in QA:
    - `source`: the source itself explains the relationship or term
    - `generic definition`: the note explains a standard business/finance term without adding event-specific claims
    - `externally verified`: the note adds event-specific background checked from a reliable source
+   - `source correction`: the note discloses a reader-visible correction to an apparent source, transcript, or extraction error
    Do not add event-specific background under a generic-definition basis.
+18. Separate translator notes from source emphasis. If `<em>` is used for both, the QA must inventory each class so a reader will not confuse a note with an ordinary product name or acronym. Prefer plain text for common finance acronyms unless the source itself emphasized them or the visual distinction prevents a concrete misunderstanding.
 
 ## HTML Deliverable Rules
 
@@ -239,24 +276,39 @@ When producing HTML for a translation:
    - speaker block
    - paragraph block
    - explicit blank-line block
-3. Preserve live web links with `<a href="...">...</a>`.
-4. Preserve italics for product names, campaign names, document names, acronyms, or user-requested notes when appropriate.
-5. Escape text before injecting it into HTML.
-6. Do not depend on visual CSS alone for blank lines.
-7. After generation, open or inspect the HTML and verify that copy-paste-sensitive spacing is represented by real elements.
-8. Keep HTML generation deterministic:
-   - Store translated paragraphs as plain structured records or clean chunk HTML.
-   - Use a small assembly script for repeated wrappers such as title, date, speaker, paragraph, blank-line block, links, and italics.
-   - Do not hand-maintain hundreds of repeated HTML wrapper lines if a script can avoid formatting drift.
+   - report page/section block for annual reports and financial reports
+   - table block with explicit alignment classes when the source has tables
+   - navigation/search controls for very long HTML reports when they materially improve inspection
+3. Preserve live web links with `<a href="...">...</a>`. Auto-hyperlink any raw website URLs found in the text (e.g. `www.example.com` -> `<a href="https://www.example.com" target="_blank">www.example.com</a>`).
+4. Clean and strip all redundant corporate page headers, footers (e.g. `Page X`, `페이지 X`, repeated company annual-report footers), and system placeholders from the main content body.
+5. Table formatting and layout:
+   - Ensure all tables have consistent column alignments.
+   - Align text description columns to the left (`class="left-cell"`).
+   - Align numeric and financial columns to the right (`class="right-cell"`), including their header cells. Use `tabular-nums` CSS properties for exact digit alignment.
+   - Align short text codes (such as `M`, `C` in director boards) to the center (`class="center-cell"`).
+   - Ensure all tables have exact column parity: the header row and every row in the body must contain the exact same number of cells (no mismatched sizes or empty header cells).
+6. Chinese name and terms parenthesizing:
+   - Always translate Chinese names/terms and write them in standard Korean with parenthesized raw Chinese/transliterated names.
+   - Prevent any duplicate translation name artifacts (such as `(홍길동, 홍길동)` or duplicated names/characters).
+7. Ensure no raw markdown formatting markers (like `**`, `\#`, or `\*`) remain in the HTML output.
+8. Preserve or add italics only when the emphasis has a reader-facing purpose. Do not italicize all acronyms by default. Product names, campaign names, document names, and translator notes may use `<em>` when the source formatting, publication convention, or reader clarity justifies it; ordinary finance acronyms should usually stay plain body text.
+9. Escape text before injecting it into HTML.
+10. Do not depend on visual CSS alone for blank lines.
+11. After generation, open or inspect the HTML and verify that copy-paste-sensitive spacing is represented by real elements.
+12. Keep HTML generation deterministic:
+    - Store translated paragraphs as plain structured records or clean chunk HTML.
+    - Use a small assembly script for repeated wrappers such as title, date, speaker, paragraph, blank-line block, links, and italics.
+    - Do not hand-maintain hundreds of repeated HTML wrapper lines if a script can avoid formatting drift.
 
-For blog HTML, verify these structural invariants mechanically before delivery:
+For blog or report HTML, verify these structural invariants mechanically before delivery:
 
 1. Every `.speaker` block is immediately followed by a `.para` block.
 2. No `.blank` block appears between a speaker and that speaker's first paragraph.
 3. Paragraph-to-paragraph and paragraph-to-speaker spacing uses a real `.blank` element.
-4. `<em>`, `<a>`, `<body>`, and `<html>` tags are balanced and closed.
+4. `<em>`, `<a>`, `<body>`, `<html>`, and structural tags (like `section`, `table`, `tr`, `td`, `th`, `div`, `li`) are balanced, closed, and have perfect column parity.
 5. The file starts with a valid Korean HTML shell, including `<html lang="ko">` and `<meta charset="utf-8">`.
 6. The file ends with closing `</body>` and `</html>` tags.
+7. For report HTML, page sections and table counts are plausible for the source, and table cells have explicit `left-cell`, `right-cell`, or `center-cell` classes.
 
 Build a formatting inventory before assembly:
 
@@ -267,14 +319,14 @@ Build a formatting inventory before assembly:
 5. source URLs
 6. explanatory notes
 
-After assembly, compare the inventory against output `<em>` and `<a href>` occurrences. Record intentional exceptions in the QA note.
+After assembly, compare the inventory against output `<em>` and `<a href>` occurrences. Record intentional exceptions in the QA note, including why any common acronym was italicized and which `<em>` entries are translator notes rather than source terms.
 
 ## Conceptual Review Gate
 
-Run a conceptual review before mechanical QA for long transcripts, earnings calls, blog-ready translations, or any revision where the user has already corrected tone, speaker labels, notes, or financial wording.
+Run a conceptual review before mechanical QA for long transcripts, annual reports, financial reports, earnings calls, blog-ready translations, or any revision where the user has already corrected tone, speaker labels, notes, tables, or financial wording.
 
-1. Use `agents/korean_translation_reviewer.md` as the reviewer prompt. If an actual sub-agent tool is available, give that prompt to a separate reviewer agent. If no sub-agent is available, run the same prompt yourself as a separate review pass and record that it was self-run.
-2. Give the reviewer the source outline, speaker map, any translation units with source text, the assembled output, and known user preferences.
+1. Use `agents/korean_translation_reviewer.md` as the reviewer prompt for speaker-driven documents. Use `agents/korean_report_reviewer.md` for annual reports, prospectuses, audit reports, and financial statement-heavy documents. If an actual sub-agent tool is available, give the relevant prompt to a separate reviewer agent. If no sub-agent is available, run the same prompt yourself as a separate review pass and record that it was self-run.
+2. Give the reviewer the source outline, speaker map when applicable, report page/table inventory when applicable, any translation units with source text, the assembled output, and known user preferences.
 3. The reviewer must find principle violations, not just bad strings. Each finding must explain:
    - reader-facing problem
    - underlying principle violated
@@ -288,12 +340,16 @@ Run a conceptual review before mechanical QA for long transcripts, earnings call
    - whether Korean register and honorifics imply unintended hierarchy
    - whether financial units and large numbers create the right scale in Korean
    - whether fiscal-year labels remain distinguishable from calendar dates
+   - whether any corrected source transcript or extraction error is both justified and disclosed with a concise note
    - whether domain terms preserve the source business relationship
    - whether positive enablement language has been turned into constraint/problem language
    - whether notes prevent real misunderstanding and appear at the first relevant occurrence
+   - whether visual emphasis separates translator notes, source titles/names, and ordinary acronyms instead of making all of them look like the same kind of annotation
    - whether repeated boilerplate should be preserved, compressed, or removed
+   - for reports, whether table structure, page headings, defined terms, legal labels, audit/signature blocks, and footnotes remain intelligible
 6. Add a `Conceptual Review` section to `work/qa_report.md` with:
-   - reviewer mode: sub-agent or self-run
+   - reviewer mode: sub-agent, separate Codex process, external runner, or self-run
+   - reviewer prompt used
    - findings accepted and fixed
    - findings rejected and why
    - evidence that no accepted P1/P2 finding remains unresolved
@@ -307,31 +363,17 @@ Before final delivery, run a full-document QA pass:
 1. Compare the final translation against the source or extracted source for omissions, duplicated blocks, speaker-order errors, and mistranslated numeric guidance.
 2. Numeric QA must check the final assembled output, not only the draft chunks or a manually written summary. When source units have `unit` IDs and HTML paragraphs have `data-unit`, compare each numeric source unit against the matching final HTML paragraph.
 3. Repeated numeric guidance is not covered by checking one representative occurrence. If a range such as `mid-to-high teens`, `high single digits`, bp guidance, EPS, margin, inventory growth, store count, or currency amount appears multiple times, record or script-check every occurrence and every final rendering.
-4. Search the output for known bad patterns and revise every real issue:
-   - `높은 수준`
+4. Search the output for mechanically checkable defects and exact recurring mistranslation templates. Do not treat ordinary Korean words as forbidden tokens. Register, perspective wording, comparison phrasing, and domain terminology must be judged in conceptual review against the source role and sentence purpose.
+   - `높은 수준에서 말씀드리겠습니다`
    - `에게서 나옵니다`
-   - `파급 효과`
+   - `파급 효과를 만들어내지 못`
    - literal product/material phrases such as `새로운 [제품군] 원단`
    - `것으로 현재`
    - `현재 예상`
    - `관문 요인`
    - `제품을 이동`
-   - `기저 추세`
-   - `순차적 개선`
    - `업데이트해 주실 수`
-   - `부정적 영향`
-   - `긍정적 영향`
-   - `측면에서`
-   - `관점에서`
-   - `관련해서는`
-   - `포지셔닝`
-   - `이니셔티브`
-   - `레버`
-   - `탄력`
-   - `도움이 됩니다`
    - `행운을 빕니다`
-   - `말씀`
-   - `비교됩니다`
    - `준비한 말씀`
    - `이상으로 준비한`
    - `추가 말씀`
@@ -344,7 +386,7 @@ Before final delivery, run a full-document QA pass:
    - raw extracted speaker labels such as `Speaker <number>` in reader-facing speaker labels
    - `RMB` in the final Korean body unless the user explicitly wants source currency codes retained
    - `100억 규모...`, `100억 지원...`, or similar phrases when the source means `RMB 100 billion` or another hundred-billion-yuan amount
-5. Do not blindly replace every match. Read the surrounding context and keep a phrase only if it is genuinely the best Korean.
+5. Do not blindly replace every match. Read the surrounding context and keep a phrase when it is genuinely the best Korean.
 6. Verify transcript mechanics:
    - speaker labels appear only on speaker changes
    - speaker labels are bold in HTML
@@ -353,7 +395,7 @@ Before final delivery, run a full-document QA pass:
    - copied blank lines survive because they are real elements
 7. Verify rich formatting:
    - links remain live
-   - italics remain where required
+   - italics remain where required and are not applied mechanically to ordinary acronyms
    - explanatory notes are in the right location
    - repeated notes have not been duplicated
 8. Verify title/date/file naming:
@@ -370,7 +412,7 @@ For long transcripts, create `work/qa_report.md` or an equivalent QA note contai
 2. speaker count or speaker-transition sanity check
 3. title/date check
 4. link count and target check
-5. italics/emphasis check
+5. italics/emphasis semantic inventory, including translator-note versus source-term distinction
 6. explanatory note count and first-occurrence placement check
 7. bad-pattern search command and remaining matches with disposition
 8. numeric guidance unit checks, especially revenue, margin, EPS, inventory, tariff, store count, and percentage guidance
@@ -390,7 +432,7 @@ When the source and final output have unit IDs, each table row should identify t
 Use mechanical checks like these when applicable:
 
 ```bash
-rg -n "높은 수준|에게서 나옵니다|파급 효과|새로운 .{1,20}원단|것으로 현재|현재 예상|관문 요인|제품을 이동|기저 추세|순차적 개선|업데이트해 주실 수|부정적 영향|긍정적 영향|측면에서|관점에서|관련해서는|포지셔닝|이니셔티브|레버|탄력|도움이 됩니다|행운을 빕니다|위임장 변경|말씀|비교됩니다|준비한 말씀|이상으로 준비한|추가 말씀|에게 넘겨|매장 위반 처리 시간|\\[Non-English content\\]|\\[비영어 발언\\]|\\[\\[em:|RMB|100억(\\(위안\\))?\\s*(규모|지원|투자|프로그램|계획|펀드)" outputs/*.html work/translation_chunks
+rg -n "높은 수준에서 말씀드리겠습니다|에게서 나옵니다|파급 효과를 만들어내지 못|새로운 .{1,20}원단|것으로 현재|현재 예상|관문 요인|제품을 이동|업데이트해 주실 수|행운을 빕니다|위임장 변경|준비한 말씀|이상으로 준비한|추가 말씀|에게 넘겨|매장 위반 처리 시간|\\[Non-English content\\]|\\[비영어 발언\\]|\\[\\[em:|RMB|100억(\\(위안\\))?\\s*(규모|지원|투자|프로그램|계획|펀드)" outputs/*.html work/translation_chunks
 ```
 
 For HTML deliverables, also run the bundled QA helper when possible:
@@ -405,7 +447,48 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/translation-quality/scripts/qa_html_
   --strict-style
 ```
 
-If a style match is intentionally acceptable, rerun without `--strict-style` only after recording the context and disposition in `work/qa_report.md`. Hard structural failures, visible non-English markers, raw `[[em:` markers, and incorrect visible interpreter labels must be fixed rather than waived.
+For annual reports and formal financial reports, use the report profile so transcript-specific style patterns do not mask the structural checks that matter for reports:
+
+```bash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/translation-quality/scripts/qa_html_translation.py" \
+  --output outputs/<clear_document_name>_ko.html \
+  --expect-title "<exact Korean title>" \
+  --profile report \
+  --strict-style
+```
+
+When comparing a generated report against an accepted reference, run the equivalence evaluator:
+
+```bash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/translation-quality/scripts/evaluate_report_equivalence.py" \
+  --candidate outputs/<candidate>_ko.html \
+  --reference /path/to/accepted_reference.html \
+  --expect-title "<exact Korean title>" \
+  --expect-pages <page-count> \
+  --require-core-counts-match
+```
+
+For long documents processed in chunks, use the bundled scripts to merge and build reader-ready HTML:
+
+```bash
+# 1. Merge all translated markdown chunks
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/translation-quality/scripts/merge_chunks.py" \
+  --input-dir work/translation_chunks \
+  --output work/combined_translation.md \
+  --title "Document Title" \
+  --description "Document Description"
+
+# 2. Convert to reader-ready HTML (includes TOC, dark mode, search, auto-links, footer cleanup, table alignments)
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/translation-quality/scripts/md_to_html.py" \
+  --input work/combined_translation.md \
+  --output outputs/final_ko.html \
+  --title "Document Title" \
+  --date "YYYY.MM.DD." \
+  --replacements-json work/replacements.json \
+  --strip-line-regex "repeated footer pattern"
+```
+
+If a style match is intentionally acceptable, rerun without `--strict-style` only after recording the context and disposition in `work/qa_report.md`. Hard structural failures, visible non-English markers, raw `[[em:` markers, and incorrect visible interpreter labels must be fixed rather than waived. Do not use `--strict-style` as a substitute for conceptual review of register, comparison phrasing, or domain terminology.
 
 Use `--allow-visible-interpreter-label` only when the visible speaker really is an interpreter and the QA report records why the answer could not be attributed to an original speaker. Do not use it for anonymous interpreted executive or analyst answers.
 
@@ -425,6 +508,7 @@ Before the final response, run a final file sanity check and summarize it in QA:
 10. no visible `[Non-English content]`, `[비영어 발언]`, raw `[[em:` markers, or anonymous interpreter speaker labels remain in the reader-facing output
 11. no raw source helper metadata appears in the reader-facing title block
 12. applicable task-local evaluator scripts have been run and their results are recorded
+13. for report HTML, page section count, table count, TOC/search behavior, table column parity, and table alignment classes are checked or the reason for skipping is recorded
 
 ## Earnings Call Specific Checklist
 
@@ -441,13 +525,14 @@ For earnings-call transcripts, perform these additional checks:
 4. Product/campaign names should be preserved consistently and italicized in HTML when useful.
 5. Analyst pleasantries should be readable Korean, not literal ceremony.
 6. Proxy contests, shareholder actions, board-seat fights, or other governance events should be explained at first occurrence if a Korean reader may not understand the context.
-7. For Chinese-company calls or any call with interpretation, verify:
+7. If an internally inconsistent transcript period or number is corrected, verify the correction against internal source evidence or an external primary source, add a concise note at the corrected sentence, and record the source-correction basis in QA.
+8. For Chinese-company calls or any call with interpretation, verify:
    - non-English source markers are not visible when interpretation exists
    - interpreted answers are attributed to the original executive or analyst, not to `통역`
    - `Operator` and company host/moderator labels are distinct
    - RMB/CNY and billion-to-억 conversions are correct
    - program names with large monetary figures are introduced once with the currency unit if needed
-8. Re-read all passages involving:
+9. Re-read all passages involving:
    - markdowns and clearance
    - full-price sales
    - inventory dollars versus units

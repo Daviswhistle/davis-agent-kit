@@ -7,6 +7,7 @@ import argparse
 import csv
 from dataclasses import dataclass
 import html
+from html.parser import HTMLParser
 from pathlib import Path
 import re
 import sys
@@ -21,36 +22,61 @@ HARD_PATTERNS = (
     ("visible workflow metadata", re.compile(r"번역 품질 평가용|Financial period source|Title source|Date source")),
 )
 
-STYLE_PATTERNS = (
-    ("literal high-level phrase", re.compile(r"높은 수준")),
+TRANSCRIPT_STYLE_PATTERNS = (
+    ("literal high-level phrase", re.compile(r"높은 수준에서\s+말씀드리겠습니다")),
     ("literal operator question handoff", re.compile(r"에게서 나옵니다")),
-    ("literal halo-effect phrase", re.compile(r"파급 효과")),
+    ("literal halo-effect phrase", re.compile(r"파급 효과를\s+만들어내지\s+못")),
     ("literal product/material phrase", re.compile(r"새로운\s+\S{1,20}원단")),
     ("literal current-expect phrase", re.compile(r"것으로 현재|현재 예상")),
     ("literal gateway factor", re.compile(r"관문 요인")),
     ("literal product-move phrase", re.compile(r"제품을 이동")),
-    ("literal underlying trend", re.compile(r"기저 추세")),
-    ("literal sequential improvement", re.compile(r"순차적 개선")),
     ("literal update-us wording", re.compile(r"업데이트해 주실 수")),
-    ("overused impact phrase", re.compile(r"부정적 영향|긍정적 영향")),
-    ("overused aspect/viewpoint phrase", re.compile(r"측면에서|관점에서|관련해서는")),
-    ("untranslated business jargon", re.compile(r"포지셔닝|이니셔티브|레버|탄력")),
-    ("literal helpful phrase", re.compile(r"도움이 됩니다")),
     ("literal analyst goodbye", re.compile(r"행운을 빕니다")),
     ("ambiguous proxy phrase", re.compile(r"위임장 변경")),
-    ("generic honorific speech", re.compile(r"말씀")),
-    ("repetitive compared-with phrase", re.compile(r"비교됩니다")),
     ("literal prepared-remarks closing", re.compile(r"준비한 말씀|이상으로 준비한")),
     ("literal further-remarks transition", re.compile(r"추가 말씀")),
     ("awkward handoff phrase", re.compile(r"에게 넘겨")),
     ("awkward violation-handling phrase", re.compile(r"매장 위반 처리 시간")),
     ("raw RMB currency code", re.compile(r"\bRMB\b")),
     ("possible large-number currency-scale issue", re.compile(r"(?<!1,)100억(?:\(위안\))?\s*(?:규모|지원|투자|프로그램|계획|펀드)")),
-    ("platform domain term needs context review", re.compile(r"직영 브랜드|가맹상인")),
 )
+
+STYLE_PATTERNS_BY_PROFILE = {
+    "transcript": TRANSCRIPT_STYLE_PATTERNS,
+    "report": (),
+    "generic": (),
+}
 
 TAG_RE = re.compile(r"<(?P<tag>div|p)\b(?P<attrs>[^>]*)>", re.IGNORECASE | re.DOTALL)
 CLASS_RE = re.compile(r"\bclass\s*=\s*(['\"])(?P<class>.*?)\1", re.IGNORECASE | re.DOTALL)
+ALIGNMENT_CLASSES = {"left-cell", "right-cell", "center-cell"}
+TRACKED_TAGS = {
+    "a",
+    "aside",
+    "body",
+    "div",
+    "em",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "html",
+    "li",
+    "main",
+    "ol",
+    "p",
+    "section",
+    "strong",
+    "table",
+    "tbody",
+    "td",
+    "th",
+    "thead",
+    "tr",
+    "ul",
+}
 
 
 @dataclass(frozen=True)
@@ -76,7 +102,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--strict-style",
         action="store_true",
-        help="Fail when style-review patterns remain, not only hard structural failures.",
+        help=(
+            "Fail when exact recurring mistranslation templates remain, not only hard "
+            "structural failures. Ordinary wording still requires conceptual review."
+        ),
     )
     parser.add_argument(
         "--allow-visible-interpreter-label",
@@ -87,6 +116,15 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--source-units",
         type=Path,
         help="Optional source_units.tsv. When provided, checks selected numeric range terms against final data-unit paragraphs.",
+    )
+    parser.add_argument(
+        "--profile",
+        choices=sorted(STYLE_PATTERNS_BY_PROFILE),
+        default="transcript",
+        help=(
+            "Style profile for lexical review. Use 'report' for annual reports and "
+            "formal financial reports where transcript-specific wording checks are not applicable."
+        ),
     )
     return parser.parse_args(argv)
 
@@ -147,6 +185,86 @@ def block_sequence(text: str) -> list[tuple[str, int]]:
     return blocks
 
 
+class RobustTagAndTableParser(HTMLParser):
+    def __init__(self, path: Path, findings: list[Finding]) -> None:
+        super().__init__()
+        self.path = path
+        self.findings = findings
+        self.stack: list[tuple[str, tuple[int, int]]] = []
+        self.table_depth = 0
+        self.current_table_headers_count: int | None = None
+        self.current_table_row_count = 0
+        self.current_row_cells_count = 0
+        self.in_tr = False
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        tag_lower = tag.lower()
+        attr_map = {name.lower(): value or "" for name, value in attrs}
+        if tag_lower in TRACKED_TAGS:
+            self.stack.append((tag_lower, self.getpos()))
+
+        if tag_lower == 'table':
+            self.table_depth += 1
+            self.current_table_headers_count = None
+            self.current_table_row_count = 0
+        elif tag_lower == 'tr':
+            self.in_tr = True
+            self.current_row_cells_count = 0
+            self.current_table_row_count += 1
+        elif tag_lower in ('td', 'th'):
+            if self.in_tr:
+                colspan = 1
+                try:
+                    colspan = int(attr_map.get("colspan", "1"))
+                except ValueError:
+                    colspan = 1
+                self.current_row_cells_count += colspan
+                classes = set(attr_map.get("class", "").split())
+                if self.table_depth and not classes.intersection(ALIGNMENT_CLASSES):
+                    self.findings.append(
+                        Finding(
+                            "HARD",
+                            self.path,
+                            self.getpos()[0],
+                            f"table cell <{tag_lower}> missing left-cell/right-cell/center-cell alignment class",
+                        )
+                    )
+
+    def handle_endtag(self, tag: str) -> None:
+        tag_lower = tag.lower()
+        if tag_lower in TRACKED_TAGS:
+            if not self.stack:
+                self.findings.append(Finding("HARD", self.path, self.getpos()[0], f"unexpected closing tag </{tag_lower}>"))
+                return
+            expected, pos = self.stack.pop()
+            if expected != tag_lower:
+                self.findings.append(Finding("HARD", self.path, self.getpos()[0], f"mismatched tag: closed </{tag_lower}> but expected </{expected}> (opened at line {pos[0]})"))
+
+        if tag_lower == 'tr':
+            self.in_tr = False
+            if self.current_table_headers_count is None:
+                self.current_table_headers_count = self.current_row_cells_count
+            else:
+                if self.current_row_cells_count != self.current_table_headers_count:
+                    self.findings.append(Finding("HARD", self.path, self.getpos()[0], f"table row has {self.current_row_cells_count} columns, expected {self.current_table_headers_count}"))
+        elif tag_lower == 'table':
+            self.table_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        in_a = any(t == 'a' for t, _ in self.stack)
+        if not in_a:
+            url_match = re.search(r'\b(?:https?://|www\.)[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}[^\s<)]*', data)
+            if url_match:
+                self.findings.append(Finding("STYLE", self.path, self.getpos()[0], f"unlinked website URL: {url_match.group(0)}"))
+
+            if '**' in data or '\\#' in data or '\\*' in data:
+                self.findings.append(Finding("HARD", self.path, self.getpos()[0], "leftover raw markdown formatting markers"))
+
+            duplicate_match = re.search(r'\(\s*([가-힣]{2,4})\s*,\s*\1\s*\)', data)
+            if duplicate_match:
+                self.findings.append(Finding("HARD", self.path, self.getpos()[0], f"duplicate name/phrase translation artifact: {duplicate_match.group(0)}"))
+
+
 def add_html_structure_findings(findings: list[Finding], path: Path, text: str, args: argparse.Namespace) -> None:
     lower = text.lower()
     visible_text = html.unescape(text)
@@ -155,9 +273,18 @@ def add_html_structure_findings(findings: list[Finding], path: Path, text: str, 
         findings.append(Finding("HARD", path, 1, "missing <html lang=\"ko\">"))
     if not has_utf8_meta(text):
         findings.append(Finding("HARD", path, 1, "missing <meta charset=\"utf-8\">"))
-    for tag in ("em", "a", "strong", "body", "html"):
-        if count_open(text, tag) != count_close(text, tag):
-            findings.append(Finding("HARD", path, 1, f"unbalanced <{tag}> tags"))
+
+    # Use HTMLParser subclass to check robust tag balance and table parity
+    parser = RobustTagAndTableParser(path, findings)
+    try:
+        parser.feed(text)
+    except Exception as e:
+        findings.append(Finding("HARD", path, 1, f"HTML parsing error: {e}"))
+
+    if parser.stack:
+        for tag, pos in parser.stack:
+            findings.append(Finding("HARD", path, pos[0], f"unclosed tag <{tag}>"))
+
     if "</body>" not in lower:
         findings.append(Finding("HARD", path, 1, "missing closing </body>"))
     if "</html>" not in lower:
@@ -310,7 +437,7 @@ def run(argv: list[str]) -> int:
                 item for item in HARD_PATTERNS if item[0] != "visible interpreter speaker label"
             )
         add_pattern_findings(findings, path, text, hard_patterns, "HARD")
-        add_pattern_findings(findings, path, text, STYLE_PATTERNS, "STYLE")
+        add_pattern_findings(findings, path, text, STYLE_PATTERNS_BY_PROFILE[args.profile], "STYLE")
 
     hard_count = sum(1 for finding in findings if finding.severity == "HARD")
     style_count = sum(1 for finding in findings if finding.severity == "STYLE")

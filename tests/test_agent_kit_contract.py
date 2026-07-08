@@ -56,6 +56,31 @@ class AgentKitContractTests(unittest.TestCase):
         self.assertNotIn("coding-workflow", agents)
         self.assertNotIn("coding-workflow", skills_readme)
 
+    def test_software_engineering_references_are_bundled(self) -> None:
+        skill_root = ROOT / "skills" / "software-engineering"
+        reference_paths = [
+            "references/cra-loop.md",
+            "references/tca-loop.md",
+            "references/naming-docs-consistency.md",
+        ]
+
+        skill = read("skills/software-engineering/SKILL.md")
+        for rel_path in reference_paths:
+            self.assertTrue((skill_root / rel_path).is_file())
+            self.assertIn(rel_path, skill)
+
+        reference_text = "\n".join(
+            (skill_root / rel_path).read_text(encoding="utf-8")
+            for rel_path in reference_paths
+        )
+        software_engineering_text = skill + "\n" + reference_text
+
+        self.assertIn('-c model="gpt-5.5"', software_engineering_text)
+        self.assertNotIn("review_model=", software_engineering_text)
+        self.assertIn("codex review --commit", reference_text)
+        self.assertIn("Task-Commit-Approve", reference_text)
+        self.assertIn("Names are maintenance interfaces", reference_text)
+
 
 if __name__ == "__main__":
     unittest.main()

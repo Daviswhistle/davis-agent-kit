@@ -9,6 +9,8 @@ Use this skill to finish software work as a coherent engineering change, not as 
 
 This is an engineering judgment skill, not a framework skill. If another skill covers the domain, such as GitHub PR handling, frontend implementation, Next.js, Vercel, OpenAI docs, or skill creation, use that domain skill for the technical details and use this skill for scope, validation, review, commit, and finish criteria.
 
+Keep this front page compact. When a task needs detailed loop mechanics, restart gates, or consistency passes, use the bundled reference playbooks.
+
 ## Core Contract
 
 1. Work from the current checkout, not memory or intention.
@@ -30,7 +32,17 @@ Record a commit only when all of these are true:
 
 Do not record a commit when the scope is unclear, unrelated changes cannot be separated, the task is review-only, or the change needs user approval before being recorded.
 
-Never push, deploy, migrate, approve snapshots, update production data, or otherwise change external state unless the user explicitly asks.
+Treat a local commit as a reviewable checkpoint, not approval to publish or change external state. Never push, deploy, migrate, approve snapshots, update production data, or otherwise change external state unless the user explicitly asks.
+
+## Reference Material
+
+Use these deeper references only when the task crosses that surface:
+
+1. `references/cra-loop.md` - detailed Codex Review Agent loop mechanics, state model, log discipline, findings, and reporting.
+2. `references/tca-loop.md` - detailed Task-Commit-Approve queue, task boundary, restart, and stop rules.
+3. `references/naming-docs-consistency.md` - deeper checks for names, docs, tests, settings, logs, metrics, and public contracts.
+
+Reference files refine this skill. They do not override the Core Contract, root `AGENTS.md`, or a more specific domain skill.
 
 ## Start The Work
 
@@ -65,6 +77,7 @@ For vendor or official API comparison, read vendor-provided navigation first whe
 5. Keep compatibility paths when existing persisted records or old payloads still need to be read.
 6. When public behavior changes, update the closest docs, examples, generated-contract descriptions, or reproduction commands.
 7. Do not expose secrets through source, logs, command lines, exceptions, or final output.
+8. When responsibility or public behavior shifts, use `references/naming-docs-consistency.md` to decide which names, docs, tests, settings, logs, metrics, or generated contracts must move with it.
 
 ## Validate
 
@@ -92,7 +105,7 @@ If a reviewer finding conflicts with runtime evidence or an explicit user clarif
 
 ## CRA Loop
 
-Use only when the user explicitly requests `CRA 루프`.
+Use only when the user explicitly requests `CRA 루프`. Use `references/cra-loop.md` for the detailed state model, log discipline, finding handling, and reporting requirements.
 
 1. Commit the completed task unit.
 2. Run the review as a blocking batch job. Do not background it with `&`.
@@ -109,7 +122,7 @@ COMMIT_SHA="$(git rev-parse HEAD)"
 rm -f review.done review.log
 
 codex review --commit "$COMMIT_SHA" \
-  -c review_model="gpt-5.5" \
+  -c model="gpt-5.5" \
   -c model_reasoning_effort="xhigh" \
   > review.log 2>&1 && touch review.done
 ```
@@ -131,7 +144,7 @@ Final CRA reporting must include final commit hash, validation, review status, a
 
 ## TCA Loop
 
-Use only when the user explicitly requests `TCA 루프`.
+Use only when the user explicitly requests `TCA 루프`. Use `references/tca-loop.md` for the detailed task queue, restart gates, stop conditions, and final report requirements.
 
 Split the requested work into independently reviewable task units. Do not start the next implementation until the current task has a commit, local verification, CRA completion, and an updated task queue.
 

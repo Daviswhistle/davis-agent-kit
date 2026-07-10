@@ -2,7 +2,7 @@
 
 These references keep `software-engineering/SKILL.md` compact while preserving detailed procedures that are useful only for specific engineering surfaces.
 
-Use a reference when the user explicitly requests that workflow or when the current task crosses the surface the reference describes. The references refine this skill; they do not override the Core Contract, root `AGENTS.md`, `PHILOSOPHY.md`, `PRINCIPLES.md`, or a more specific domain skill.
+Use a reference when the user explicitly requests that workflow or when the current task crosses the surface the reference describes. The references refine this skill; they do not override the Core Contract, root `AGENTS.md`, or a more specific domain skill.
 
 ## Current References
 

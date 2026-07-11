@@ -100,15 +100,17 @@ rm -f "$HOME/.codex/AGENTS.md"
 rm -rf "$HOME/.codex/skills/translation-quality"
 rm -rf "$HOME/.codex/skills/handoff-agent-builder"
 rm -rf "$HOME/.codex/skills/software-engineering"
+rm -rf "$HOME/.codex/skills/writing-quality"
 
 ln -s "$KIT_DIR" "$HOME/.codex/davis-agent-kit"
 ln -s "$HOME/.codex/davis-agent-kit/AGENTS.md" "$HOME/.codex/AGENTS.md"
 ln -s "$HOME/.codex/davis-agent-kit/skills/translation-quality" "$HOME/.codex/skills/translation-quality"
 ln -s "$HOME/.codex/davis-agent-kit/skills/handoff-agent-builder" "$HOME/.codex/skills/handoff-agent-builder"
 ln -s "$HOME/.codex/davis-agent-kit/skills/software-engineering" "$HOME/.codex/skills/software-engineering"
+ln -s "$HOME/.codex/davis-agent-kit/skills/writing-quality" "$HOME/.codex/skills/writing-quality"
 ```
 
-이전 구조에서 쓰던 legacy 스킬이 남아 있는 기기에서는 아래 명령으로 정리합니다. 처음 설치하는 기기에서는 필요 없습니다.
+이전 저장소 구조에서 쓰던 legacy 스킬이 남아 있는 기기에서는 아래 명령으로 정리합니다. 처음 설치하는 기기에서는 필요 없습니다.
 
 ```bash
 rm -rf "$HOME/.codex/skills/davis-operating-system"
@@ -129,6 +131,7 @@ readlink "$HOME/.codex/AGENTS.md"
 readlink "$HOME/.codex/skills/translation-quality"
 readlink "$HOME/.codex/skills/handoff-agent-builder"
 readlink "$HOME/.codex/skills/software-engineering"
+readlink "$HOME/.codex/skills/writing-quality"
 ```
 
 ## 현재 스킬
@@ -136,6 +139,7 @@ readlink "$HOME/.codex/skills/software-engineering"
 - [`translation-quality`](skills/translation-quality/) - 실적발표 컨퍼런스콜과 긴 비즈니스 문서를 자연스러운 한국어로 번역하고 개념 검수와 HTML QA까지 수행하기 위한 스킬
 - [`handoff-agent-builder`](skills/handoff-agent-builder/) - 프로젝트별 인수인계 에이전트를 설계하고 멀티턴 검증까지 수행하기 위한 스킬
 - [`software-engineering`](skills/software-engineering/) - 소프트웨어 변경, 리뷰, 검증, 런타임 경계, CRA/TCA 루프를 다루는 엔지니어링 판단 스킬
+- [`writing-quality`](skills/writing-quality/) - 분석, 투자 리서치, 기술 설명, 업무 메시지, 프롬프트, 에세이를 과제에 맞는 구조와 확인된 글쓰기 원칙으로 작성·편집하기 위한 범용 스킬
 
 ## 첫 번째 기준점
 

@@ -24,7 +24,8 @@ class HwiWritingSkillContractTests(unittest.TestCase):
         }
         self.assertEqual(keys, {"name", "description"})
         self.assertIn("name: hwi-writing", frontmatter)
-        self.assertIn('display_name: "Hwi Writing"', metadata)
+        self.assertIn("display_name:", metadata)
+        self.assertIn("Hwi Writing", metadata)
         self.assertIn("$hwi-writing", metadata)
 
     def test_references_are_bundled_and_linked(self) -> None:

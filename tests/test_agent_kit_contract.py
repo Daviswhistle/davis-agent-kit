@@ -106,6 +106,43 @@ class AgentKitContractTests(unittest.TestCase):
         self.assertIn("Task-Commit-Approve", reference_text)
         self.assertIn("Names are maintenance interfaces", reference_text)
 
+    def test_hwi_writing_is_the_single_general_writing_skill(self) -> None:
+        skill_root = ROOT / "skills" / "hwi-writing"
+        self.assertTrue((skill_root / "SKILL.md").is_file())
+        self.assertTrue((skill_root / "agents" / "openai.yaml").is_file())
+        self.assertFalse((ROOT / "skills" / "hwi-analytical-writing").exists())
+        self.assertFalse((ROOT / "skills" / "write-in-daehwi-style").exists())
+
+        skill = read("skills/hwi-writing/SKILL.md")
+        metadata = read("skills/hwi-writing/agents/openai.yaml")
+        agents = read("AGENTS.md")
+        root_readme = read("README.md")
+        skills_readme = read("skills/README.md")
+        writing_guideline = read("guidelines/writing-style.md")
+
+        self.assertIn("name: hwi-writing", skill)
+        self.assertIn('display_name: "Hwi Writing"', metadata)
+        self.assertIn("$hwi-writing", metadata)
+        self.assertIn("`hwi-writing` 스킬", agents)
+        self.assertIn("skills/hwi-writing", root_readme)
+        self.assertIn("`hwi-writing`", skills_readme)
+        self.assertIn("hwi-writing", writing_guideline)
+
+        references = [
+            "references/genre-playbooks.md",
+            "references/review-rubric.md",
+            "references/test-matrix.md",
+        ]
+        for rel_path in references:
+            self.assertTrue((skill_root / rel_path).is_file())
+            self.assertIn(rel_path, skill)
+
+        playbooks = read("skills/hwi-writing/references/genre-playbooks.md")
+        core_and_playbooks = skill + playbooks
+        self.assertNotIn("네이버웹툰", core_and_playbooks)
+        for inherited_metaphor in ("시간선", "완충재", "유사 구독"):
+            self.assertNotIn(inherited_metaphor, core_and_playbooks)
+
 
 if __name__ == "__main__":
     unittest.main()

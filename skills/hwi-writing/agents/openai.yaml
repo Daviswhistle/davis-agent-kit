@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hwi Writing"
+  short_description: "Write and revise in Hwi's confirmed style"
+  default_prompt: "Use $hwi-writing to draft or revise this text in Hwi's style."

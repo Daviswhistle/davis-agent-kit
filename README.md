@@ -110,11 +110,16 @@ ln -s "$HOME/.codex/davis-agent-kit/skills/software-engineering" "$HOME/.codex/s
 ln -s "$HOME/.codex/davis-agent-kit/skills/hwi-writing" "$HOME/.codex/skills/hwi-writing"
 ```
 
-이전 구조에서 쓰던 legacy 스킬이 남아 있는 기기에서는 아래 명령으로 정리합니다. 처음 설치하는 기기에서는 필요 없습니다.
+이전 저장소 구조에서 쓰던 legacy 스킬이 남아 있는 기기에서는 아래 명령으로 정리합니다. 처음 설치하는 기기에서는 필요 없습니다.
 
 ```bash
 rm -rf "$HOME/.codex/skills/davis-operating-system"
 rm -rf "$HOME/.codex/skills/coding-workflow"
+```
+
+저장소 밖에서 설치한 두 개인 글쓰기 스킬을 `hwi-writing` 하나로 교체하려면 통합본 설치를 확인한 뒤 아래 항목을 별도로 정리합니다.
+
+```bash
 rm -rf "$HOME/.codex/skills/hwi-analytical-writing"
 rm -rf "$HOME/.codex/skills/write-in-daehwi-style"
 ```

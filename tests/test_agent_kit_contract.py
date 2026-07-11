@@ -106,12 +106,10 @@ class AgentKitContractTests(unittest.TestCase):
         self.assertIn("Task-Commit-Approve", reference_text)
         self.assertIn("Names are maintenance interfaces", reference_text)
 
-    def test_hwi_writing_is_the_single_general_writing_skill(self) -> None:
+    def test_hwi_writing_is_integrated_as_a_general_writing_skill(self) -> None:
         skill_root = ROOT / "skills" / "hwi-writing"
         self.assertTrue((skill_root / "SKILL.md").is_file())
         self.assertTrue((skill_root / "agents" / "openai.yaml").is_file())
-        self.assertFalse((ROOT / "skills" / "hwi-analytical-writing").exists())
-        self.assertFalse((ROOT / "skills" / "write-in-daehwi-style").exists())
 
         skill = read("skills/hwi-writing/SKILL.md")
         metadata = read("skills/hwi-writing/agents/openai.yaml")

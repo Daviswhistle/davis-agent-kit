@@ -1,7 +1,7 @@
 # Translation Quality Skill
 
 긴 비즈니스 문서, 연차보고서, 재무보고서, 실적발표 컨퍼런스콜을 자연스러운 한국어로 번역하기 위한 Codex 스킬입니다.
-이 레포만 새로 받아 설치해도 동작하도록 품질 기준, 검수 프롬프트, HTML QA helper, 벤치마크 reference를 함께 포함합니다.
+이 레포만 새로 받아 설치해도 동작하도록 품질 기준, 문서 유형별 profile, 검수 프롬프트, HTML QA helper, 벤치마크 reference를 함께 포함합니다.
 
 이 스킬은 특히 다음 문제를 막기 위해 만들었습니다.
 
@@ -17,6 +17,19 @@
 - 통역이 포함된 컨퍼런스콜에서 원 발언자와 통역자 라벨이 뒤섞이는 문제
 - RMB/CNY, billion, 억 단위가 한국어 독자에게 잘못된 규모로 읽히는 문제
 - 개별 표현만 고치고 그 지적의 상위 실패 원칙을 반영하지 못하는 문제
+
+
+## 단계별 reference
+
+`SKILL.md`는 자동 선택과 완료 gate만 담는 짧은 진입점입니다. 실제 작업에서는 문서 유형에 맞춰 reference를 단계적으로 읽습니다.
+
+1. 모든 비단순 번역에서 `references/core.md`를 읽습니다.
+2. 화자 중심 문서는 `references/profiles/transcript.md`를 primary profile로 선택합니다.
+3. 페이지·표 중심 공식 문서는 `references/profiles/report.md`를 primary profile로 선택합니다.
+4. 두 계약이 실제로 함께 필요한 문서에서만 두 profile을 모두 읽고, primary/secondary 선택을 QA 리포트에 남깁니다.
+5. 긴 문서, 품질 민감 작업, 레퍼런스 동등성 작업에서는 `references/quality_benchmark.md`도 읽습니다.
+
+이 구조는 공통 독자 계약을 유지하면서 transcript 전용 화자 규칙과 report 전용 표·법정 문구 규칙을 불필요하게 동시에 로드하지 않도록 합니다.
 
 ## 이 스킬이 강제하는 기준
 
@@ -84,16 +97,14 @@ translation-quality 스킬을 사용해. 이 PDF 컨퍼런스콜을 한국어 HT
 
 긴 transcript를 처리할 때 이 스킬은 Codex가 다음 절차를 따르도록 요구합니다.
 
-1. 원문을 추출하고 번역 단위로 정리합니다.
-2. 한 줄에 여러 화자가 붙어 있으면 번역 전에 분리합니다.
-3. 전체 문서를 한 번에 생성하지 않고 청크 단위로 번역합니다.
-4. 중간 번역 파일과 진행표를 저장합니다.
-5. 서식이 필요한 경우 복사-붙여넣기에 안전한 HTML로 조립합니다.
-6. 화자 전환, 링크, 의미 있는 이태릭체, 설명 주석을 보존합니다.
-7. 보고서형 문서는 페이지/섹션, 표, 주석, 법정 명칭, 재무제표 구조를 보존합니다.
-8. 개념 검수 에이전트, 보고서 검수 에이전트, 또는 같은 프롬프트의 별도 패스로 독자 관점의 실패 유형을 찾습니다.
-9. 어색한 직역 표현, 반복 숫자 가이던스, HTML 구조, 표 alignment, 최종 파일 상태를 검수합니다.
-10. 검증 명령, 생략한 검사와 사유, 남은 리스크를 QA 리포트에 분리해 남깁니다.
+1. 원문 유형을 확인하고 primary profile을 선택합니다.
+2. `references/core.md`와 선택한 profile을 읽고 원문을 번역 단위로 정리합니다.
+3. transcript는 화자 map과 Q&A 흐름을, report는 페이지/섹션 map과 표 inventory를 만듭니다.
+4. 전체 문서를 한 번에 생성하지 않고 청크 단위로 번역하며 중간 파일과 진행표를 저장합니다.
+5. 서식이 필요한 경우 복사-붙여넣기에 안전한 HTML로 결정적으로 조립합니다.
+6. 선택한 profile의 개념 검수 프롬프트로 독자 관점의 실패 유형을 찾습니다.
+7. 어색한 직역 표현, 반복 숫자 가이던스, HTML 구조, 표 alignment, 최종 파일 상태를 검수합니다.
+8. 검증 명령, 생략한 검사와 사유, 남은 리스크를 QA 리포트에 분리해 남깁니다.
 
 이 스킬이 엄격한 이유는 긴 transcript 번역에서 누락, 직역투, 숫자 오역, 서식 깨짐이 쉽게 발생하기 때문입니다.
 
@@ -152,7 +163,10 @@ python3 scripts/evaluate_report_equivalence.py \
 
 ## 파일
 
-- `SKILL.md`: Codex 스킬 정의와 작업 절차
+- `SKILL.md`: 스킬 자동 선택, staged loading, 실행·완료 gate를 담은 진입점
+- `references/core.md`: 모든 비단순 번역에 적용하는 독자 계약, 공통 workflow, style, note, HTML, QA 기준
+- `references/profiles/transcript.md`: 화자 흐름, 통역 귀속, 실적발표 문체, transcript 숫자 QA profile
+- `references/profiles/report.md`: 페이지/섹션, 표, 법정 문구, 보고서 publication/equivalence QA profile
 - `agents/korean_translation_reviewer.md`: 독자 관점의 한국어 번역 개념 검수 프롬프트
 - `agents/korean_report_reviewer.md`: 연차보고서/재무보고서 구조, 표, 법정 문구 검수 프롬프트
 - `references/quality_benchmark.md`: 새 설치 환경에서도 같은 기준을 적용하기 위한 품질 벤치마크

@@ -129,6 +129,7 @@ class AgentKitContractTests(unittest.TestCase):
         references = [
             "references/genre-playbooks.md",
             "references/review-rubric.md",
+            "references/recipient-centered-persuasion.md",
             "references/test-matrix.md",
         ]
         for rel_path in references:

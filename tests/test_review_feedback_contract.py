@@ -1,0 +1,61 @@
+from __future__ import annotations
+
+from pathlib import Path
+import sys
+import unittest
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+from doctor import sanitize_git_remote  # noqa: E402
+
+
+class ReviewFeedbackContractTests(unittest.TestCase):
+    def test_installation_examples_honor_codex_home(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        install = readme.split("## 설치", 1)[1].split("## 현재 스킬", 1)[0]
+
+        self.assertIn('CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"', install)
+        self.assertNotIn('mkdir -p "$HOME/.codex/skills"', install)
+        self.assertNotIn('rm -rf "$HOME/.codex/skills/', install)
+
+    def test_generic_translation_has_core_only_loading_path(self) -> None:
+        skill = (ROOT / "skills" / "translation-quality" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("Use `core-only` for general business prose", skill)
+        self.assertIn(
+            "for `core-only`, use `agents/korean_translation_reviewer.md`",
+            skill,
+        )
+        self.assertIn("selected loading-path contract", skill)
+
+    def test_git_origin_output_removes_credentials_and_query_secrets(self) -> None:
+        self.assertEqual(
+            sanitize_git_remote(
+                "https://user:secret@github.com/owner/repo.git?token=x#fragment"
+            ),
+            "https://github.com/owner/repo.git",
+        )
+        self.assertEqual(
+            sanitize_git_remote("git@github.com:owner/repo.git"),
+            "github.com:owner/repo.git",
+        )
+        self.assertEqual(
+            sanitize_git_remote("https://github.com/owner/repo.git"),
+            "https://github.com/owner/repo.git",
+        )
+
+    def test_event_based_rereview_prefix_matches_validator_contract(self) -> None:
+        user_model = (ROOT / "user-model" / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("재검토: YYYY-MM-DD 또는 조건: 구체적인 재검토 조건", user_model)
+        self.assertIn("`조건: 사용자 정정 시`", user_model)
+
+
+if __name__ == "__main__":
+    unittest.main()

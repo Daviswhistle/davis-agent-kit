@@ -64,7 +64,7 @@ Do not claim completion until all applicable gates pass or a concrete limitation
 - `references/profiles/transcript.md`: speaker flow, interpreted speech, earnings-call language, and transcript QA
 - `references/profiles/report.md`: page/section hierarchy, tables, legal/reporting labels, and equivalence evidence
 - `references/quality_benchmark.md`: portable acceptance benchmark and bad-to-target examples
-- `agents/korean_translation_reviewer.md`: conceptual reviewer for speaker-driven documents
+- `agents/korean_translation_reviewer.md`: conceptual reviewer for speaker-driven and `core-only` documents
 - `agents/korean_report_reviewer.md`: conceptual reviewer for formal reports
 - `scripts/qa_html_translation.py`: HTML, source-artifact, style-template, and numeric QA helper
 - `scripts/evaluate_report_equivalence.py`: report structure and reference-equivalence evaluator
@@ -73,7 +73,7 @@ Do not claim completion until all applicable gates pass or a concrete limitation
 ## Final Response
 
 1. State what was delivered and where.
-2. Name the primary profile and concrete QA checks performed.
+2. Name the selected loading path, the primary profile if one applies, and the concrete QA checks performed.
 3. List skipped checks, reasons, and residual risk.
 4. If a browser file is already open, tell the user to refresh the existing tab.
 5. Do not overclaim perfection or publication approval.

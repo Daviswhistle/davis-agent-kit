@@ -127,14 +127,6 @@ ln -s "$CODEX_DIR/davis-agent-kit/skills/handoff-agent-builder" "$CODEX_DIR/skil
 ln -s "$CODEX_DIR/davis-agent-kit/skills/software-engineering" "$CODEX_DIR/skills/software-engineering"
 ```
 
-이전 구조에서 쓰던 legacy 스킬이 남아 있는 기기에서는 아래 명령으로 정리합니다. 처음 설치하는 기기에서는 필요 없습니다.
-
-```bash
-CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
-rm -rf "$CODEX_DIR/skills/davis-operating-system"
-rm -rf "$CODEX_DIR/skills/coding-workflow"
-```
-
 설치 후에는 Codex를 재시작하거나 새 세션을 시작해 전역 지침과 스킬 목록이 다시 로드되도록 합니다.
 
 `AGENTS.md`만 복사해도 철학, 핵심 원칙, 기본 동작은 적용됩니다. 스킬과 세부 실행물까지 사용하려면 위 연결 설치를 사용합니다.

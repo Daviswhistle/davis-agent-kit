@@ -100,36 +100,38 @@ git rebase origin/main
 
 권장 설치 방식은 레포 전체를 Codex 설정 디렉터리에 연결하는 것입니다. `AGENTS.md`는 자동 로드되는 전역 판단 기준을 제공하고, 레포 연결은 스킬과 세부 실행물을 필요할 때 참조할 수 있게 합니다.
 
-기존 `~/.codex/AGENTS.md`나 같은 이름의 스킬 폴더를 보존해야 한다면 설치 전에 백업하세요.
+기존 `${CODEX_HOME:-$HOME/.codex}/AGENTS.md`나 같은 이름의 스킬 폴더를 보존해야 한다면 설치 전에 백업하세요.
 
 ```bash
 KIT_DIR="$(pwd)"
+CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
 
-mkdir -p "$HOME/.codex/skills"
+mkdir -p "$CODEX_DIR/skills"
 
-if [ -e "$HOME/.codex/davis-agent-kit" ] && [ ! -L "$HOME/.codex/davis-agent-kit" ]; then
-  printf '%s\n' "$HOME/.codex/davis-agent-kit exists and is not a symlink"
+if [ -e "$CODEX_DIR/davis-agent-kit" ] && [ ! -L "$CODEX_DIR/davis-agent-kit" ]; then
+  printf '%s\n' "$CODEX_DIR/davis-agent-kit exists and is not a symlink"
   exit 1
 fi
 
-rm -f "$HOME/.codex/davis-agent-kit"
-rm -f "$HOME/.codex/AGENTS.md"
-rm -rf "$HOME/.codex/skills/translation-quality"
-rm -rf "$HOME/.codex/skills/handoff-agent-builder"
-rm -rf "$HOME/.codex/skills/software-engineering"
+rm -f "$CODEX_DIR/davis-agent-kit"
+rm -f "$CODEX_DIR/AGENTS.md"
+rm -rf "$CODEX_DIR/skills/translation-quality"
+rm -rf "$CODEX_DIR/skills/handoff-agent-builder"
+rm -rf "$CODEX_DIR/skills/software-engineering"
 
-ln -s "$KIT_DIR" "$HOME/.codex/davis-agent-kit"
-ln -s "$HOME/.codex/davis-agent-kit/AGENTS.md" "$HOME/.codex/AGENTS.md"
-ln -s "$HOME/.codex/davis-agent-kit/skills/translation-quality" "$HOME/.codex/skills/translation-quality"
-ln -s "$HOME/.codex/davis-agent-kit/skills/handoff-agent-builder" "$HOME/.codex/skills/handoff-agent-builder"
-ln -s "$HOME/.codex/davis-agent-kit/skills/software-engineering" "$HOME/.codex/skills/software-engineering"
+ln -s "$KIT_DIR" "$CODEX_DIR/davis-agent-kit"
+ln -s "$CODEX_DIR/davis-agent-kit/AGENTS.md" "$CODEX_DIR/AGENTS.md"
+ln -s "$CODEX_DIR/davis-agent-kit/skills/translation-quality" "$CODEX_DIR/skills/translation-quality"
+ln -s "$CODEX_DIR/davis-agent-kit/skills/handoff-agent-builder" "$CODEX_DIR/skills/handoff-agent-builder"
+ln -s "$CODEX_DIR/davis-agent-kit/skills/software-engineering" "$CODEX_DIR/skills/software-engineering"
 ```
 
 이전 구조에서 쓰던 legacy 스킬이 남아 있는 기기에서는 아래 명령으로 정리합니다. 처음 설치하는 기기에서는 필요 없습니다.
 
 ```bash
-rm -rf "$HOME/.codex/skills/davis-operating-system"
-rm -rf "$HOME/.codex/skills/coding-workflow"
+CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
+rm -rf "$CODEX_DIR/skills/davis-operating-system"
+rm -rf "$CODEX_DIR/skills/coding-workflow"
 ```
 
 설치 후에는 Codex를 재시작하거나 새 세션을 시작해 전역 지침과 스킬 목록이 다시 로드되도록 합니다.

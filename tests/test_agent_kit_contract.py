@@ -119,7 +119,7 @@ class AgentKitContractTests(unittest.TestCase):
         writing_guideline = read("guidelines/writing-style.md")
 
         self.assertIn("name: writing-quality", skill)
-        self.assertIn('display_name: "Writing Quality"', metadata)
+        self.assertIn("display_name: Writing Quality", metadata)
         self.assertIn("$writing-quality", metadata)
         self.assertIn("`writing-quality` 스킬", agents)
         self.assertIn("skills/writing-quality", root_readme)

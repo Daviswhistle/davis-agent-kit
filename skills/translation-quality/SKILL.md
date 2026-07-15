@@ -23,22 +23,23 @@ This skill defines the user's expected translation workflow and output standard.
 Use progressive disclosure. Do not load every rule for every document.
 
 1. Read `references/core.md` for every non-trivial translation or revision. It contains the portable reader contract, common workflow, style, notes, HTML, conceptual review, and shared QA gates.
-2. Choose one primary document profile during intake:
-   - `references/profiles/transcript.md` for earnings calls, interviews, Q&A, interpreted calls, or any speaker-driven document.
-   - `references/profiles/report.md` for annual reports, audit reports, prospectuses, financial statements, governance reports, or page/table-heavy formal documents.
-3. Load both profiles only when the source genuinely combines both contracts. Record the primary profile and any secondary profile in `work/qa_report.md`.
+2. Choose the applicable loading path during intake:
+   - Use `core-only` for general business prose, press releases, articles, blog posts, web documents, and other inputs that are neither speaker-driven nor formal report artifacts.
+   - Use `references/profiles/transcript.md` for earnings calls, interviews, Q&A, interpreted calls, or any speaker-driven document.
+   - Use `references/profiles/report.md` for annual reports, audit reports, prospectuses, financial statements, governance reports, or page/table-heavy formal documents.
+3. Load both profiles only when the source genuinely combines both contracts. Record the loading path, primary profile if any, and any secondary profile in `work/qa_report.md`.
 4. For long, quality-sensitive, or reference-matching work, also read `references/quality_benchmark.md`.
 5. Resolve all bundled resources relative to this `SKILL.md` first. The default installed root is `${CODEX_HOME:-$HOME/.codex}/skills/translation-quality`.
 
 ## Execution Contract
 
 1. State the task objective and completion conditions in one sentence.
-2. Identify the source, document type, primary profile, output format, and reader-visible metadata.
+2. Identify the source, document type, loading path, optional profile, output format, and reader-visible metadata.
 3. Trace the source-to-output flow and discover task-local evaluators before editing.
 4. For sources longer than roughly 3,000 words, create source units, chunk files, a progress ledger, and a QA report under `work/`.
 5. Translate and save reviewable chunks; do not simulate chunking by generating one monolithic translation and splitting it afterward.
 6. Assemble the final deliverable deterministically under `outputs/`.
-7. Run conceptual review with the reviewer named by the selected profile, then run mechanical and source-fidelity QA.
+7. Run conceptual review with the applicable profile reviewer; for `core-only`, use `agents/korean_translation_reviewer.md`. Then run mechanical and source-fidelity QA.
 8. Fix accepted findings, rerun the closest affected checks, and verify the final file itself before delivery.
 
 ## Completion Gates
@@ -46,7 +47,7 @@ Use progressive disclosure. Do not load every rule for every document.
 Do not claim completion until all applicable gates pass or a concrete limitation is disclosed:
 
 1. source coverage and order
-2. selected profile contract
+2. selected loading-path contract
 3. natural Korean and communicative role
 4. financial number, unit, fiscal-period, and repeated-guidance fidelity
 5. note basis and first-occurrence placement

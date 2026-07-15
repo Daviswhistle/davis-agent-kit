@@ -27,6 +27,7 @@ Use progressive disclosure. Do not load every rule for every document.
    - Use `core-only` for general business prose, press releases, articles, blog posts, web documents, and other inputs that are neither speaker-driven nor formal report artifacts.
    - Use `references/profiles/transcript.md` for earnings calls, interviews, Q&A, interpreted calls, or any speaker-driven document.
    - Use `references/profiles/report.md` for annual reports, audit reports, prospectuses, financial statements, governance reports, or page/table-heavy formal documents.
+   Choose one primary document profile only when a transcript or report profile applies; `core-only` intentionally has no primary profile.
 3. Load both profiles only when the source genuinely combines both contracts. Record the loading path, primary profile if any, and any secondary profile in `work/qa_report.md`.
 4. For long, quality-sensitive, or reference-matching work, also read `references/quality_benchmark.md`.
 5. Resolve all bundled resources relative to this `SKILL.md` first. The default installed root is `${CODEX_HOME:-$HOME/.codex}/skills/translation-quality`.

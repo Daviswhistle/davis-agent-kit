@@ -9,13 +9,55 @@ REPO_ROOT = ROOT.parents[1]
 SKILL = ROOT / "SKILL.md"
 REVIEWER = ROOT / "agents" / "korean_translation_reviewer.md"
 REPORT_REVIEWER = ROOT / "agents" / "korean_report_reviewer.md"
+CORE = ROOT / "references" / "core.md"
+TRANSCRIPT_PROFILE = ROOT / "references" / "profiles" / "transcript.md"
+REPORT_PROFILE = ROOT / "references" / "profiles" / "report.md"
 BENCHMARK = ROOT / "references" / "quality_benchmark.md"
 REFERENCE_SUITE = REPO_ROOT / "examples" / "translation" / "good" / "reference-quality-suite.md"
 
 
 class SkillContractTests(unittest.TestCase):
-    def test_skill_contains_reader_contract_and_conceptual_review_gate(self) -> None:
-        text = SKILL.read_text(encoding="utf-8")
+    def test_staged_contract_contains_reader_and_profile_gates(self) -> None:
+        skill_text = SKILL.read_text(encoding="utf-8")
+        core_text = CORE.read_text(encoding="utf-8")
+        transcript_text = TRANSCRIPT_PROFILE.read_text(encoding="utf-8")
+        report_text = REPORT_PROFILE.read_text(encoding="utf-8")
+        text = "\n".join((skill_text, core_text, transcript_text, report_text))
+
+        for path in (CORE, TRANSCRIPT_PROFILE, REPORT_PROFILE):
+            self.assertTrue(path.is_file())
+        self.assertLessEqual(len(skill_text.splitlines()), 120)
+
+        staged_phrases = [
+            "## Staged Reference Loading",
+            "references/core.md",
+            "references/profiles/transcript.md",
+            "references/profiles/report.md",
+            "Choose one primary document profile",
+            "Load both profiles only when the source genuinely combines both contracts",
+        ]
+        missing_staged = [phrase for phrase in staged_phrases if phrase not in skill_text]
+        self.assertEqual(missing_staged, [])
+
+        for phrase in ("## Reader Contract", "## Shared Mandatory QA Gate"):
+            self.assertIn(phrase, core_text)
+        for phrase in (
+            "## Speaker And Paragraph Formatting",
+            "## Earnings Call Specific Checklist",
+            "agents/korean_translation_reviewer.md",
+        ):
+            self.assertIn(phrase, transcript_text)
+        for phrase in (
+            "## Equivalence Evidence Gate",
+            "agents/korean_report_reviewer.md",
+            "--profile report",
+        ):
+            self.assertIn(phrase, report_text)
+
+        self.assertNotIn("## Earnings Call Specific Checklist", core_text)
+        self.assertNotIn("## Equivalence Evidence Gate", core_text)
+        self.assertNotIn("## Equivalence Evidence Gate", transcript_text)
+        self.assertNotIn("## Speaker And Paragraph Formatting", report_text)
 
         required_phrases = [
             "## Reader Contract",

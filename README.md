@@ -17,6 +17,9 @@
 ```text
 davis-agent-kit/
   AGENTS.md     # 철학·핵심 원칙·기본 동작을 담은 전역 지침의 유일한 원본
+  kit.toml      # 키트 버전·스키마·Python·설치 대상 manifest
+  scripts/      # 전체 검증과 실제 설치 상태 진단 도구
+  .github/      # 같은 검증 진입점을 실행하는 CI
   guidelines/   # 원칙에서 내려온 적용 지침
   checklists/   # 완료 전 검수 기준
   templates/    # 글, 리서치, 리뷰 등 출력 형식 템플릿
@@ -44,13 +47,27 @@ davis-agent-kit/
 
 ## 검증
 
-루트 문서 계층과 스킬 구조 계약은 아래 명령으로 검증합니다.
+저장소 전체의 manifest 계약, 루트 테스트, 모든 `skills/*/tests`, bundled helper의 `--help` smoke test는 한 명령으로 실행합니다.
 
 ```bash
-python3 -m unittest discover
+python3 scripts/validate_kit.py
 ```
 
-스킬별 helper와 계약 테스트는 해당 스킬의 `tests/`에서 관리합니다.
+이 명령은 새 스킬 테스트 디렉터리와 helper를 자동 발견합니다. `.github/workflows/validate.yml`도 pull request와 `main` push에서 같은 명령을 실행하므로 로컬 완료 기준과 CI 완료 기준이 갈라지지 않습니다.
+
+설치 링크를 요구하지 않고 레포와 manifest 상태만 진단하려면 다음을 실행합니다.
+
+```bash
+python3 scripts/doctor.py --repo-only
+```
+
+## 버전 manifest
+
+[`kit.toml`](kit.toml)은 키트 버전, manifest 스키마 버전, 최소 Python 버전, 전역 지침 원본, Codex 설치 경로 이름, 활성 스킬과 제거해야 할 legacy 스킬 목록을 관리합니다.
+
+- 스킬을 추가하거나 이름을 바꾸면 `kit.toml`을 같은 변경에서 갱신합니다.
+- `scripts/validate_kit.py`는 manifest와 실제 `skills/*/SKILL.md` 목록, `name`·`description` frontmatter, bundled resource 참조가 일치하는지 검사합니다.
+- `scripts/doctor.py`는 같은 manifest를 사용해 현재 checkout과 Codex가 읽는 심링크 대상이 일치하는지 검사합니다.
 
 ## 수정 전 safe sync
 
@@ -121,15 +138,22 @@ rm -rf "$HOME/.codex/skills/coding-workflow"
 
 ### 연결 상태 확인
 
-연결 상태는 아래처럼 확인합니다.
+설치 후에는 레포 루트에서 doctor를 실행합니다.
 
 ```bash
-readlink "$HOME/.codex/davis-agent-kit"
-readlink "$HOME/.codex/AGENTS.md"
-readlink "$HOME/.codex/skills/translation-quality"
-readlink "$HOME/.codex/skills/handoff-agent-builder"
-readlink "$HOME/.codex/skills/software-engineering"
+python3 scripts/doctor.py
 ```
+
+Doctor는 다음을 함께 확인합니다.
+
+- 현재 `kit.toml`과 실제 스킬 목록
+- 최소 Python 버전과 git checkout/commit/working-tree 상태
+- `${CODEX_HOME:-$HOME/.codex}/davis-agent-kit`이 현재 레포를 가리키는지
+- 전역 `AGENTS.md` 링크가 이 레포의 규범 원본을 가리키는지
+- manifest에 등록된 모든 스킬 링크와 `SKILL.md` load entrypoint가 존재하는지
+- 제거 대상으로 선언된 legacy 스킬이나 manifest에 없는 이 키트 내부 스킬 링크가 남아 있지 않은지
+
+경고까지 실패로 처리하려면 `python3 scripts/doctor.py --strict`를 사용합니다. 파일 시스템 연결이 맞아도 이미 열린 Codex 세션의 목록은 자동 갱신되지 않으므로 설치나 스킬 변경 뒤에는 새 세션을 시작합니다.
 
 ## 현재 스킬
 

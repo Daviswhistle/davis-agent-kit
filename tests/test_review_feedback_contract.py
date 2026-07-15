@@ -22,6 +22,17 @@ class ReviewFeedbackContractTests(unittest.TestCase):
         self.assertNotIn('mkdir -p "$HOME/.codex/skills"', install)
         self.assertNotIn('rm -rf "$HOME/.codex/skills/', install)
 
+    def test_canonical_and_safe_sync_paths_honor_codex_home(self) -> None:
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        safe_sync = readme.split("## 수정 전 safe sync", 1)[1].split("## 설치", 1)[0]
+
+        canonical = "${CODEX_HOME:-$HOME/.codex}/davis-agent-kit"
+        self.assertIn(canonical, agents)
+        self.assertIn('CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"', safe_sync)
+        self.assertIn('cd "$CODEX_DIR/davis-agent-kit"', safe_sync)
+        self.assertNotIn('cd "$HOME/.codex/davis-agent-kit"', safe_sync)
+
     def test_generic_translation_has_core_only_loading_path(self) -> None:
         skill = (ROOT / "skills" / "translation-quality" / "SKILL.md").read_text(
             encoding="utf-8"
@@ -33,6 +44,23 @@ class ReviewFeedbackContractTests(unittest.TestCase):
             skill,
         )
         self.assertIn("selected loading-path contract", skill)
+
+    def test_core_reference_and_final_response_accept_core_only(self) -> None:
+        skill = (ROOT / "skills" / "translation-quality" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        core = (
+            ROOT / "skills" / "translation-quality" / "references" / "core.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("`core-only` uses this file without a primary profile", core)
+        self.assertIn("loading path, optional primary profile", core)
+        self.assertIn("For `core-only`, run shared checks", core)
+        self.assertIn(
+            "Name the selected loading path, the primary profile if one applies",
+            skill,
+        )
+        self.assertNotIn("Name the primary profile and", skill)
 
     def test_git_origin_output_removes_credentials_and_query_secrets(self) -> None:
         self.assertEqual(

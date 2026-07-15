@@ -74,7 +74,8 @@ python3 scripts/doctor.py --repo-only
 에이전트가 이 레포를 수정하기 전에는 원격 변경을 먼저 확인합니다. 목표는 로컬 변경과 원격 변경을 모두 보존한 상태로 수정 가능한 기준점을 만드는 것입니다.
 
 ```bash
-cd "$HOME/.codex/davis-agent-kit"
+CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
+cd "$CODEX_DIR/davis-agent-kit"
 
 if [ -n "$(git status --porcelain)" ]; then
   git status --short

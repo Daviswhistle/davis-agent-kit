@@ -1,6 +1,6 @@
 ---
 name: writing-quality
-description: Write or revise Korean and English using Davis's confirmed writing principles and style. Use for analytical essays, business-model and mechanism analysis, investment research, technical explanations, business messages, prompts, literary prose, or edits when the user asks for Davis's style, their style, a polished or tighter draft, higher information density, or preservation of their voice. Adapt the structure to the genre and task instead of forcing a business-model template.
+description: Write or revise Korean and English using Davis's confirmed writing principles and style. Use for analytical essays, business-model and mechanism analysis, investment research, technical explanations, relationship-sensitive cooperation requests, business messages, prompts, literary prose, or edits when the user asks for Davis's style, their style, a polished or tighter draft, higher information density, or preservation of their voice. Adapt the structure to the genre and task instead of forcing a business-model template.
 ---
 
 # Writing Quality
@@ -20,7 +20,7 @@ description: Write or revise Korean and English using Davis's confirmed writing 
 
 ## 불변 원칙
 
-1. 핵심 답이나 중심 주장을 초반에 드러내라. 다만 장면과 여운이 의미를 운반하는 에세이·서사에서는 구체적 장면으로 시작해도 된다.
+1. 핵심 답이나 중심 주장을 초반에 드러내라. 다만 장면과 여운이 의미를 운반하는 에세이·서사에서는 구체적 장면으로 시작해도 되고, 관계 민감한 협조 요청에서는 수신자가 요청을 해석할 감사와 선의의 맥락을 먼저 세울 수 있다.
 2. 현상이나 결론만 나열하지 말고 실제 작동 메커니즘과 인과의 중간 단계를 설명하라.
 3. 추상어보다 확인된 사실, 숫자, 날짜, 비교, 장면, 과정, 선택 조건을 우선하라.
 4. 검증된 사실, 합리적 추론, 가정, 미확인 영역을 구분하라. 추론을 사실처럼 쓰지 말라.
@@ -29,6 +29,7 @@ description: Write or revise Korean and English using Davis's confirmed writing 
 7. 차분하고 직접적으로 쓰라. 약한 논리와 불확실성은 숨기지 말되 과장된 자신감이나 의례적 완곡어를 보태지 말라.
 8. 기존 원고를 고칠 때는 고유한 표현과 강한 문장을 보존하라. 사실·논리·명료성·리듬·경제성을 실질적으로 개선하는 부분만 바꾸라.
 9. 결말은 도입을 되풀이하지 말고 판단, 남은 불확실성, 다음 관찰 지표, 행동 요청, 또는 앞의 논리를 압축한 명제로 닫으라.
+10. 자발적 협력이 필요한 업무 메시지에서는 발신자의 불편만 앞세우지 말고, 수신자가 실제로 원하는 결과와 발신자의 진실한 호의를 중심에 두라. 의무·제재·평가를 수신자를 위한 조언으로 위장하지 말라.
 
 ## 작성 절차
 
@@ -41,6 +42,7 @@ description: Write or revise Korean and English using Davis's confirmed writing 
 - 장르와 형식: 보고서, 분석문, 메시지, 프롬프트, 에세이 등 무엇인가
 - 사실성의 기준: 최신 자료 확인, 원문 충실성, 인용, 수치 검증, 실화·자전적 경험 보존이 필요한가
 - 완료 조건: 어떤 질문에 답하고 어떤 상태로 끝나야 하는가
+- 관계와 권한: 수신자에게 재량이 있는 협조 요청인가, 아니면 의무 통지·평가·안전 지시처럼 직접성이 우선하는가
 
 맥락이 충분하면 형식적인 확인 질문을 던지지 말고 합리적으로 정해 진행하라.
 
@@ -50,7 +52,23 @@ description: Write or revise Korean and English using Davis's confirmed writing 
 
 비즈니스 모델이나 행동 메커니즘을 설명할 때만 구체적 작동 장면, 선택의 변화, 반복 가능한 구조를 중심에 두라. 기술 설명, 투자 판단, 업무 메시지, 문학적 글에 이 순서를 억지로 이식하지 말라.
 
-### 3. 다섯 줄 논리 설계를 만들라
+### 3. 관계 민감한 협조 요청은 별도로 설계하라
+
+수신자의 자발적 협력이 중요하고 발신자가 수신자의 좋은 결과를 진심으로 지지할 수 있는 업무 메시지라면 `references/recipient-centered-persuasion.md`를 적용하라.
+
+먼저 다음을 판별하라.
+
+- 수신자가 실제로 원하는 좋은 결과가 무엇인가
+- 발신자가 그 결과를 바란다고 진실하게 말할 수 있는가
+- 요청한 행동이 그 결과를 실제로 개선하는가
+- 수신자에게 선택하거나 조정할 재량이 있는가
+- 존중과 지원이 협조의 조건으로 제시되지 않는가
+
+조건이 맞으면 관계의 가치와 선의를 먼저 보여 주고, 현재 문제를 수신자의 좋은 결과를 방해하는 장애물로 설명한 뒤, 요청을 그 결과에 이르는 방법으로 제안하라. 반대로 연체 대금 회수, 법적 통지, 성과 평가, 징계, 안전 지시처럼 의무·권한·결과 고지가 중심이면 존중을 갖춘 직접성을 사용하라. 이런 메시지를 호의적 조언처럼 꾸미지 말라.
+
+관계 전략과 문장 구현을 분리해 검수하라. 설득 구조가 적절해도 수신자 이익을 억지로 끼워 넣은 명사화, 주어 전환, `아쉽습니다`의 반복, 부자연스러운 인과가 남아 있으면 다시 써라.
+
+### 4. 다섯 줄 논리 설계를 만들라
 
 사용자가 요청하지 않으면 노출하지 말고 내부 작업용으로 작성하라.
 
@@ -62,7 +80,7 @@ description: Write or revise Korean and English using Davis's confirmed writing 
 
 모든 칸을 기계적으로 본문 문단으로 바꾸지 말라. 낮은 중요도의 글에서는 불필요한 반론이나 경계 조건을 생략하라.
 
-### 4. 완결된 초안을 쓰라
+### 5. 완결된 초안을 쓰라
 
 - 첫 문단에서 독자가 글의 방향을 알게 하라.
 - 주장 뒤에는 작동 방식이나 근거를 붙여라.
@@ -71,7 +89,7 @@ description: Write or revise Korean and English using Davis's confirmed writing 
 - 표와 목록은 정확한 비교나 빠른 탐색이 산문보다 나을 때만 사용하라.
 - 소제목은 긴 글의 탐색을 돕거나 사용자가 요구할 때만 사용하라.
 
-### 5. 사실과 논리를 검증하라
+### 6. 사실과 논리를 검증하라
 
 실제 기업, 사람, 제품, 수치, 법·정책, 최신 사건을 다루면 가능한 공식 자료와 1차 자료를 확인하라. 출처가 필요한 글에서는 주장 가까이에 근거를 배치하라.
 
@@ -87,7 +105,7 @@ description: Write or revise Korean and English using Davis's confirmed writing 
 
 실화·자전적 글에서는 장면, 대화, 사건의 순서, 감정, 결과도 사실에 속한다. 사용자가 제공하지 않은 세부를 생생함을 위해 만들지 말라. 핵심 내용이 없으면 제공된 사실만으로 범위를 좁히거나, 필요한 자리에 표시를 남기거나, 선택에 따라 결과가 크게 달라질 때 질문하라.
 
-### 6. 한 번의 집중 수정으로 마무리하라
+### 7. 한 번의 집중 수정으로 마무리하라
 
 구조, 사실과 인과, 문장과 리듬 순서로 다시 읽으라. `references/review-rubric.md`를 긴 글, 중요한 판단, 또는 사용자가 높은 완성도를 요구한 작업에 적용하라.
 
@@ -98,6 +116,7 @@ description: Write or revise Korean and English using Davis's confirmed writing 
 - 앞 문단과 같은 역할을 반복하는 문장
 - 주어, 지시어, 용어의 경계가 흐린 문장
 - 의미 없이 멋있거나 방어적으로 길어진 문장
+- 관계적 태도를 보이려고 추상어와 감정어를 억지로 덧붙인 문장
 - 장르와 맞지 않는 템플릿의 흔적
 
 사실이나 구조가 바뀌면 필요한 만큼 다시 검증하라. 단지 더 매끈하게 보이게 하려고 사용자의 독특한 표현을 평준화하지 말라.
@@ -113,6 +132,8 @@ description: Write or revise Korean and English using Davis's confirmed writing 
 - 전문 용어는 정밀도를 높일 때만 쓰고, 처음 등장할 때 실제 작동 방식으로 풀어라.
 - `오늘날`, `급변하는 시대`, `이번 글에서는`, `결론적으로`, `종합하면`, `단순히 A를 넘어 B` 같은 상투어를 피하라.
 - `본질`, `혁신`, `압도적`, `강력한`, `시너지`, `패러다임`은 구체적 근거가 바로 뒤따를 때만 사용하라.
+- 호의나 안타까움을 매 문장에 명시하지 말라. 관계적 태도는 글 전체의 관점과 배열로 보여 주고, 문제 문장은 구체적이고 평이하게 쓴다.
+- 수신자 관점을 넣기 위해 `귀사에서 최종본을 확인하는 시점`처럼 사건을 추상적인 명사구로 바꾸지 말라. 가능하면 `최종본 전달이 늦어집니다`처럼 실제 변화를 직접 쓴다.
 
 ## 장르 과최적화를 막아라
 
@@ -146,4 +167,5 @@ description: Write or revise Korean and English using Davis's confirmed writing 
 
 - `references/genre-playbooks.md`: 과제 유형별 전개 선택
 - `references/review-rubric.md`: 블라인드 검수와 과최적화 감점
+- `references/recipient-centered-persuasion.md`: 호의 기반 수신자 관점 설득의 적용 조건, 구조, 경계 사례, 예시
 - `references/test-matrix.md`: 스킬 자체를 수정하거나 전향 테스트할 때 사용할 범용성 과제

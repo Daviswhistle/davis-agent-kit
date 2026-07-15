@@ -22,6 +22,18 @@ class ReviewFeedbackContractTests(unittest.TestCase):
         self.assertNotIn('mkdir -p "$HOME/.codex/skills"', install)
         self.assertNotIn('rm -rf "$HOME/.codex/skills/', install)
 
+        for relative_path in (
+            "skills/translation-quality/README.md",
+            "skills/handoff-agent-builder/README.md",
+        ):
+            skill_readme = (ROOT / relative_path).read_text(encoding="utf-8")
+            self.assertIn(
+                'CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"',
+                skill_readme,
+                relative_path,
+            )
+            self.assertNotIn("~/.codex/skills/", skill_readme, relative_path)
+
     def test_canonical_and_safe_sync_paths_honor_codex_home(self) -> None:
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -37,6 +49,9 @@ class ReviewFeedbackContractTests(unittest.TestCase):
         skill = (ROOT / "skills" / "translation-quality" / "SKILL.md").read_text(
             encoding="utf-8"
         )
+        readme = (
+            ROOT / "skills" / "translation-quality" / "README.md"
+        ).read_text(encoding="utf-8")
 
         self.assertIn("Use `core-only` for general business prose", skill)
         self.assertIn(
@@ -44,6 +59,12 @@ class ReviewFeedbackContractTests(unittest.TestCase):
             skill,
         )
         self.assertIn("selected loading-path contract", skill)
+        self.assertIn("`core-only` 경로", readme)
+        self.assertIn("primary profile을 선택하지 않습니다", readme)
+        self.assertIn(
+            "`core-only`는 `agents/korean_translation_reviewer.md`",
+            readme,
+        )
 
     def test_core_reference_and_final_response_accept_core_only(self) -> None:
         skill = (ROOT / "skills" / "translation-quality" / "SKILL.md").read_text(

@@ -1,218 +1,28 @@
-name: Apply latest review feedback
+name: Validate kit
 
 on:
   pull_request:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-and-validate:
+  validate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: Check out PR branch
+      - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          ref: agent/address-pr15-review-feedback
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Apply review fixes
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          def replace(path: str, old: str, new: str) -> None:
-              target = Path(path)
-              text = target.read_text(encoding="utf-8")
-              if old not in text:
-                  raise SystemExit(f"expected text not found in {path}: {old[:100]!r}")
-              target.write_text(text.replace(old, new, 1), encoding="utf-8")
-
-          replace(
-              "scripts/doctor.py",
-              '''def sanitize_git_remote(remote: str) -> str:
-              remote = remote.strip()
-              if "://" in remote:
-                  parsed = urlsplit(remote)
-                  hostname = parsed.hostname or ""
-                  port = f":{parsed.port}" if parsed.port is not None else ""
-                  return urlunsplit((parsed.scheme, hostname + port, parsed.path, "", ""))
-              if "@" in remote:
-                  return remote.split("@", 1)[1]
-              return remote''',
-              '''def sanitize_git_remote(remote: str) -> str:
-              remote = remote.strip().split("#", 1)[0].split("?", 1)[0]
-              if "://" in remote:
-                  parsed = urlsplit(remote)
-                  netloc = parsed.netloc.rsplit("@", 1)[-1]
-                  return urlunsplit((parsed.scheme, netloc, parsed.path, "", ""))
-              if "@" in remote:
-                  return remote.split("@", 1)[1]
-              return remote''',
-          )
-
-          replace(
-              "skills/translation-quality/README.md",
-              '''1. 모든 비단순 번역에서 `references/core.md`를 읽습니다.
-          2. 화자 중심 문서는 `references/profiles/transcript.md`를 primary profile로 선택합니다.
-          3. 페이지·표 중심 공식 문서는 `references/profiles/report.md`를 primary profile로 선택합니다.
-          4. 두 계약이 실제로 함께 필요한 문서에서만 두 profile을 모두 읽고, primary/secondary 선택을 QA 리포트에 남깁니다.
-          5. 긴 문서, 품질 민감 작업, 레퍼런스 동등성 작업에서는 `references/quality_benchmark.md`도 읽습니다.''',
-              '''1. 모든 비단순 번역에서 `references/core.md`를 읽습니다.
-          2. 일반 비즈니스 문서, 보도자료, 기사, 블로그 글, 웹 문서는 `core-only` 경로를 사용하며 primary profile을 선택하지 않습니다.
-          3. 화자 중심 문서는 `references/profiles/transcript.md`를 primary profile로 선택합니다.
-          4. 페이지·표 중심 공식 문서는 `references/profiles/report.md`를 primary profile로 선택합니다.
-          5. 두 계약이 실제로 함께 필요한 문서에서만 두 profile을 모두 읽고, loading path와 primary/secondary 선택을 QA 리포트에 남깁니다.
-          6. 긴 문서, 품질 민감 작업, 레퍼런스 동등성 작업에서는 `references/quality_benchmark.md`도 읽습니다.''',
-          )
-          replace(
-              "skills/translation-quality/README.md",
-              '''```bash
-          mkdir -p ~/.codex/skills/translation-quality
-          rsync -a ./ ~/.codex/skills/translation-quality/
-          ```''',
-              '''```bash
-          CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
-          mkdir -p "$CODEX_DIR/skills/translation-quality"
-          rsync -a ./ "$CODEX_DIR/skills/translation-quality/"
-          ```''',
-          )
-          replace(
-              "skills/translation-quality/README.md",
-              '''1. 원문 유형을 확인하고 primary profile을 선택합니다.
-          2. `references/core.md`와 선택한 profile을 읽고 원문을 번역 단위로 정리합니다.
-          3. transcript는 화자 map과 Q&A 흐름을, report는 페이지/섹션 map과 표 inventory를 만듭니다.''',
-              '''1. 원문 유형을 확인하고 `core-only`, transcript, report 중 loading path를 선택합니다.
-          2. `references/core.md`를 읽고, transcript/report일 때만 선택한 profile을 추가로 읽어 원문을 번역 단위로 정리합니다.
-          3. `core-only`는 primary profile 없이 공통 독자 계약을 적용하고, transcript는 화자 map과 Q&A 흐름을, report는 페이지/섹션 map과 표 inventory를 만듭니다.''',
-          )
-          replace(
-              "skills/translation-quality/README.md",
-              "6. 선택한 profile의 개념 검수 프롬프트로 독자 관점의 실패 유형을 찾습니다.",
-              "6. transcript/report는 선택한 profile reviewer를 사용하고, `core-only`는 `agents/korean_translation_reviewer.md`로 독자 관점의 실패 유형을 찾습니다.",
-          )
-
-          replace(
-              "skills/handoff-agent-builder/README.md",
-              '''```bash
-          mkdir -p ~/.codex/skills/handoff-agent-builder
-          cp -R handoff-agent-builder/* ~/.codex/skills/handoff-agent-builder/
-          ```''',
-              '''```bash
-          CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
-          mkdir -p "$CODEX_DIR/skills/handoff-agent-builder"
-          cp -R handoff-agent-builder/* "$CODEX_DIR/skills/handoff-agent-builder/"
-          ```''',
-          )
-
-          test_path = Path("tests/test_review_feedback_contract.py")
-          test_text = test_path.read_text(encoding="utf-8")
-          test_text = test_text.replace(
-              '''        self.assertNotIn('rm -rf "$HOME/.codex/skills/', install)
-
-              def test_generic_translation_has_core_only_loading_path(self) -> None:''',
-              '''        self.assertNotIn('rm -rf "$HOME/.codex/skills/', install)
-
-                  for relative_path in (
-                      "skills/translation-quality/README.md",
-                      "skills/handoff-agent-builder/README.md",
-                  ):
-                      skill_readme = (ROOT / relative_path).read_text(encoding="utf-8")
-                      self.assertIn('CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"', skill_readme)
-                      self.assertNotIn("~/.codex/skills/", skill_readme)
-
-              def test_generic_translation_has_core_only_loading_path(self) -> None:''',
-              1,
-          )
-          test_text = test_text.replace(
-              '''        self.assertIn("selected loading-path contract", skill)
-
-              def test_git_origin_output_removes_credentials_and_query_secrets(self) -> None:''',
-              '''        self.assertIn("selected loading-path contract", skill)
-
-                  core = (
-                      ROOT / "skills" / "translation-quality" / "references" / "core.md"
-                  ).read_text(encoding="utf-8")
-                  readme = (
-                      ROOT / "skills" / "translation-quality" / "README.md"
-                  ).read_text(encoding="utf-8")
-                  self.assertIn("`core-only` uses this file without a primary profile", core)
-                  self.assertIn("`core-only` 경로", readme)
-                  self.assertIn("primary profile을 선택하지 않습니다", readme)
-
-              def test_git_origin_output_removes_credentials_and_query_secrets(self) -> None:''',
-              1,
-          )
-          test_text = test_text.replace(
-              '''        self.assertEqual(
-                      sanitize_git_remote("https://github.com/owner/repo.git"),
-                      "https://github.com/owner/repo.git",
-                  )''',
-              '''        self.assertEqual(
-                      sanitize_git_remote("https://github.com/owner/repo.git"),
-                      "https://github.com/owner/repo.git",
-                  )
-                  self.assertEqual(
-                      sanitize_git_remote("https://user:secret@example.com:bad/owner/repo.git"),
-                      "https://example.com:bad/owner/repo.git",
-                  )
-                  self.assertEqual(
-                      sanitize_git_remote("git@github.com:owner/repo.git?token=secret#fragment"),
-                      "github.com:owner/repo.git",
-                  )''',
-              1,
-          )
-          test_path.write_text(test_text, encoding="utf-8")
-
-          Path(".github/workflows/validate.yml").write_text(
-              '''name: Validate kit
-
-          on:
-            pull_request:
-            push:
-              branches:
-                - main
-            workflow_dispatch:
-
-          permissions:
-            contents: read
-
-          jobs:
-            validate:
-              runs-on: ubuntu-latest
-              timeout-minutes: 10
-
-              steps:
-                - name: Check out repository
-                  uses: actions/checkout@v4
-
-                - name: Set up Python
-                  uses: actions/setup-python@v5
-                  with:
-                    python-version: "3.11"
-
-                - name: Run all contracts and tests
-                  run: python3 scripts/validate_kit.py
-          ''',
-              encoding="utf-8",
-          )
-          PY
-
-      - name: Validate all contracts and tests
+      - name: Run all contracts and tests
         run: python3 scripts/validate_kit.py
-
-      - name: Commit fixes
-        run: |
-          git config user.name "Davis Agent Kit Automation"
-          git config user.email "actions@users.noreply.github.com"
-          git add .
-          git commit -m "Address remaining review feedback"
-          git push origin HEAD:agent/address-pr15-review-feedback

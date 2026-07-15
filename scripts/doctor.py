@@ -38,12 +38,11 @@ def run_git(repo_root: Path, *args: str) -> tuple[int, str]:
 
 
 def sanitize_git_remote(remote: str) -> str:
-    remote = remote.strip()
+    remote = remote.strip().split("#", 1)[0].split("?", 1)[0]
     if "://" in remote:
         parsed = urlsplit(remote)
-        hostname = parsed.hostname or ""
-        port = f":{parsed.port}" if parsed.port is not None else ""
-        return urlunsplit((parsed.scheme, hostname + port, parsed.path, "", ""))
+        netloc = parsed.netloc.rsplit("@", 1)[-1]
+        return urlunsplit((parsed.scheme, netloc, parsed.path, "", ""))
     if "@" in remote:
         return remote.split("@", 1)[1]
     return remote

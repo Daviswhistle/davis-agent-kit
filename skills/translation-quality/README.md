@@ -24,10 +24,11 @@
 `SKILL.md`는 자동 선택과 완료 gate만 담는 짧은 진입점입니다. 실제 작업에서는 문서 유형에 맞춰 reference를 단계적으로 읽습니다.
 
 1. 모든 비단순 번역에서 `references/core.md`를 읽습니다.
-2. 화자 중심 문서는 `references/profiles/transcript.md`를 primary profile로 선택합니다.
-3. 페이지·표 중심 공식 문서는 `references/profiles/report.md`를 primary profile로 선택합니다.
-4. 두 계약이 실제로 함께 필요한 문서에서만 두 profile을 모두 읽고, primary/secondary 선택을 QA 리포트에 남깁니다.
-5. 긴 문서, 품질 민감 작업, 레퍼런스 동등성 작업에서는 `references/quality_benchmark.md`도 읽습니다.
+2. 일반 비즈니스 문서, 보도자료, 기사, 블로그 글, 웹 문서는 `core-only` 경로를 사용하며 primary profile을 선택하지 않습니다.
+3. 화자 중심 문서는 `references/profiles/transcript.md`를 primary profile로 선택합니다.
+4. 페이지·표 중심 공식 문서는 `references/profiles/report.md`를 primary profile로 선택합니다.
+5. 두 계약이 실제로 함께 필요한 문서에서만 두 profile을 모두 읽고, loading path와 primary/secondary 선택을 QA 리포트에 남깁니다.
+6. 긴 문서, 품질 민감 작업, 레퍼런스 동등성 작업에서는 `references/quality_benchmark.md`도 읽습니다.
 
 이 구조는 공통 독자 계약을 유지하면서 transcript 전용 화자 규칙과 report 전용 표·법정 문구 규칙을 불필요하게 동시에 로드하지 않도록 합니다.
 
@@ -61,8 +62,9 @@
 스킬 폴더 전체를 Codex 사용자 스킬 디렉터리에 복사하세요. `agents/`, `scripts/`, `tests/`도 스킬의 일부입니다.
 
 ```bash
-mkdir -p ~/.codex/skills/translation-quality
-rsync -a ./ ~/.codex/skills/translation-quality/
+CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
+mkdir -p "$CODEX_DIR/skills/translation-quality"
+rsync -a ./ "$CODEX_DIR/skills/translation-quality/"
 ```
 
 복사한 뒤 Codex를 재시작하거나 새 세션을 시작해 스킬 목록이 다시 로드되도록 하세요.
@@ -97,12 +99,12 @@ translation-quality 스킬을 사용해. 이 PDF 컨퍼런스콜을 한국어 HT
 
 긴 transcript를 처리할 때 이 스킬은 Codex가 다음 절차를 따르도록 요구합니다.
 
-1. 원문 유형을 확인하고 primary profile을 선택합니다.
-2. `references/core.md`와 선택한 profile을 읽고 원문을 번역 단위로 정리합니다.
-3. transcript는 화자 map과 Q&A 흐름을, report는 페이지/섹션 map과 표 inventory를 만듭니다.
+1. 원문 유형을 확인하고 `core-only`, transcript, report 중 loading path를 선택합니다.
+2. `references/core.md`를 읽고, transcript/report일 때만 선택한 profile을 추가로 읽어 원문을 번역 단위로 정리합니다.
+3. `core-only`는 primary profile 없이 공통 독자 계약을 적용하고, transcript는 화자 map과 Q&A 흐름을, report는 페이지/섹션 map과 표 inventory를 만듭니다.
 4. 전체 문서를 한 번에 생성하지 않고 청크 단위로 번역하며 중간 파일과 진행표를 저장합니다.
 5. 서식이 필요한 경우 복사-붙여넣기에 안전한 HTML로 결정적으로 조립합니다.
-6. 선택한 profile의 개념 검수 프롬프트로 독자 관점의 실패 유형을 찾습니다.
+6. transcript/report는 선택한 profile reviewer를 사용하고, `core-only`는 `agents/korean_translation_reviewer.md`로 독자 관점의 실패 유형을 찾습니다.
 7. 어색한 직역 표현, 반복 숫자 가이던스, HTML 구조, 표 alignment, 최종 파일 상태를 검수합니다.
 8. 검증 명령, 생략한 검사와 사유, 남은 리스크를 QA 리포트에 분리해 남깁니다.
 

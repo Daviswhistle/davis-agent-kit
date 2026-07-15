@@ -21,8 +21,9 @@
 이 스킬은 `references/`를 사용하므로 폴더 전체를 복사하세요.
 
 ```bash
-mkdir -p ~/.codex/skills/handoff-agent-builder
-cp -R handoff-agent-builder/* ~/.codex/skills/handoff-agent-builder/
+CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
+mkdir -p "$CODEX_DIR/skills/handoff-agent-builder"
+cp -R handoff-agent-builder/* "$CODEX_DIR/skills/handoff-agent-builder/"
 ```
 
 복사한 뒤 Codex를 재시작하거나 새 세션을 시작해 스킬 목록이 다시 로드되도록 하세요.

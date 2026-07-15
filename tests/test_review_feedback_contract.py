@@ -77,6 +77,14 @@ class ReviewFeedbackContractTests(unittest.TestCase):
             sanitize_git_remote("https://github.com/owner/repo.git"),
             "https://github.com/owner/repo.git",
         )
+        self.assertEqual(
+            sanitize_git_remote("https://user:secret@example.com:bad/owner/repo.git"),
+            "https://example.com:bad/owner/repo.git",
+        )
+        self.assertEqual(
+            sanitize_git_remote("git@github.com:owner/repo.git?token=secret#fragment"),
+            "github.com:owner/repo.git",
+        )
 
     def test_event_based_rereview_prefix_matches_validator_contract(self) -> None:
         user_model = (ROOT / "user-model" / "README.md").read_text(encoding="utf-8")

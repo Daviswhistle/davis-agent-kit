@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 from typing import Literal
+from urllib.parse import urlsplit, urlunsplit
 
 from kit_manifest import ManifestError, KitManifest, load_manifest, validate_manifest
 
@@ -34,6 +35,17 @@ def run_git(repo_root: Path, *args: str) -> tuple[int, str]:
         check=False,
     )
     return completed.returncode, completed.stdout.strip()
+
+
+def sanitize_git_remote(remote: str) -> str:
+    remote = remote.strip().split("#", 1)[0].split("?", 1)[0]
+    if "://" in remote:
+        parsed = urlsplit(remote)
+        netloc = parsed.netloc.rsplit("@", 1)[-1]
+        return urlunsplit((parsed.scheme, netloc, parsed.path, "", ""))
+    if "@" in remote:
+        return remote.split("@", 1)[1]
+    return remote
 
 
 def repository_checks(repo_root: Path, manifest: KitManifest) -> list[Result]:
@@ -111,7 +123,7 @@ def repository_checks(repo_root: Path, manifest: KitManifest) -> list[Result]:
 
     code, remote = run_git(repo_root, "remote", "get-url", "origin")
     if code == 0:
-        results.append(Result("INFO", "git-origin", remote))
+        results.append(Result("INFO", "git-origin", sanitize_git_remote(remote)))
     else:
         results.append(Result("WARN", "git-origin", "origin remote is not configured"))
 

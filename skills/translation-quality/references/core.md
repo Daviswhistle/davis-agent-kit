@@ -1,6 +1,6 @@
 # Translation Quality Core Reference
 
-Read this reference for every non-trivial translation or revision, then load the primary profile selected in `SKILL.md`. This file is the shared contract; speaker-only rules belong in `references/profiles/transcript.md`, and page/table/report-only rules belong in `references/profiles/report.md`.
+Read this reference for every non-trivial translation or revision, then follow the loading path selected in `SKILL.md`. `core-only` uses this file without a primary profile; speaker-only rules belong in `references/profiles/transcript.md`, and page/table/report-only rules belong in `references/profiles/report.md`.
 
 ## Portable Quality Contract
 
@@ -28,13 +28,13 @@ Do not claim knowledge of unavailable prior work. Record which benchmark items w
 3. Identify affected resources before changing the skill itself. Keep `SKILL.md`, references, reviewer prompts, helpers, tests, examples, and README consistent.
 4. Before translating, scan the current task directory for explicit local evaluation files such as rubrics, `evaluate_*.py`, `check_*.py`, and `test_*.py`.
 5. Do not report "mechanical QA pass" while a relevant local evaluator is failing or has not run without a concrete reason.
-6. Separate verification from approval or publication. A passing helper alone is not enough when source coverage, conceptual review, or the selected profile remains unchecked.
+6. Separate verification from approval or publication. A passing helper alone is not enough when source coverage, conceptual review, or the selected loading-path contract remains unchecked.
 7. Check naming and visible labels as part of quality: title, date, speaker labels, file names, `data-unit` IDs, note fields, and helper option names must describe their current role.
 8. Keep scope tight, but fix directly connected contract drift and regression coverage.
 
 ## Intake And Chunking
 
-1. Identify the source format, document type, primary profile, output format, title, date, fiscal period, and reader-visible metadata.
+1. Identify the source format, document type, loading path, optional primary profile, output format, title, date, fiscal period, and reader-visible metadata.
 2. Preserve structural extraction evidence until QA is complete.
 3. For sources longer than roughly 3,000 words, create reviewable source units, chunk files, a progress ledger, and `work/qa_report.md`.
 4. Do not fake chunking by writing one giant translation dictionary and splitting it afterward. Translate and save independent reviewable chunks, then assemble deterministically.
@@ -86,13 +86,13 @@ For long or high-risk documents, separate review concerns when tools allow:
 
 1. prose and reader-facing Korean
 2. source fidelity, numbers, units, and fiscal periods
-3. profile-specific structure and publication behavior
+3. loading-path-specific structure and publication behavior
 
 Record reviewer mode for each pass: sub-agent, separate process, external runner, or self-run. Fanout does not replace final synthesis by the primary agent.
 
 ## Conceptual Review Gate
 
-Use `agents/korean_translation_reviewer.md` for speaker-driven work and the report reviewer named by the report profile for formal reports. Record conceptual review findings as a ledger with reader-facing problem, underlying principle, source/output location, revision, evidence, disposition, and remaining risk.
+Use `agents/korean_translation_reviewer.md` for `core-only` and speaker-driven work, and the report reviewer named by the report profile for formal reports. Record conceptual review findings as a ledger with reader-facing problem, underlying principle, source/output location, revision, evidence, disposition, and remaining risk.
 
 The reviewer must inspect every material occurrence of repeated guidance, unit conversions, source corrections, notes, hierarchy-sensitive language, domain relationships, and emphasis decisions. Fix accepted findings and rerun the closest checks.
 
@@ -103,10 +103,10 @@ Before delivery:
 1. Compare the assembled output against source units for omissions, duplication, order, structure, and material repetition.
 2. For numeric content, compare each numeric source unit against the matching final HTML paragraph. Verify currency, scale, range, percentage, bp, fiscal period, and repeated occurrence.
 3. Check title, date, fiscal wording, links, emphasis semantics, notes, source corrections, and visible labels.
-4. Run the selected profile's final-file checks and all applicable task-local evaluators.
+4. Run the selected loading path's final-file checks and all applicable task-local evaluators. For `core-only`, run shared checks without loading a transcript or report profile.
 5. Record exact commands, pass/fail results, accepted and rejected reviewer findings, skipped checks with reasons, and residual risk.
 6. Do not report "mechanical QA pass" while a relevant local evaluator is failing.
-7. A passing helper alone is not enough; conceptual review, source coverage, and profile compliance remain separate gates.
+7. A passing helper alone is not enough; conceptual review, source coverage, and loading-path compliance remain separate gates.
 8. Separate verification from approval or publication readiness in the final response.
 
 For transcript HTML, use the helper command described in `references/profiles/transcript.md`. For report equivalence, use `scripts/evaluate_report_equivalence.py`, `--profile report`, and the applicable exemplar axes in `reference-quality-suite.md`. Metrics prove shape and artifact cleanup; they do not by themselves prove natural Korean or source fidelity.

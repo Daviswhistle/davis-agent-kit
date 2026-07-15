@@ -1,0 +1,41 @@
+name: Apply validated agent patch
+
+on:
+  push:
+    branches:
+      - agent/validate-kit-user-model-doctor-pr
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-validated-agent-patch
+  cancel-in-progress: false
+
+jobs:
+  apply-patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out bootstrap branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download and apply validated commit
+        env:
+          PATCH_URL: https://filebin.net/davis-agent-kit-776ab05-20260715/davis-agent-kit-776ab05.patch
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-all-errors "$PATCH_URL" --output /tmp/davis-agent-kit.patch
+          git config user.name "Davis Agent Kit Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git am --3way /tmp/davis-agent-kit.patch
+
+      - name: Remove bootstrap workflow and publish branch
+        run: |
+          set -euo pipefail
+          rm .github/workflows/apply-agent-patch.yml
+          git add -A
+          git commit --amend --no-edit
+          git push --force-with-lease origin HEAD:refs/heads/agent/validate-kit-user-model-doctor-pr

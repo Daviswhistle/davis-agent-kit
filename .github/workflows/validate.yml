@@ -25,4 +25,4 @@ jobs:
           python-version: "3.11"
 
       - name: Run all contracts and tests
-        run: python3 scripts/validate_kit.py
+        run: python3 scripts/validate_kit.py --quiet

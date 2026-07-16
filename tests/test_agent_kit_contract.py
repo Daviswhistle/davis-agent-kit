@@ -106,6 +106,42 @@ class AgentKitContractTests(unittest.TestCase):
         self.assertIn("Task-Commit-Approve", reference_text)
         self.assertIn("Names are maintenance interfaces", reference_text)
 
+    def test_writing_quality_is_integrated_as_a_general_writing_skill(self) -> None:
+        skill_root = ROOT / "skills" / "writing-quality"
+        self.assertTrue((skill_root / "SKILL.md").is_file())
+        self.assertTrue((skill_root / "agents" / "openai.yaml").is_file())
+
+        skill = read("skills/writing-quality/SKILL.md")
+        metadata = read("skills/writing-quality/agents/openai.yaml")
+        agents = read("AGENTS.md")
+        root_readme = read("README.md")
+        skills_readme = read("skills/README.md")
+        writing_guideline = read("guidelines/writing-style.md")
+
+        self.assertIn("name: writing-quality", skill)
+        self.assertIn("display_name: Writing Quality", metadata)
+        self.assertIn("$writing-quality", metadata)
+        self.assertIn("`writing-quality` 스킬", agents)
+        self.assertIn("skills/writing-quality", root_readme)
+        self.assertIn("`writing-quality`", skills_readme)
+        self.assertIn("writing-quality", writing_guideline)
+
+        references = [
+            "references/genre-playbooks.md",
+            "references/review-rubric.md",
+            "references/recipient-centered-persuasion.md",
+            "references/test-matrix.md",
+        ]
+        for rel_path in references:
+            self.assertTrue((skill_root / rel_path).is_file())
+            self.assertIn(rel_path, skill)
+
+        playbooks = read("skills/writing-quality/references/genre-playbooks.md")
+        core_and_playbooks = skill + playbooks
+        self.assertNotIn("네이버웹툰", core_and_playbooks)
+        for inherited_metaphor in ("시간선", "완충재", "유사 구독"):
+            self.assertNotIn(inherited_metaphor, core_and_playbooks)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -34,6 +34,7 @@ class ToolingContractTests(unittest.TestCase):
                 "translation-quality",
                 "handoff-agent-builder",
                 "software-engineering",
+                "writing-quality",
             },
         )
         self.assertEqual(

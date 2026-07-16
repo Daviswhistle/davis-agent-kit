@@ -1,0 +1,11 @@
+interface:
+  display_name: Writing Quality
+  short_description: Write and revise with Davis writing principles
+  default_prompt: Use $writing-quality to draft or revise this text with Davis's writing principles.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

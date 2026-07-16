@@ -23,3 +23,8 @@ entrypoint = "SKILL.md"
 name = "software-engineering"
 path = "skills/software-engineering"
 entrypoint = "SKILL.md"
+
+[[skills]]
+name = "writing-quality"
+path = "skills/writing-quality"
+entrypoint = "SKILL.md"

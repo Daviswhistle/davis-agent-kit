@@ -95,8 +95,9 @@ class AgentKitContractTests(unittest.TestCase):
         for model_specific_token in (
             "gpt-5.6-sol",
             "model_reasoning_effort",
-            "Max가",
-            "Medium을",
+            "Max",
+            "Medium",
+            "Ultra",
         ):
             self.assertNotIn(model_specific_token, agents)
 

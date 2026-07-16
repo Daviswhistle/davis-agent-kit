@@ -105,62 +105,11 @@ If a reviewer finding conflicts with runtime evidence or an explicit user clarif
 
 ## CRA Loop
 
-Use only when the user explicitly requests `CRA 루프`. Use `references/cra-loop.md` for the detailed state model, log discipline, finding handling, and reporting requirements.
-
-1. Commit the completed task unit.
-2. Run the review as a blocking batch job. Do not background it with `&`.
-3. Do not repeatedly tail or interpret in-progress logs.
-4. Determine status after process exit from exit code, optional sentinel, and the last 50-100 log lines.
-5. Review substantive findings only after the reviewer has finished.
-6. If a finding is valid, fix it, rerun local verification from the changed point, `git commit --amend --no-edit`, and run review again.
-7. Stop when the final review reports no substantive findings, or when all remaining findings are explicitly rebuttable with current evidence.
-
-Recommended blocking review command:
-
-```bash
-COMMIT_SHA="$(git rev-parse HEAD)"
-rm -f review.done review.log
-
-codex review --commit "$COMMIT_SHA" \
-  -c model="gpt-5.6-sol" \
-  -c model_reasoning_effort="max" \
-  > review.log 2>&1 && touch review.done
-```
-
-After the process exits, check the result:
-
-```bash
-REVIEW_EXIT=$?
-echo "review_exit=$REVIEW_EXIT"
-test -f review.done && echo "review_done=yes" || echo "review_done=no"
-tail -100 review.log
-```
-
-Do not treat a transport, auth, quota, CLI, or model-selection failure as a completed review. If `codex review --commit` is unavailable in the installed CLI version, use the closest supported review flow, record the exact command or interactive path used, and preserve the completed review output.
-
-Do not commit `review.log`, `review.done`, temporary review transcripts, caches, credentials, or unrelated user changes.
-
-Final CRA reporting must include final commit hash, validation, review status, accepted fixes, rejected findings with reasons, and any naming/docs/file movement rationale.
+Use only when the user explicitly requests `CRA 루프`. Read `references/cra-loop.md` before starting and follow its state model, blocking review command, failure classification, finding handling, amendment loop, and final reporting contract. Do not duplicate or partially reconstruct that procedure from this front page.
 
 ## TCA Loop
 
-Use only when the user explicitly requests `TCA 루프`. Use `references/tca-loop.md` for the detailed task queue, restart gates, stop conditions, and final report requirements.
-
-Split the requested work into independently reviewable task units. Do not start the next implementation until the current task has a commit, local verification, CRA completion, and an updated task queue.
-
-Task queue format:
-
-```text
-[ ] T1. Task name
-    - Goal:
-    - Scope:
-    - Dependency:
-    - Expected validation:
-    - Commit boundary:
-    - CRA need:
-```
-
-If review fixes change the task premise, update the queue before continuing.
+Use only when the user explicitly requests `TCA 루프`. Read `references/tca-loop.md` before creating the task queue and follow its task boundaries, restart gates, CRA dependency, stop conditions, and final reporting contract.
 
 ## Interrupted Workstream Recovery
 

@@ -36,11 +36,13 @@ class ReviewFeedbackContractTests(unittest.TestCase):
 
     def test_canonical_and_safe_sync_paths_honor_codex_home(self) -> None:
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        project_override = (ROOT / "AGENTS.override.md").read_text(encoding="utf-8")
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         safe_sync = readme.split("## 수정 전 safe sync", 1)[1].split("## 설치", 1)[0]
 
         canonical = "${CODEX_HOME:-$HOME/.codex}/davis-agent-kit"
-        self.assertIn(canonical, agents)
+        self.assertNotIn(canonical, agents)
+        self.assertIn(canonical, project_override)
         self.assertIn('CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"', safe_sync)
         self.assertIn('cd "$CODEX_DIR/davis-agent-kit"', safe_sync)
         self.assertNotIn('cd "$HOME/.codex/davis-agent-kit"', safe_sync)

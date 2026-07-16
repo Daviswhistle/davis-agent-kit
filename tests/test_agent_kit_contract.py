@@ -158,6 +158,12 @@ class AgentKitContractTests(unittest.TestCase):
         self.assertIn("## 호출 경계", skill)
         self.assertIn("Do not invoke solely because an ordinary answer", skill)
         self.assertIn("user-facing text", metadata)
+        self.assertIn("독자가 그대로 읽거나 보내거나 게시할", skills_readme)
+        self.assertIn(
+            "일반 질의 응답이 산문이거나 기술·투자 내용을 다룬다는 이유만으로 호출하지 않는다.",
+            skills_readme,
+        )
+        self.assertNotIn("- `writing-quality`: 분석, 투자 리서치", skills_readme)
 
         references = [
             "references/genre-playbooks.md",

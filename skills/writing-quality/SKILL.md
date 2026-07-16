@@ -1,11 +1,17 @@
 ---
 name: writing-quality
-description: Write or revise Korean and English using Davis's confirmed writing principles and style. Use for analytical essays, business-model and mechanism analysis, investment research, technical explanations, relationship-sensitive cooperation requests, business messages, prompts, literary prose, or edits when the user asks for Davis's style, their style, a polished or tighter draft, higher information density, or preservation of their voice. Adapt the structure to the genre and task instead of forcing a business-model template.
+description: Draft or revise a user-facing Korean or English artifact using Davis's confirmed writing principles and style. Use when the main deliverable is an analytical essay, business-model or mechanism analysis, investment research, technical explanation, relationship-sensitive cooperation request, business message, prompt, literary prose, or an edit, especially when the user requests Davis's style, preservation of voice, higher information density, or a polished or tighter draft. Do not invoke solely because an ordinary answer is written in prose or contains technical or investment analysis.
 ---
 
 # Writing Quality
 
 문체를 문장 표면의 습관으로 복제하지 말고, 무엇을 남기고 어떤 순서로 보여줄지 판단한 결과로 재현하라. 독자가 대상을 더 정확히 이해하고 바로 판단하거나 행동할 수 있는 글을 완성하라.
+
+## 호출 경계
+
+1. 독자가 그대로 읽거나 보내거나 게시할 원고가 주요 산출물일 때 사용한다.
+2. 일반 질의 응답이 산문 형식이거나 기술·투자 내용을 다룬다는 이유만으로 호출하지 않는다.
+3. 소프트웨어 변경이 중심이면 `software-engineering`이 작업과 검증을 소유한다. 문서나 사용자 대상 문구가 실질적 산출물일 때만 이 스킬을 함께 적용한다.
 
 ## 우선순위
 

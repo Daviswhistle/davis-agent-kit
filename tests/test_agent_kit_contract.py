@@ -12,8 +12,9 @@ def read(path: str) -> str:
 
 
 class AgentKitContractTests(unittest.TestCase):
-    def test_agents_is_the_single_normative_root(self) -> None:
+    def test_global_and_project_instruction_contracts_are_separated(self) -> None:
         self.assertTrue((ROOT / "AGENTS.md").is_file())
+        self.assertTrue((ROOT / "AGENTS.override.md").is_file())
         self.assertFalse((ROOT / "PHILOSOPHY.md").exists())
         self.assertFalse((ROOT / "PRINCIPLES.md").exists())
         self.assertTrue((ROOT / "guidelines").is_dir())
@@ -21,11 +22,14 @@ class AgentKitContractTests(unittest.TestCase):
         self.assertFalse((ROOT / "principles").exists())
 
         agents = read("AGENTS.md")
+        project_override = read("AGENTS.override.md")
         for heading in (
             "## 역할과 우선순위",
             "## 작동 철학",
             "## 핵심 원칙",
             "## 기본 동작",
+            "## 행동 권한",
+            "## 중단 조건",
             "## 스킬과 리소스 라우팅",
         ):
             self.assertIn(heading, agents)
@@ -35,8 +39,21 @@ class AgentKitContractTests(unittest.TestCase):
             "불필요한 것은 제거한다.",
             "필요한 것은 통합한다.",
             "확인하지 않은 사실을 단정하지 않는다.",
+            "사용자가 변경도 요청하지 않았다면 구현하거나 파일을 수정하지 않는다.",
+            "핵심 요청을 필요한 근거와 요청된 형식으로 충족할 수 있으면 답하고 멈춘다.",
+            "일반 질의 응답이 산문이라는 이유만으로 호출하지 않는다.",
         ):
             self.assertIn(statement, agents)
+
+        self.assertEqual(
+            agents.count("내 자리에서 맞는 판단은 상대의 자리에서도 버텨야 한다."),
+            1,
+        )
+        self.assertNotIn("## Davis Agent Kit 수정", agents)
+        self.assertIn("## 적용 범위", project_override)
+        self.assertIn("## 수정 계약", project_override)
+        self.assertIn("이 파일은 `davis-agent-kit` 저장소 안에서 작업할 때만 적용", project_override)
+        self.assertIn("`AGENTS.md`에는 전역 지침 역할을 넘는 저장소 전용 절차를 넣지 않는다.", project_override)
 
         checked_paths = [
             path
@@ -63,6 +80,18 @@ class AgentKitContractTests(unittest.TestCase):
                 stale_hits[str(path.relative_to(ROOT))] = matches
 
         self.assertEqual(stale_hits, {})
+
+    def test_prompt_migration_guideline_preserves_measured_change_discipline(self) -> None:
+        guideline = read("guidelines/prompt-migration.md")
+        for statement in (
+            "사용자가 받게 될 산출물이나 완료 상태",
+            "현재 모델과 reasoning effort로 대표 과제의 기준선을 기록한다.",
+            "한 번에 하나의 의미 있는 변경 묶음만 적용한다.",
+            "동일한 입력과 평가 기준으로 다시 실행한다.",
+            "정적 계약 테스트는 파일·라우팅·필수 문구의 구조적 회귀를 막는다.",
+            "`max`는 가장 어려운 품질 우선 작업에만 사용",
+        ):
+            self.assertIn(statement, guideline)
 
     def test_software_engineering_skill_replaces_coding_workflow(self) -> None:
         self.assertTrue((ROOT / "skills" / "software-engineering" / "SKILL.md").is_file())
@@ -102,6 +131,7 @@ class AgentKitContractTests(unittest.TestCase):
 
         self.assertIn('-c model="gpt-5.6-sol"', software_engineering_text)
         self.assertNotIn("review_model=", software_engineering_text)
+        self.assertNotIn("codex review --commit", skill)
         self.assertIn("codex review --commit", reference_text)
         self.assertIn("Task-Commit-Approve", reference_text)
         self.assertIn("Names are maintenance interfaces", reference_text)
@@ -125,6 +155,15 @@ class AgentKitContractTests(unittest.TestCase):
         self.assertIn("skills/writing-quality", root_readme)
         self.assertIn("`writing-quality`", skills_readme)
         self.assertIn("writing-quality", writing_guideline)
+        self.assertIn("## 호출 경계", skill)
+        self.assertIn("Do not invoke solely because an ordinary answer", skill)
+        self.assertIn("user-facing text", metadata)
+        self.assertIn("독자가 그대로 읽거나 보내거나 게시할", skills_readme)
+        self.assertIn(
+            "일반 질의 응답이 산문이거나 기술·투자 내용을 다룬다는 이유만으로 호출하지 않는다.",
+            skills_readme,
+        )
+        self.assertNotIn("- `writing-quality`: 분석, 투자 리서치", skills_readme)
 
         references = [
             "references/genre-playbooks.md",

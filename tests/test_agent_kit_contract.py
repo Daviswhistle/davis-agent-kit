@@ -81,6 +81,26 @@ class AgentKitContractTests(unittest.TestCase):
 
         self.assertEqual(stale_hits, {})
 
+    def test_delegation_contract_is_model_neutral(self) -> None:
+        agents = read("AGENTS.md")
+
+        for statement in (
+            "최종 결과를 통합하는 주 세션은 사용자의 의도, 완료 기준, 검증, 최종 응답의 책임을 유지한다.",
+            "위임할 때는 목표, 범위, 제약, 필요한 완료 근거를 명시한다.",
+            "하위 에이전트의 완료 선언이나 요약만으로 완료를 판정하지 않는다.",
+            "특정 모델, 추론 수준, 공급자, 비용 등급을 전역 기본값으로 강제하지 않는다.",
+        ):
+            self.assertIn(statement, agents)
+
+        for model_specific_token in (
+            "gpt-5.6-sol",
+            "model_reasoning_effort",
+            "Max",
+            "Medium",
+            "Ultra",
+        ):
+            self.assertNotIn(model_specific_token, agents)
+
     def test_prompt_migration_guideline_preserves_measured_change_discipline(self) -> None:
         guideline = read("guidelines/prompt-migration.md")
         for statement in (

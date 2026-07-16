@@ -25,22 +25,4 @@ jobs:
           python-version: "3.11"
 
       - name: Run all contracts and tests
-        id: validation
-        shell: bash
-        run: |
-          set +e
-          python3 scripts/validate_kit.py --quiet > validation.log 2>&1
-          status=$?
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-          exit 0
-
-      - name: Upload validation log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: validation-log
-          path: validation.log
-
-      - name: Fail when validation failed
-        if: steps.validation.outputs.status != '0'
-        run: exit 1
+        run: python3 scripts/validate_kit.py

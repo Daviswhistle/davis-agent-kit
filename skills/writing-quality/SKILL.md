@@ -1,6 +1,6 @@
 ---
 name: writing-quality
-description: Draft or revise a user-facing Korean or English artifact using Davis's confirmed writing principles and style. Use when the main deliverable is an analytical essay, business-model or mechanism analysis, investment research, technical explanation, relationship-sensitive cooperation request, business message, prompt, literary prose, or an edit, especially when the user requests Davis's style, preservation of voice, higher information density, or a polished or tighter draft. Do not invoke solely because an ordinary answer is written in prose or contains technical or investment analysis.
+description: Draft or revise a user-facing Korean or English artifact using Davis's confirmed writing principles and style. Use when the main deliverable is an analytical essay, business-model or mechanism analysis, investment research, technical explanation, publish-ready HTML/CSS article, relationship-sensitive cooperation request, business message, prompt, literary prose, or an edit, especially when the user requests Davis's style, preservation of voice, higher information density, or a polished or tighter draft. Do not invoke solely because an ordinary answer is written in prose or contains technical or investment analysis.
 ---
 
 # Writing Quality
@@ -12,6 +12,7 @@ description: Draft or revise a user-facing Korean or English artifact using Davi
 1. 독자가 그대로 읽거나 보내거나 게시할 원고가 주요 산출물일 때 사용한다.
 2. 일반 질의 응답이 산문 형식이거나 기술·투자 내용을 다룬다는 이유만으로 호출하지 않는다.
 3. 소프트웨어 변경이 중심이면 `software-engineering`이 작업과 검증을 소유한다. 문서나 사용자 대상 문구가 실질적 산출물일 때만 이 스킬을 함께 적용한다.
+4. 원고와 HTML/CSS가 함께 주요 산출물인 게시형 아티클은 이 스킬이 주장·한국어·정보 구조를 소유하고, `software-engineering`이 렌더링과 코드 검증을 소유한다. `references/publishable-html-article.md`를 함께 적용한다.
 
 ## 우선순위
 
@@ -45,7 +46,8 @@ description: Draft or revise a user-facing Korean or English artifact using Davi
 
 - 목적: 설명, 판단, 설득, 행동 요청, 기록, 정서적 경험 중 무엇인가
 - 독자: 무엇을 알고 무엇을 결정해야 하는가
-- 장르와 형식: 보고서, 분석문, 메시지, 프롬프트, 에세이 등 무엇인가
+- 장르와 형식: 보고서, 분석문, 메시지, 프롬프트, 에세이, HTML/CSS 아티클 등 무엇인가
+- 사용 표면: 일반 문서, CMS 본문, 이메일, 웹 페이지 중 어디에서 어떤 폭과 제약으로 읽히는가
 - 사실성의 기준: 최신 자료 확인, 원문 충실성, 인용, 수치 검증, 실화·자전적 경험 보존이 필요한가
 - 완료 조건: 어떤 질문에 답하고 어떤 상태로 끝나야 하는가
 - 관계와 권한: 수신자에게 재량이 있는 협조 요청인가, 아니면 의무 통지·평가·안전 지시처럼 직접성이 우선하는가
@@ -57,6 +59,8 @@ description: Draft or revise a user-facing Korean or English artifact using Davi
 `references/genre-playbooks.md`에서 지배적인 목적에 맞는 플레이북을 고르라. 둘 이상이 필요한 긴 글에서는 중심 플레이북 하나를 정하고 필요한 부분만 결합하라.
 
 비즈니스 모델이나 행동 메커니즘을 설명할 때만 구체적 작동 장면, 선택의 변화, 반복 가능한 구조를 중심에 두라. 기술 설명, 투자 판단, 업무 메시지, 문학적 글에 이 순서를 억지로 이식하지 말라.
+
+단일 파일 HTML/CSS, CMS 붙여넣기용 코드, 미리보기 이미지까지 요구되는 분석 아티클에는 `references/publishable-html-article.md`의 주장·한국어·시각 의미·렌더링·산출물 일치 계약을 적용하라.
 
 ### 3. 관계 민감한 협조 요청은 별도로 설계하라
 
@@ -105,6 +109,7 @@ description: Draft or revise a user-facing Korean or English artifact using Davi
 - 인과관계가 사실에서 따라오는가
 - 다른 설명이 더 잘 맞지 않는가
 - 적용 범위와 시점이 정확한가
+- 수치가 집계하는 대상, 관측·추정 여부, 제안·결정·시행 단계, 출처의 성격이 문장에 정확히 반영됐는가
 - 비유가 실제 구조를 보존하는가
 
 사실을 확인할 수 없으면 중심 근거로 삼지 말고 불확실성을 표시하라. 글을 풍부하게 보이게 하려고 수치, 인용, 출처, 수신자, 약속을 만들지 말라.
@@ -127,10 +132,14 @@ description: Draft or revise a user-facing Korean or English artifact using Davi
 
 사실이나 구조가 바뀌면 필요한 만큼 다시 검증하라. 단지 더 매끈하게 보이게 하려고 사용자의 독특한 표현을 평준화하지 말라.
 
+사용자가 한 문장이나 한 시각 요소에서 반복 패턴을 지적하면 실패 유형을 일반화해 원고 전체와 파생 산출물을 검색하라. 국소 수정만 한 뒤 전체 문제가 해결됐다고 보고하지 말라.
+
 ## 문장과 수사
 
 - 한국어는 `-다`, `-이다` 중심의 자연스럽고 단정적인 문장을 기본으로 삼되, 메시지의 높임말이나 장르의 어조를 우선하라.
 - 영어는 한국어 문장 구조를 옮기지 말고 같은 판단 밀도와 절제를 자연스러운 영어로 구현하라.
+- 영어 자료를 한국어로 재서술할 때는 어휘와 문장 뼈대를 옮기지 말고, 사실과 논리 관계를 한국어 독자의 처리 순서로 다시 써라.
+- 제목은 본문이 실제로 입증한 변화, 메커니즘, 판단을 근거의 강도로 압축하라. 본문에 없는 양자택일이나 더 강한 단정을 제목에서 만들지 말라.
 - 대조는 실제로 혼동하기 쉬운 두 개념의 경계를 그을 때만 사용하라. 약한 전제를 세운 뒤 `A가 아니라 B다`로 강조하는 습관을 피하라.
 - 비유는 문자 그대로의 설명보다 정확하고 짧을 때만 사용하라. 하나의 지배적 이미지를 여러 비유보다 우선하라.
 - 가격, 비용, 할인, 전환 비용처럼 경제적·법적 의미가 다른 용어를 비유 때문에 섞지 말라.
@@ -174,4 +183,5 @@ description: Draft or revise a user-facing Korean or English artifact using Davi
 - `references/genre-playbooks.md`: 과제 유형별 전개 선택
 - `references/review-rubric.md`: 블라인드 검수와 과최적화 감점
 - `references/recipient-centered-persuasion.md`: 호의 기반 수신자 관점 설득의 적용 조건, 구조, 경계 사례, 예시
+- `references/publishable-html-article.md`: 한국어 분석 원고를 게시 가능한 HTML/CSS 아티클로 완성할 때의 주장, 수치, 시각 의미, 렌더링, 산출물 일치 계약
 - `references/test-matrix.md`: 스킬 자체를 수정하거나 전향 테스트할 때 사용할 범용성 과제

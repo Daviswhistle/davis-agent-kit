@@ -60,7 +60,7 @@ description: Draft or revise a user-facing Korean or English artifact using Davi
 
 비즈니스 모델이나 행동 메커니즘을 설명할 때만 구체적 작동 장면, 선택의 변화, 반복 가능한 구조를 중심에 두라. 기술 설명, 투자 판단, 업무 메시지, 문학적 글에 이 순서를 억지로 이식하지 말라.
 
-단일 파일 HTML/CSS, CMS 붙여넣기용 코드, 미리보기 이미지까지 요구되는 분석 아티클에는 `references/publishable-html-article.md`의 주장·한국어·시각 의미·렌더링·산출물 일치 계약을 적용하라.
+단일 파일 HTML/CSS, CMS 붙여넣기용 코드, 미리보기 이미지까지 요구되는 분석 아티클에는 `references/publishable-html-article.md`의 주장·한국어·시각 의미·렌더링·산출물 일치 계약을 적용하라. 제목·카드·배지·도표 레이블처럼 짧게 압축한 화면 문구는 원문과 별도의 편집 산출물로 취급한다. 원문이 한국어여도 주체·행동·비교축이 사라지거나 명사만 이어 붙인 표현이 생기지 않았는지 다시 읽는다.
 
 ### 3. 관계 민감한 협조 요청은 별도로 설계하라
 
@@ -98,6 +98,7 @@ description: Draft or revise a user-facing Korean or English artifact using Davi
 - 긴 분석 문장 사이의 짧은 문장은 전환, 경계 설정, 명명에만 사용하라.
 - 표와 목록은 정확한 비교나 빠른 탐색이 산문보다 나을 때만 사용하라.
 - 소제목은 긴 글의 탐색을 돕거나 사용자가 요구할 때만 사용하라.
+- 화면에 들어갈 짧은 문구도 사람이 실제로 말하거나 쓸 수 있는 완결된 의미 단위로 작성하라. 공간을 맞추기 위해 의미 관계를 독자에게 넘기지 말라.
 
 ### 6. 사실과 논리를 검증하라
 
@@ -132,7 +133,7 @@ description: Draft or revise a user-facing Korean or English artifact using Davi
 
 사실이나 구조가 바뀌면 필요한 만큼 다시 검증하라. 단지 더 매끈하게 보이게 하려고 사용자의 독특한 표현을 평준화하지 말라.
 
-사용자가 한 문장이나 한 시각 요소에서 반복 패턴을 지적하면 실패 유형을 일반화해 원고 전체와 파생 산출물을 검색하라. 국소 수정만 한 뒤 전체 문제가 해결됐다고 보고하지 말라.
+사용자가 한 문장이나 한 시각 요소에서 반복 패턴을 지적하면 실패 유형을 일반화해 원고 전체와 파생 산출물을 검색하라. 국소 수정만 한 뒤 전체 문제가 해결됐다고 보고하지 말라. 시각 요소에서 비교 대상, 기준, 방향, 결론이 작은 보조 문구에 흩어져 있으면 독자가 관계를 조립해야 하는 실패로 본다. 핵심 명제를 1차 시각 위계에 두고 관계에 맞는 형식으로 다시 설계하라.
 
 ## 문장과 수사
 
@@ -176,7 +177,7 @@ description: Draft or revise a user-facing Korean or English artifact using Davi
 
 ## 최종 출력
 
-사용자가 완성 원고를 요청하면 해설, 점수, 작업 과정 없이 원고만 제공하라. 피드백이나 검수를 요청하면 오류와 취향을 구분해 우선순위가 높은 문제부터 설명하라. 요청한 언어, 형식, 길이를 그대로 지켜라.
+사용자가 완성 원고를 요청하면 해설, 점수, 작업 과정 없이 원고만 제공하라. 피드백이나 검수를 요청하면 오류와 취향을 구분해 우선순위가 높은 문제부터 설명하라. 수정 결과를 요청받으면 진단과 계획만 설명하지 말고 실제 산출물을 먼저 수정해 보여라. 설명은 변경된 결과와 검증 근거를 짧게 보조한다. 요청한 언어, 형식, 길이를 그대로 지켜라.
 
 ## 참고 자료
 
@@ -184,4 +185,5 @@ description: Draft or revise a user-facing Korean or English artifact using Davi
 - `references/review-rubric.md`: 블라인드 검수와 과최적화 감점
 - `references/recipient-centered-persuasion.md`: 호의 기반 수신자 관점 설득의 적용 조건, 구조, 경계 사례, 예시
 - `references/publishable-html-article.md`: 한국어 분석 원고를 게시 가능한 HTML/CSS 아티클로 완성할 때의 주장, 수치, 시각 의미, 렌더링, 산출물 일치 계약
+- `references/reader-first-information-design-examples.md`: 한국어 화면 문구 압축, 비교축, 시각 위계, 관계 시각화, 결과 우선 수정의 전후 사례
 - `references/test-matrix.md`: 스킬 자체를 수정하거나 전향 테스트할 때 사용할 범용성 과제

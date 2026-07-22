@@ -54,12 +54,15 @@ class PublishableHtmlArticleContractTests(unittest.TestCase):
         matrix = read("references/test-matrix.md")
 
         self.assertIn("## 게시형 HTML 아티클 추가 검수", rubric)
+        self.assertIn("본문 한국어가 원자료의 문장 구조를 옮기지 않고", rubric)
         self.assertIn("한국어 원문을 화면 문구로 압축", rubric)
         self.assertIn("작은 보조 문구", rubric)
+        self.assertIn("배지·버튼·탭처럼 보이는 모양", rubric)
         self.assertIn("가림 테스트나 콜드 리드", rubric)
         self.assertIn("실제 아티클 컨테이너", rubric)
         self.assertIn("최종 HTML, CMS용 코드, 미리보기", rubric)
         self.assertIn("실제 수정 결과", rubric)
+        self.assertIn("`해당 없음`으로 기록하고 점수와 분모에서 제외", rubric)
 
         for case_type in (
             "분석 글 제목",

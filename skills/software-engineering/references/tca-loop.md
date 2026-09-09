@@ -83,7 +83,7 @@ For each task unit:
 5. Independently verify every validation result required for completion by re-running it or inspecting independently accessible raw output, exit status, and artifacts. If only the worker's prose summary exists, re-run the validation.
 6. Check `git status --short` and the relevant diff; separate unrelated changes.
 7. Commit only the current task unit.
-8. Run CRA with entry source `tca-required`.
+8. Run the native commit-review loop in `references/cra-loop.md`.
 9. Verify and process CRA findings, amend the same task commit, and revalidate from the changed point.
 10. Record the final commit and CRA terminal state in the queue.
 11. Reassess whether the next planned task is still necessary and correctly bounded.
@@ -111,7 +111,7 @@ Proceed only when all are true:
 2. validation required for completion has been independently verified
 3. skipped validation and reasons are recorded
 4. the primary session inspected the actual diff and repository state
-5. the last CRA reached a terminal state
+5. the latest CRA satisfies the completion criteria in `references/cra-loop.md`
 6. no valid critical, high-risk, or in-scope medium finding remains unresolved
 7. CRA-triggered changes were revalidated from the correct point
 8. the task queue reflects the current repository state

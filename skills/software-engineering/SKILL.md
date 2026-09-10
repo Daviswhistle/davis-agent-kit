@@ -49,7 +49,7 @@ Use CRA when the user explicitly requests it or independent commit-level review 
 
 Usually skip CRA for narrow mechanical changes already established by focused validation.
 
-When selected, read `references/cra-loop.md`.
+When selected, read `references/cra-loop.md` for the native commit-review and amend loop.
 
 ## TCA
 

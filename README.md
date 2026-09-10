@@ -13,6 +13,8 @@ davis-agent-kit/
 │   ├── handoff-agent-builder/
 │   ├── software-engineering/
 │   └── writing-quality/
+├── pets/
+│   └── hwito/
 ├── scripts/
 ├── tests/
 └── .github/
@@ -21,6 +23,7 @@ davis-agent-kit/
 - `AGENTS.md`: 모든 작업의 기본 자세, 권한, 완료 기준과 skill routing
 - `AGENTS.override.md`: 이 저장소 자체를 수정할 때의 관리 규칙
 - `skills/`: 반복 workflow와 그 workflow에만 필요한 references, agents, scripts, tests
+- `pets/hwito/`: 선택해서 설치할 수 있는 Codex custom pet
 - `scripts/install_codex.py`: 전역 AGENTS와 user skills를 심링크
 - `scripts/validate_kit.py`: active skill 계약과 실행 가능한 tests/helpers 검증
 
@@ -72,6 +75,19 @@ Codex는 skill을 먼저 metadata로 발견하고 선택된 skill의 `SKILL.md`�
 설치기는 기존 파일이나 다른 skill을 덮어쓰지 않습니다. 이미 정확한 심링크면 유지하고 충돌하면 변경 전에 중단합니다.
 
 이 kit의 과거 버전이 사용하던 `${CODEX_HOME:-$HOME/.codex}/skills`는 Codex가 호환 목적으로 아직 읽을 수 있으므로, 그 위치에 `translation-quality`, `handoff-agent-builder`, `software-engineering`, `writing-quality` 또는 retired kit skill이 남아 있으면 migration을 중단합니다. 중복 로딩을 피하기 위해 해당 과거 링크를 직접 확인해 제거한 뒤 다시 실행합니다.
+
+### 선택: Hwito
+
+`Hwito`는 kit 동작과 무관한 선택형 Codex custom pet입니다. 기본 설치기는 펫을 설치하지 않습니다.
+
+기존 `hwito` custom pet이 없을 때 저장소 루트에서:
+
+```bash
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/pets"
+cp -R pets/hwito "${CODEX_HOME:-$HOME/.codex}/pets/"
+```
+
+Codex에서 custom pet 목록을 새로고침한 뒤 `Hwito`를 선택합니다.
 
 설치 상태 확인:
 

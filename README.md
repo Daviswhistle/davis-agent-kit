@@ -76,6 +76,16 @@ Codex는 skill을 먼저 metadata로 발견하고 선택된 skill의 `SKILL.md`�
 
 이 kit의 과거 버전이 사용하던 `${CODEX_HOME:-$HOME/.codex}/skills`는 Codex가 호환 목적으로 아직 읽을 수 있으므로, 그 위치에 `translation-quality`, `handoff-agent-builder`, `software-engineering`, `writing-quality` 또는 retired kit skill이 남아 있으면 migration을 중단합니다. 중복 로딩을 피하기 위해 해당 과거 링크를 직접 확인해 제거한 뒤 다시 실행합니다.
 
+설치 상태 확인:
+
+```bash
+./scripts/install_codex.sh --check
+```
+
+`--check`는 kit의 전역 `AGENTS.md`와 user skill 설치 상태를 검증하며 custom pet은 검사하지 않습니다.
+
+`AGENTS.md` 또는 skill 설치·변경 뒤에는 새 Codex 세션을 시작합니다.
+
 ### 선택: Hwito
 
 `Hwito`는 kit 동작과 무관한 선택형 Codex custom pet입니다. 기본 설치기는 펫을 설치하지 않습니다.
@@ -87,15 +97,7 @@ mkdir -p "${CODEX_HOME:-$HOME/.codex}/pets"
 cp -R pets/hwito "${CODEX_HOME:-$HOME/.codex}/pets/"
 ```
 
-Codex에서 custom pet 목록을 새로고침한 뒤 `Hwito`를 선택합니다.
-
-설치 상태 확인:
-
-```bash
-./scripts/install_codex.sh --check
-```
-
-설치 또는 skill 변경 뒤에는 새 Codex 세션을 시작합니다.
+Codex에서 custom pet 목록을 새로고침한 뒤 `Hwito`를 선택합니다. `Hwito`는 수동 설치 항목이므로 위 `--check`의 검증 대상이 아닙니다.
 
 ## 검증
 

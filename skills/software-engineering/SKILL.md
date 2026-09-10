@@ -24,7 +24,7 @@ Do not create workflow ceremony merely because a workflow exists.
 ## Resource defaults
 
 - bounded implementation worker: first candidate `gpt-5.6-luna`, Max reasoning, Fast tier
-- independent CRA reviewer: `gpt-6-astra`, Medium reasoning, default/non-Fast service tier
+- independent CRA reviewer: `gpt-6-astra`, High reasoning, default/non-Fast service tier
 - every role: runtime default context; this kit does not raise context-window or auto-compaction limits
 
 Escalate resources only for a concrete quality reason such as ambiguity, consequence of error, difficult reasoning or an insufficient result.

@@ -10,14 +10,14 @@ A local commit or review does not authorize push, deployment, migration or remot
 
 ## Native review
 
-Default: `gpt-6-astra`, `medium` reasoning, `default` (non-Fast) service tier and runtime default context. Do not enlarge context to fit a task; use coherent, independently reviewable task boundaries instead.
+Default: `gpt-6-astra`, `high` reasoning, `default` (non-Fast) service tier and runtime default context. Do not enlarge context to fit a task; use coherent, independently reviewable task boundaries instead.
 
 Run in the foreground against the current task SHA:
 
 ```bash
 COMMIT_SHA="$(git rev-parse HEAD)"
 CRA_REVIEW_MODEL="${CRA_REVIEW_MODEL:-gpt-6-astra}"
-CRA_REVIEW_EFFORT="${CRA_REVIEW_EFFORT:-medium}"
+CRA_REVIEW_EFFORT="${CRA_REVIEW_EFFORT:-high}"
 
 codex review --commit "$COMMIT_SHA" \
   -c "model=$CRA_REVIEW_MODEL" \

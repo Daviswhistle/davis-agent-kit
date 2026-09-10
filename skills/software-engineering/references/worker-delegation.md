@@ -30,7 +30,7 @@ Resolve missing product decisions in the primary session.
 Choose role first, then model, reasoning effort, service tier and history propagation.
 
 1. bounded implementation worker: `gpt-5.6-luna` + Max + Fast when available and sufficient;
-2. CRA reviewer: `gpt-6-astra` + Medium + default/non-Fast tier; `references/cra-loop.md` owns the exact invocation;
+2. CRA reviewer: `gpt-6-astra` + High + default/non-Fast tier; `references/cra-loop.md` owns the exact invocation;
 3. explorer: cheapest available model that can answer the bounded discovery question reliably.
 
 Verify the launcher can express the selected settings when this matters. An example config is not runtime evidence.

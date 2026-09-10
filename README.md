@@ -45,7 +45,7 @@ Codex는 skill을 먼저 metadata로 발견하고 선택된 skill의 `SKILL.md`�
 
 - 모든 역할은 런타임 기본 컨텍스트를 사용합니다. 이 kit는 context window나 auto-compaction limit을 늘리지 않습니다.
 - bounded implementation worker의 첫 후보는 `gpt-5.6-luna` + Max + Fast입니다.
-- CRA reviewer의 기본은 `gpt-6-astra` + Medium + default/non-Fast service tier입니다.
+- CRA reviewer의 기본은 `gpt-6-astra` + High + default/non-Fast service tier입니다.
 - 더 비싼 자원은 오류 비용·모호성·실제 품질 실패 같은 구체적 이유가 있을 때만 사용합니다.
 
 ## 설치

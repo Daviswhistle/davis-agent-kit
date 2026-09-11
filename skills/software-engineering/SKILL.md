@@ -1,11 +1,11 @@
 ---
 name: software-engineering
-description: Use for software implementation, modification, debugging, refactoring, or code review. Define a coherent task contract, delegate bounded implementation when useful, verify the actual result, and use CRA or TCA only when independent review or task commits materially improve confidence.
+description: Use for software implementation, modification, debugging, refactoring, or code review. Define a coherent task contract, choose direct work or bounded delegation, and use CRA, TCA, or conditional Teamwork only when their coordination or independent evidence adds value.
 ---
 
 # Software Engineering
 
-The primary session owns user intent, task boundaries, integration, verification and the final response.
+The primary session owns user intent, authority, task boundaries, integration, verification and the final response.
 
 ## Selection
 
@@ -17,17 +17,19 @@ For software changes:
 4. if delegating, read `references/worker-delegation.md` and send a bounded contract;
 5. inspect the returned diff/state and independently verify completion-critical evidence;
 6. decide whether CRA is warranted after local validation;
-7. use TCA only when multiple independently reviewable task commits materially improve correctness, recovery or reviewability.
+7. use TCA only when multiple independently reviewable task commits materially improve correctness, recovery or reviewability;
+8. use Teamwork when the user requests a separate orchestrator or dynamic team, or several separable tracks need repeated coordination, steering or context isolation that justifies a separate manager.
 
-Do not create workflow ceremony merely because a workflow exists.
+Do not create workflow ceremony merely because a task is difficult or has many steps.
 
 ## Resource defaults
 
 - bounded implementation worker: first candidate `gpt-5.6-luna`, Max reasoning, Fast tier
 - independent CRA reviewer: `gpt-6-astra`, High reasoning, default/non-Fast service tier
+- Teamwork orchestrator and non-implementation specialists: choose resources proportionate to the planning or verification risk using the current launcher and available account/runtime capacity; the implementation worker default does not automatically govern these roles
 - every role: runtime default context; this kit does not raise context-window or auto-compaction limits
 
-Escalate resources only for a concrete quality reason such as ambiguity, consequence of error, difficult reasoning or an insufficient result.
+Escalate resources only for a concrete quality reason such as ambiguity, consequence of error, difficult reasoning or an insufficient result. Verify that the launcher can express a selected model, effort and service tier, and report an unavailable tier honestly rather than silently changing it.
 
 ## Local validation
 
@@ -56,6 +58,10 @@ When selected, read `references/cra-loop.md` for the native commit-review and am
 Use TCA when the user explicitly requests it or a large change has safe, dependency-ordered, independently verifiable commit boundaries whose per-task CRA materially improves recovery/reviewability. Do not manufacture task boundaries.
 
 When selected, read `references/tca-loop.md`.
+
+## Teamwork
+
+Teamwork keeps the primary available to the user while a separate orchestrator child manages an adaptive team. When selected, read `references/teamwork-loop.md` for capability checks, ownership, steering and completion. Use `$software-engineering` with a Teamwork request; `/teamwork-preview` is also recognized as an intent phrase, but this kit does not install that slash command.
 
 ## Boundaries
 

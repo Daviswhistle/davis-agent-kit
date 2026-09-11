@@ -1,10 +1,11 @@
 # Worker Delegation
 
-Use when a software task is delegated to a worker, explorer or independent reviewer. Delegation moves bounded work and noisy output; it does not transfer final responsibility.
+Use when a software task is delegated to an implementation worker, explorer, independent reviewer or separate orchestrator. Delegation moves bounded work and noisy output; it does not transfer the primary's final responsibility.
 
 ## Roles
 
-- primary: user intent, scope, integration, final diff inspection, completion-critical validation and final response
+- primary: user intent, authority, user-facing status/steering, integration, completion-critical validation and final response
+- orchestrator: a separate child accountable to the primary; decomposes, schedules, delegates and supervises bounded work and retries. It may maintain concise coordination state and integrate authorized outputs after writers stop, but it delegates implementation and does not replace the primary or certify the final outcome
 - implementation worker: assigned implementation and local validation only
 - explorer: read-only bounded discovery
 - independent reviewer: must not be the author of the change it reviews
@@ -20,10 +21,12 @@ Out of scope: <nearby work to leave alone>
 Constraints: <project, safety, compatibility, user choices>
 Authority: <read/edit/test/commit permission>
 Validation: <required checks/evidence>
-Return: <changes, effect, raw results, skipped checks, uncertainty, blockers>
+Return: <changed files, effect, raw results, skipped checks, uncertainty, blockers>
 ```
 
-Resolve missing product decisions in the primary session.
+Send minimal history and only the artifacts needed to act. Resolve missing product decisions in the primary session.
+
+For coordinated or changing tasks, add the current contract revision, pinned workspace/branch baseline, writer or stable-reader ownership, integration owner and the point at which writers stop. Define domain-specific tolerances or stochastic criteria when needed for acceptance.
 
 ## Resource defaults
 
@@ -31,7 +34,8 @@ Choose role first, then model, reasoning effort, service tier and history propag
 
 1. bounded implementation worker: `gpt-5.6-luna` + Max + Fast when available and sufficient;
 2. CRA reviewer: `gpt-6-astra` + High + default/non-Fast tier; `references/cra-loop.md` owns the exact invocation;
-3. explorer: cheapest available model that can answer the bounded discovery question reliably.
+3. explorer: cheapest available model that can answer the bounded discovery question reliably;
+4. orchestrator and other specialists: choose a role-appropriate resource using the current launcher and available capacity; do not inherit the implementation worker default automatically.
 
 Verify the launcher can express the selected settings when this matters. An example config is not runtime evidence.
 
@@ -52,11 +56,12 @@ Prefer a self-contained handoff with no history or the smallest useful history s
 ## Execution rules
 
 1. Use one write-capable worker for one coherent change.
-2. One mutable worktree is a single-writer/stable-reader boundary. Serialize state-dependent readers or give them a fixed commit/separate worktree.
-3. Under TCA, delegate only the active task unit.
-4. A worker does not CRA-review its own implementation.
-5. Inspect actual changes and completion-critical evidence after the worker returns.
-6. If the worker finds a contradiction or materially larger scope, it stops and returns evidence instead of expanding silently.
+2. Treat one mutable worktree as a single-writer/stable-reader boundary. Parallel writing requires distinct worktrees; disjoint filenames alone are not sufficient. Serialize state-dependent readers until the writer exits, or give them a fixed commit snapshot.
+3. Pin the baseline and name an integration owner before dispatch. Serialize integration and state-dependent validation; an orchestrator may perform authorized integration after active writers stop.
+4. Under TCA, delegate only the active task unit. Under Teamwork, dispatch only ready units whose dependencies and slots are available; reuse idle workers where useful and report when independence cannot be preserved.
+5. A worker does not final-certify or CRA-review its own implementation. Workers run local checks and return raw evidence for independent inspection.
+6. Inspect actual changes, repository state and completion-critical evidence after the delegate returns.
+7. If the delegate finds a contradiction or materially larger scope, it stops and returns evidence instead of expanding silently.
 
 ## Return evidence
 

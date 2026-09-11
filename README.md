@@ -39,7 +39,7 @@ davis-agent-kit/
 
 - `translation-quality`: 비단순 한국어 번역, transcript·재무보고서 번역, source/numeric/format QA
 - `handoff-agent-builder`: Codex가 자동 발견하는 repo-local handoff skill 설계와 멀티턴 검증
-- `software-engineering`: 구현 위임, 로컬 검증, 필요할 때 Codex 기본 commit review 기반 CRA/TCA
+- `software-engineering`: 직접 실행·구현 위임과 로컬 검증, 필요할 때 CRA/TCA 또는 별도 오케스트레이터가 작업자를 구성하는 Teamwork
 - `writing-quality`: 글쓰기 자체가 품질 병목인 원고·장문 분석·게시용 문서 작성과 편집
 
 Codex는 skill을 먼저 metadata로 발견하고 선택된 skill의 `SKILL.md`와 필요한 reference만 읽습니다. 따라서 전역 원칙은 AGENTS에, 조건부 절차는 skill 내부에만 둡니다.

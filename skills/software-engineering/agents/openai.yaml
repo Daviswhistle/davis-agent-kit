@@ -1,4 +1,4 @@
 interface:
   display_name: "Software Engineering"
-  short_description: "Implement directly or delegate, then use CRA/TCA when useful"
-  default_prompt: "Use $software-engineering to define the task contract, choose direct execution or bounded delegation based on value, verify the actual result, and use CRA or TCA only when warranted."
+  short_description: "Choose direct work, delegation, or a coordinated team"
+  default_prompt: "Use $software-engineering to define the contract, choose direct work or bounded delegation, and invoke conditional Teamwork only when a separate orchestrator adds value; verify the integrated result."

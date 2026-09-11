@@ -1,0 +1,95 @@
+name: Fix Hwito open eyes
+
+on:
+  push:
+    branches:
+      - fix/hwito-cute-final-v4
+
+permissions:
+  contents: write
+
+jobs:
+  fix-eyes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Pillow
+        run: python -m pip install --quiet pillow
+      - name: Remove eyelid lines from open eyes
+        run: |
+          python - <<'PY'
+          from PIL import Image
+
+          W, H = 192, 208
+          sheet = Image.open('pets/hwito/spritesheet.webp').convert('RGBA')
+
+          # Use the first idle frame's plain open eyes as the canonical eye shape.
+          master = sheet.crop((0, 0, W, H))
+          left_eye = master.crop((60, 92, 89, 121))
+          right_eye = master.crop((103, 92, 132, 121))
+          fur = (251, 249, 247, 255)
+
+          def components(frame):
+              pts = set()
+              for y in range(82, 125):
+                  for x in range(45, 145):
+                      r, g, b, a = frame.getpixel((x, y))
+                      if a > 100 and max(r, g, b) < 150:
+                          pts.add((x, y))
+              out = []
+              while pts:
+                  seed = pts.pop()
+                  stack = [seed]
+                  xs = [seed[0]]
+                  ys = [seed[1]]
+                  while stack:
+                      x, y = stack.pop()
+                      for nx in (x-1, x, x+1):
+                          for ny in (y-1, y, y+1):
+                              if (nx, ny) in pts:
+                                  pts.remove((nx, ny))
+                                  stack.append((nx, ny))
+                                  xs.append(nx)
+                                  ys.append(ny)
+                  n = len(xs)
+                  out.append((n, min(xs), min(ys), max(xs)+1, max(ys)+1,
+                              sum(xs)/n, sum(ys)/n))
+              return out
+
+          # Frontal-state rows only. Side-running eyes keep their perspective drawing.
+          for row in (0, 3, 4, 5, 6, 7, 8):
+              for col in range(8):
+                  frame = sheet.crop((col*W, row*H, (col+1)*W, (row+1)*H)).convert('RGBA')
+                  comps = components(frame)
+                  # Large dark components in this band are open eyes. Closed/wink eyes
+                  # are small line components and are intentionally left untouched.
+                  eyes = [c for c in comps if c[0] >= 150 and 90 <= c[6] <= 118 and 50 <= c[5] <= 140]
+                  eyes = sorted(eyes, reverse=True)[:2]
+                  for _, x0, y0, x1, y1, cx, cy in eyes:
+                      cx, cy = int(round(cx)), int(round(cy))
+                      for yy in range(max(82, cy-15), min(125, cy+16)):
+                          for xx in range(max(45, cx-15), min(145, cx+16)):
+                              r, g, b, a = frame.getpixel((xx, yy))
+                              if a > 0:
+                                  frame.putpixel((xx, yy), fur)
+                      patch = left_eye if cx < 96 else right_eye
+                      frame.alpha_composite(patch, (cx-14, cy-14))
+                  sheet.paste(frame, (col*W, row*H))
+
+          assert sheet.size == (1536, 1872)
+          sheet.save('pets/hwito/spritesheet.webp', 'WEBP', lossless=True, method=6)
+          PY
+      - name: Commit corrected sprite
+        run: |
+          if git diff --quiet -- pets/hwito/spritesheet.webp; then
+            echo 'No eye changes needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pets/hwito/spritesheet.webp
+          git commit -m 'Remove eyelid lines from Hwito open eyes'
+          git push

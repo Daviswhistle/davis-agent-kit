@@ -2,6 +2,14 @@
 
 Validate a project-specific handoff agent through executable checks and observed multi-turn behavior, not the presence of preferred wording.
 
+## Select validation scope
+
+- **New skill or substantive flow/authority change:** exercise the applicable behavior cases below, including first-session behavior, multi-turn continuation, evidence reuse/invalidation, maintenance-critical topic coverage and the final recap.
+- **Bounded behavior change:** run the affected cases and connected transitions. Reuse unchanged cases only when their source, configuration, acceptance criteria and observable evidence remain applicable. Expand when the change invalidates broader assumptions.
+- **Wording or path-only correction:** inspect the corrected guidance, real target paths and connected commands or references. Do not rebuild the curriculum or rerun an unrelated full conversation suite solely because a file changed. Run a behavior case if the correction changes what the agent should do or leaves material uncertainty.
+
+Record the changed scope, evidence actually obtained or reused, and remaining limitations. Unavailable necessary tests are not run, not passed. Unrelated cases need not be repeated or reported as failures, but local checks do not establish end-to-end behavior.
+
 ## Mechanical Checks and Manual Review
 
 Use an actually available skill validator for frontmatter and bundled resource paths, and the target project's checks for executable helpers. Do not invent an installed `quick_validate.py` path. In this kit, run `python3 scripts/validate_kit.py` for the kit's own machine contracts; a generated agent in another repository needs that repository's applicable validation.
@@ -12,11 +20,11 @@ Run whitespace validation when working in Git:
 git diff --check
 ```
 
-Manually inspect the first-session route, real command and artifact paths, unfinished placeholders, authority boundaries, and examples. A search may help locate suspicious text, but matching or missing a phrase is not a behavioral pass/fail criterion. Do not add prose-presence, heading, or banned-phrase tests.
+Manually inspect the affected route, real command and artifact paths, unfinished placeholders, authority boundaries, and examples. A search may help locate suspicious text, but matching or missing a phrase is not a behavioral pass/fail criterion. Do not add prose-presence, heading, or banned-phrase tests.
 
-## Required Behavior Tests
+## Behavior Cases
 
-Use fresh subagents or isolated conversations. The validating agent should receive the installed skill and a natural user request, not your expected answer. Confirm actual skill loading and retain observable tool results and final outputs. A skill name in the answer is not proof of invocation. When execution is unavailable, record the case as not run rather than passed.
+Use fresh subagents or isolated conversations for selected behavior tests. The validating agent should receive the installed skill and a natural user request, not your expected answer. Confirm actual skill loading and retain observable tool results and final outputs. A skill name in the answer is not proof of invocation. When execution is unavailable, record the case as not run rather than passed.
 
 ### Test 1. First Handoff Start
 
@@ -144,6 +152,6 @@ Pass criteria:
 
 ## Acceptance Standard
 
-The handoff agent passes only when applicable mechanical checks and required behavior cases pass. Include first-session behavior, at least one multi-turn continuation, evidence reuse/invalidation, proactive coverage of maintenance-critical topics, and the final maintenance recap. Record inapplicable cases with a reason, observed failures with their fixes and retest results, and unavailable tests as not run.
+A scoped validation passes only when its required checks pass. Failed or unavailable required checks leave that scope unverified; disclosing a limitation does not turn it into a pass. A new skill or substantive flow/authority change needs the full applicable coverage defined above. A bounded revision needs evidence for its changed behavior and connected contracts, not a fresh end-to-end certification; identify any prior results relied on and why they remain valid.
 
-A good first answer alone does not establish that the agent can continue through artifacts and code ownership. Static validation alone does not establish behavioral quality.
+Record observed failures, their fixes and retest results. Necessary but unavailable behavior tests remain not run. A good first answer alone does not establish continuation through artifacts and code ownership, and static validation alone does not establish behavioral quality.

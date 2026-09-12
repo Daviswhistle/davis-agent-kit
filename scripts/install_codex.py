@@ -124,6 +124,28 @@ def expected_links(
     return tuple(links)
 
 
+def global_guidance_problem(repo_root: Path, codex_home: Path) -> str | None:
+    """Check global override precedence without modifying the user's override."""
+    override = codex_home / "AGENTS.override.md"
+    try:
+        if not path_exists(override):
+            return None
+        if not override.is_file():
+            return f"cannot verify global instruction selection: not a readable file: {override}"
+        if not override.read_text(encoding="utf-8").strip():
+            return None
+        if override.samefile(repo_root / "AGENTS.md"):
+            return None
+    except (OSError, UnicodeError, RuntimeError) as exc:
+        return f"cannot verify global instruction selection at {override}: {exc}"
+    return (
+        f"global AGENTS.md is shadowed by non-empty override: {override}; "
+        "Codex selects that file instead of the kit's global instructions. "
+        "Review the override and move or merge it manually before retrying; "
+        "the installer leaves it unchanged."
+    )
+
+
 def check(repo_root: Path, codex_home: Path, skills_home: Path) -> list[str]:
     skills = discover_skills(repo_root)
     problems = []
@@ -136,6 +158,9 @@ def check(repo_root: Path, codex_home: Path, skills_home: Path) -> list[str]:
     for path, target, label in expected_links(repo_root, codex_home, skills_home, skills):
         if not same_link(path, target):
             problems.append(f"{label} is not the expected symlink: {path}")
+    guidance_problem = global_guidance_problem(repo_root, codex_home)
+    if guidance_problem:
+        problems.append(guidance_problem)
     return problems
 
 
@@ -143,6 +168,10 @@ def install(repo_root: Path, codex_home: Path, skills_home: Path) -> InstallResu
     skills = discover_skills(repo_root)
     if not (repo_root / "AGENTS.md").is_file():
         raise InstallError(f"missing normative source: {repo_root / 'AGENTS.md'}")
+
+    guidance_problem = global_guidance_problem(repo_root, codex_home)
+    if guidance_problem:
+        raise InstallError(guidance_problem)
 
     legacy = legacy_conflicts(codex_home, skills)
     if legacy:
@@ -200,7 +229,7 @@ def parse_args() -> argparse.Namespace:
         default=Path("~/.agents/skills"),
         help="Codex user skills root (default: ~/.agents/skills)",
     )
-    parser.add_argument("--check", action="store_true", help="verify links without changing them")
+    parser.add_argument("--check", action="store_true", help="verify links and global override precedence without changing them")
     return parser.parse_args()
 
 
@@ -217,7 +246,8 @@ def main() -> int:
                 for problem in problems:
                     print(f"FAIL: {problem}")
                 return 1
-            print("PASS: Davis Agent Kit installation is correct")
+            print("PASS: Davis Agent Kit installation links are correct")
+            print("PASS: kit global instructions are not shadowed by an override")
             return 0
 
         result = install(repo_root, codex_home, skills_home)
@@ -227,7 +257,8 @@ def main() -> int:
 
     for message in result.messages:
         print(message)
-    print("Codex installation is ready. Restart Codex or start a new session.")
+    print("Codex links are ready; no conflicting global override detected.")
+    print("Restart Codex or start a new session to load the instructions.")
     return 0
 
 

@@ -8,7 +8,7 @@ Use for earnings calls, interviews, Q&A, interpreted calls and other speaker-dri
 2. Build a speaker map before translation and split source units that contain multiple speakers. Source units support coverage and numeric QA in both generation modes; they are not generation chunks.
 3. Attribute interpreted speech to the original speaker whenever source flow supports it.
 4. Preserve every material occurrence of financial guidance and fiscal-period references.
-5. Use `agents/korean_translation_reviewer.md` for conceptual review.
+5. Use `agents/korean_translation_reviewer.md` for common conceptual review and the transcript-specific criteria below.
 
 ## Speaker formatting
 
@@ -22,6 +22,18 @@ Unless the user requests another format:
 - use a visible `통역` label only when the original speaker cannot be determined after checking the surrounding source, and record the ambiguity in QA.
 
 For HTML, speaker names should be visually distinct and copy-paste spacing must survive the target environment.
+
+## Transcript-specific conceptual review
+
+Supply the reviewer with the source speaker map, roles, interpreter flow and relevant event metadata. Company and fiscal-period fields apply to business calls, not automatically to every interview.
+
+- Check that each passage belongs to its effective speaker and that interpretation has not become a second speaker turn or a duplicated answer.
+- Check whether Korean honorifics accidentally elevate an executive above the reader or another speaker. Preserve communicative roles without literal ceremony.
+- Smooth greetings, self-identifications and thanks only when no substantive information or useful interaction is lost.
+- When an earnings-call date and reporting year differ, preserve the fiscal-period meaning in the title and body.
+- Preserve the scale of repeated guidance ranges in every occurrence: `mid-to-high teens` means `10%대 중반에서 후반`, not a range crossing from single digits into the teens.
+
+These criteria supplement the common review; they do not apply to general prose without speakers.
 
 ## Earnings-call risks
 

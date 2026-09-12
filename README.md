@@ -74,6 +74,8 @@ Codex는 skill을 먼저 metadata로 발견하고 선택된 skill의 `SKILL.md`�
 
 설치기는 기존 파일이나 다른 skill을 덮어쓰지 않습니다. 이미 정확한 심링크면 유지하고 충돌하면 변경 전에 중단합니다.
 
+전역 위치의 `AGENTS.override.md`에 내용이 있으면 Codex는 일반 `AGENTS.md` 대신 그 파일을 선택합니다. 설치기는 다른 지침을 담은 override를 감지하면 링크를 만들기 전에 중단하고, `--check`도 실패로 표시합니다. 빈 파일·공백뿐인 파일이나 kit의 규범 원본 `AGENTS.md` 자체를 가리키는 링크는 허용합니다. 읽을 수 없거나 깨진 override는 선택 상태를 확인할 수 없다고 보고합니다. 기존 override는 자동 삭제·덮어쓰기·병합하지 않으므로 내용을 직접 확인해 별도 보관하거나 필요한 지침을 정리한 뒤 재시도합니다. 저장소 안의 프로젝트용 `AGENTS.override.md`는 이 전역 검사 대상이 아니며 설치하지 않습니다.
+
 이 kit의 과거 버전이 사용하던 `${CODEX_HOME:-$HOME/.codex}/skills`는 Codex가 호환 목적으로 아직 읽을 수 있으므로, 그 위치에 `translation-quality`, `handoff-agent-builder`, `software-engineering`, `writing-quality` 또는 retired kit skill이 남아 있으면 migration을 중단합니다. 중복 로딩을 피하기 위해 해당 과거 링크를 직접 확인해 제거한 뒤 다시 실행합니다.
 
 설치 상태 확인:
@@ -82,7 +84,7 @@ Codex는 skill을 먼저 metadata로 발견하고 선택된 skill의 `SKILL.md`�
 ./scripts/install_codex.sh --check
 ```
 
-`--check`는 kit의 전역 `AGENTS.md`와 user skill 설치 상태를 검증하며 custom pet은 검사하지 않습니다.
+`--check`는 kit의 전역 `AGENTS.md`·user skill 링크와 전역 override 우선순위를 검사하며 custom pet은 검사하지 않습니다. 실제 Codex 세션의 전체 지침 로딩이나 프로젝트별 override까지 검증했다는 뜻은 아닙니다.
 
 `AGENTS.md` 또는 skill 설치·변경 뒤에는 새 Codex 세션을 시작합니다.
 

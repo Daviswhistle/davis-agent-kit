@@ -1,7 +1,6 @@
 ---
 name: translation-quality
-description: |
-  Use for non-trivial Korean translation, transcript translation, annual or financial report translation, earnings-call translation, blog-ready translation, or review/revision of an existing Korean translation. Preserve source structure and meaning, produce natural Korean, and verify source coverage, terminology, numbers, and final output before delivery.
+description: Translate non-trivial documents into Korean or review and revise Korean translations. Use the applicable general, transcript, or formal-report workflow to preserve meaning, source coverage, terminology, and numbers.
 ---
 
 # Translation Quality
@@ -14,11 +13,11 @@ Resolve every bundled resource relative to this `SKILL.md`.
 
 1. Read `references/core.md` for every non-trivial translation or revision.
 2. Read `references/terminology.md` when reader-visible names, aliases, former names, programmes, trials, medicines, products, or development codes require an identity/rendering convention.
-3. Use `references/profiles/transcript.md` for speaker-driven material.
+3. Use `references/profiles/transcript.md` for speaker-driven material, including its speaker/interpreter review criteria.
 4. Use `references/profiles/report.md` for page/table-heavy formal reports.
 5. Read `references/quality_benchmark.md` for long, high-risk, or publication-quality work.
 
-Do not load both document profiles unless both genuinely apply.
+Do not load both document profiles unless both genuinely apply. General articles and technical or academic prose do not require a speaker map, company, event or fiscal period unless present and relevant in the source.
 
 ## Execute and verify
 
@@ -31,7 +30,7 @@ Choose the simplest generation mode that can finish with reliable coverage:
 
 Single-pass does not waive source mapping, revision, numeric checks or full-document QA. Chunked work must contain real reviewable translation units before assembly; do not create dummy chunks to satisfy a procedure.
 
-Use `agents/korean_translation_reviewer.md` for general/transcript work and `agents/korean_report_reviewer.md` for formal reports. Record whether review was independent or self-run. Fix accepted findings and rerun affected checks.
+For general work, use `agents/korean_translation_reviewer.md`. For transcripts, combine that common review with the transcript profile's review criteria. For formal reports, use `agents/korean_report_reviewer.md` and the report profile; do not add transcript criteria unless speaker-driven material also applies. Record whether review was independent or self-run. Fix accepted findings and rerun affected checks.
 
 Completion requires:
 

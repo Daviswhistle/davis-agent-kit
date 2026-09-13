@@ -3,6 +3,7 @@
   "displayName": "Hwito",
   "description": "A tiny moon-bunny coding companion with a Go stone and a little laptop.",
   "spritesheetPath": "spritesheet.webp",
+  "spriteVersionNumber": 2,
   "animations": {
     "idle": {"frames": [0, 1, 2, 3, 4, 5, 6, 7], "fps": 6.0, "loop": true, "fallback": "idle"},
     "running-right": {"frames": [8, 9, 10, 11, 12, 13, 14, 15, 8, 9, 10, 11, 12, 13, 14, 15, 8, 9, 10, 11, 12, 13, 14, 15], "fps": 12.0, "loop": false, "fallback": "idle"},

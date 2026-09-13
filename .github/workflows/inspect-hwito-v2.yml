@@ -1,0 +1,38 @@
+name: Inspect Hwito V2 source
+
+on:
+  push:
+    branches:
+      - feat/hwito-v2-spritesheet
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --quiet pillow
+      - name: Inspect source frame
+        shell: bash
+        run: |
+          python - <<'PY'
+          from PIL import Image
+          import base64, io
+          p = 'pets/hwito/spritesheet.webp'
+          im = Image.open(p).convert('RGBA')
+          print('SHEET_SIZE', im.size)
+          frame = im.crop((0, 0, 192, 208))
+          print('FRAME0_BBOX', frame.getbbox())
+          buf = io.BytesIO()
+          frame.save(buf, format='PNG', optimize=True)
+          data = base64.b64encode(buf.getvalue()).decode('ascii')
+          print('FRAME0_PNG_BASE64_BEGIN')
+          print(data)
+          print('FRAME0_PNG_BASE64_END')
+          PY

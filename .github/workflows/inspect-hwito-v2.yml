@@ -1,38 +1,143 @@
-name: Inspect Hwito V2 source
+name: Build Hwito V2 spritesheet
 
 on:
   push:
     branches:
       - feat/hwito-v2-spritesheet
+    paths:
+      - .github/workflows/inspect-hwito-v2.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  inspect:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - run: python -m pip install --quiet pillow
-      - name: Inspect source frame
+      - name: Build and verify V2 atlas
         shell: bash
         run: |
           python - <<'PY'
-          from PIL import Image
-          import base64, io
-          p = 'pets/hwito/spritesheet.webp'
-          im = Image.open(p).convert('RGBA')
-          print('SHEET_SIZE', im.size)
-          frame = im.crop((0, 0, 192, 208))
-          print('FRAME0_BBOX', frame.getbbox())
-          buf = io.BytesIO()
-          frame.save(buf, format='PNG', optimize=True)
-          data = base64.b64encode(buf.getvalue()).decode('ascii')
-          print('FRAME0_PNG_BASE64_BEGIN')
-          print(data)
-          print('FRAME0_PNG_BASE64_END')
+          from pathlib import Path
+          from PIL import Image, ImageChops, ImageDraw
+          import hashlib
+          import math
+
+          sheet_path = Path('pets/hwito/spritesheet.webp')
+          manifest_path = Path('pets/hwito/pet.json')
+
+          src_bytes = sheet_path.read_bytes()
+          src_sha256 = hashlib.sha256(src_bytes).hexdigest()
+          src = Image.open(sheet_path).convert('RGBA')
+          assert src.size == (1536, 1872), f'unexpected V1 size: {src.size}'
+
+          cell_w, cell_h = 192, 208
+          frame0 = src.crop((0, 0, cell_w, cell_h))
+          assert frame0.getbbox() == (32, 8, 152, 196), f'unexpected frame0 bbox: {frame0.getbbox()}'
+
+          # The current Hwito has two bead-like eyes centered here.  V2 look
+          # frames keep the entire character fixed and move only the eyes by
+          # at most 2 px, preserving the selected rabbit design.
+          eye_centers = ((71, 109), (117, 109))
+          eye_radius = 11
+          face_fill = (251, 248, 246, 255)
+
+          def make_look(angle_deg: float) -> Image.Image:
+              out = frame0.copy()
+              theta = math.radians(angle_deg)
+              dx = int(round(math.sin(theta) * 2))
+              dy = int(round(-math.cos(theta) * 2))
+
+              patches = []
+              for cx, cy in eye_centers:
+                  box = (
+                      cx - eye_radius,
+                      cy - eye_radius,
+                      cx + eye_radius + 1,
+                      cy + eye_radius + 1,
+                  )
+                  patch = frame0.crop(box)
+                  mask = Image.new('L', patch.size, 0)
+                  ImageDraw.Draw(mask).ellipse(
+                      (0, 0, patch.width - 1, patch.height - 1), fill=255
+                  )
+                  patches.append((patch, mask, box))
+
+              draw = ImageDraw.Draw(out)
+              for cx, cy in eye_centers:
+                  draw.ellipse(
+                      (
+                          cx - eye_radius,
+                          cy - eye_radius,
+                          cx + eye_radius,
+                          cy + eye_radius,
+                      ),
+                      fill=face_fill,
+                  )
+
+              for patch, mask, box in patches:
+                  out.paste(patch, (box[0] + dx, box[1] + dy), mask)
+              return out
+
+          atlas = Image.new('RGBA', (1536, 2288), (0, 0, 0, 0))
+          atlas.paste(src, (0, 0))
+
+          # V2 rows 9-10: 000°, 022.5°, ... 337.5° clockwise from up.
+          for i in range(16):
+              look = make_look(i * 22.5)
+              col = i % 8
+              row = 9 + i // 8
+              atlas.paste(look, (col * cell_w, row * cell_h), look)
+
+          atlas.save(
+              sheet_path,
+              format='WEBP',
+              lossless=True,
+              quality=100,
+              method=6,
+              exact=True,
+          )
+
+          # Re-open the encoded WebP and verify geometry, original V1 visual
+          # pixels, alpha, and occupancy of all 16 new look cells.
+          out = Image.open(sheet_path).convert('RGBA')
+          assert out.size == (1536, 2288), out.size
+          top = out.crop((0, 0, 1536, 1872))
+          assert ImageChops.difference(src.getchannel('A'), top.getchannel('A')).getbbox() is None
+          white_src = Image.alpha_composite(Image.new('RGBA', src.size, 'white'), src)
+          white_top = Image.alpha_composite(Image.new('RGBA', top.size, 'white'), top)
+          assert ImageChops.difference(white_src, white_top).getbbox() is None
+          for i in range(16):
+              col = i % 8
+              row = 9 + i // 8
+              cell = out.crop((col * cell_w, row * cell_h, (col + 1) * cell_w, (row + 1) * cell_h))
+              assert cell.getbbox() is not None, f'blank look frame: {i}'
+
+          text = manifest_path.read_text(encoding='utf-8')
+          if '"spriteVersionNumber"' not in text:
+              needle = '  "spritesheetPath": "spritesheet.webp",\n'
+              assert needle in text, 'spritesheetPath formatting changed unexpectedly'
+              text = text.replace(needle, needle + '  "spriteVersionNumber": 2,\n', 1)
+              manifest_path.write_text(text, encoding='utf-8')
+
+          print('SOURCE_SHA256', src_sha256)
+          print('OUTPUT_SHA256', hashlib.sha256(sheet_path.read_bytes()).hexdigest())
+          print('OUTPUT_SIZE', out.size)
+          print('LOOK_FRAMES', 16)
           PY
+
+      - name: Commit generated V2 files
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pets/hwito/spritesheet.webp pets/hwito/pet.json
+          git diff --cached --check
+          git commit -m "feat(hwito): migrate spritesheet to V2"
+          git push origin HEAD:feat/hwito-v2-spritesheet

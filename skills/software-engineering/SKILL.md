@@ -31,6 +31,8 @@ Do not create workflow ceremony merely because a task is difficult or has many s
 
 Escalate resources only for a concrete quality reason such as ambiguity, consequence of error, difficult reasoning or an insufficient result. Verify that the launcher can express a selected model, effort and service tier, and report an unavailable tier honestly rather than silently changing it.
 
+Current Codex native subagents share the root session's service tier. When the primary must remain default/non-Fast but the bounded implementation worker should use Luna + Max + Fast, run that worker as a separate root through `scripts/run_luna_worker.py` instead of relying on a role-level `service_tier` override. If the launcher is unavailable, use the actual available tier or implement directly and report the resource change; do not claim Fast was applied when it was not.
+
 ## Local validation
 
 Start with checks closest to the changed behavior and connected contracts. Expand for shared dependencies, broad changes, material uncertainty, safety risk or explicit project requirements.

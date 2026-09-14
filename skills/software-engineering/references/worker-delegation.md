@@ -39,6 +39,26 @@ Choose role first, then model, reasoning effort, service tier and history propag
 
 Verify the launcher can express the selected settings when this matters. An example config is not runtime evidence.
 
+### Luna + Fast routing
+
+Current Codex native subagents inherit the root service tier, so a non-Fast primary cannot make only one native Luna child Fast. In that case launch the implementation worker as an independent root with `scripts/run_luna_worker.py`. The helper pins `gpt-5.6-luna`, Max reasoning, `service_tier=priority`, `workspace-write`, and `approval_policy=never`, injects the bounded worker instructions as developer instructions, and uses `--strict-config` so an installed CLI that does not recognize a pinned setting fails instead of silently downgrading it.
+
+Pass the handoff contract on stdin so shell quoting does not become part of the task:
+
+```bash
+python3 "$HOME/.agents/skills/software-engineering/scripts/run_luna_worker.py" --cwd "$PWD" <<'CONTRACT'
+Goal: ...
+Scope: ...
+Out of scope: ...
+Constraints: ...
+Authority: read/edit/test; no remote mutation
+Validation: ...
+Return: changed files, effect, raw results, skipped checks, uncertainty, blockers
+CONTRACT
+```
+
+Wait for this writer to exit before the primary or another writer edits the same worktree. Inspect the actual diff and validation afterward. Because this is a nested `codex exec`, the outer shell execution must be allowed to reach the Codex backend; if its sandbox blocks network access, use an explicitly approved network-capable execution path or do not delegate rather than bypassing that boundary silently. If the root session is already Fast, native delegation remains acceptable when its other constraints fit.
+
 ## Context
 
 Use the runtime default context for every role. Do not increase `model_context_window` or `model_auto_compact_token_limit`.

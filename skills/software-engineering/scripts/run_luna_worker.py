@@ -43,6 +43,7 @@ def build_command(codex_bin: str, cwd: Path, skip_git_repo_check: bool) -> list[
     command = [
         codex_bin,
         "exec",
+        "--strict-config",
         "--model",
         MODEL,
         "--sandbox",

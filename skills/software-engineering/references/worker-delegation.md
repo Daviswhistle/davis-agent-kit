@@ -41,7 +41,7 @@ Verify the launcher can express the selected settings when this matters. An exam
 
 ### Luna + Fast routing
 
-Current Codex native subagents inherit the root service tier, so a non-Fast primary cannot make only one native Luna child Fast. In that case launch the implementation worker as an independent root with `scripts/run_luna_worker.py`. The helper pins `gpt-5.6-luna`, Max reasoning, `service_tier=priority`, `workspace-write`, and `approval_policy=never`, and injects the bounded worker instructions as developer instructions.
+Current Codex native subagents inherit the root service tier, so a non-Fast primary cannot make only one native Luna child Fast. In that case launch the implementation worker as an independent root with `scripts/run_luna_worker.py`. The helper pins `gpt-5.6-luna`, Max reasoning, `service_tier=priority`, `workspace-write`, and `approval_policy=never`, injects the bounded worker instructions as developer instructions, and uses `--strict-config` so an installed CLI that does not recognize a pinned setting fails instead of silently downgrading it.
 
 Pass the handoff contract on stdin so shell quoting does not become part of the task:
 

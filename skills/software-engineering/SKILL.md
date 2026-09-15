@@ -55,6 +55,8 @@ Usually skip CRA for narrow mechanical changes already established by focused va
 
 When selected, read `references/cra-loop.md` for the native commit-review and amend loop.
 
+When the user explicitly requests an OpenCodeReview comparison, keep native CRA as the completion authority and use `references/ocr-shadow-experiment.md` only as an opt-in shadow experiment.
+
 ## TCA
 
 Use TCA when the user explicitly requests it or a large change has safe, dependency-ordered, independently verifiable commit boundaries whose per-task CRA materially improves recovery/reviewability. Do not manufacture task boundaries.

@@ -198,6 +198,25 @@ class DreamRSIReplayTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "missing parent"):
                 MODULE.load_history(path)
 
+    def test_train_holdout_overlap_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "overlap"):
+            MODULE.ensure_disjoint_runs([self.history], [self.history])
+
+    def test_loader_requires_quality(self) -> None:
+        raw = {
+            "schema_version": 1,
+            "run_id": "missing-quality",
+            "root_id": "root",
+            "nodes": [
+                {"id": "root", "parent_id": None, "children": [], "calls": 0},
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "missing-quality.json"
+            path.write_text(json.dumps(raw), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "quality is required"):
+                MODULE.load_history(path)
+
 
 if __name__ == "__main__":
     unittest.main()

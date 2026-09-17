@@ -14,7 +14,7 @@ For software changes:
 1. define one coherent task unit, authority and checkable completion criteria;
 2. inspect the actual execution path before editing;
 3. decide whether delegation adds enough value to justify coordination;
-4. if delegating, read `references/worker-delegation.md` and send a bounded contract;
+4. if delegating, apply the resource selection below before dispatch, then read `references/worker-delegation.md` and send a bounded contract;
 5. inspect the returned diff/state and independently verify completion-critical evidence;
 6. decide whether CRA is warranted after local validation;
 7. use TCA only when multiple independently reviewable task commits materially improve correctness, recovery or reviewability;
@@ -24,12 +24,15 @@ Do not create workflow ceremony merely because a task is difficult or has many s
 
 ## Resource defaults
 
+Before initial delegation or reusing an agent for a changed role or scope, explicitly select the role, model, reasoning effort, service tier and history propagation. Record the selection and a brief reason in the handoff or existing task record before dispatch. Reuse and inherited settings require the same assessment; convenience or context continuity alone does not justify retaining more expensive resources.
+
 - bounded implementation worker: first candidate `gpt-5.6-luna`, Max reasoning, Fast tier
 - independent CRA reviewer: `gpt-6-astra`, High reasoning, default/non-Fast service tier
+- explorer: cheapest available model that can answer the bounded discovery question reliably
 - Teamwork orchestrator and non-implementation specialists: choose resources proportionate to the planning or verification risk using the current launcher and available account/runtime capacity; the implementation worker default does not automatically govern these roles
 - every role: runtime default context; this kit does not raise context-window or auto-compaction limits
 
-Escalate resources only for a concrete quality reason such as ambiguity, consequence of error, difficult reasoning or an insufficient result. Verify that the launcher can express a selected model, effort and service tier, and report an unavailable tier honestly rather than silently changing it.
+Escalate resources only for a concrete quality reason such as ambiguity, consequence of error, difficult reasoning or an insufficient result, and state that reason before dispatch. Verify that the launcher can express the selected settings; report any unavailable setting and the chosen fallback rather than silently inheriting defaults. Check actual model, effort and tier against runtime evidence when exposed; distinguish selected settings from unverified actual settings and do not claim cost optimization without supporting usage/cost evidence.
 
 Current Codex native subagents share the root session's service tier. When the primary must remain default/non-Fast but the bounded implementation worker should use Luna + Max + Fast, run that worker as a separate root through `scripts/run_luna_worker.py` instead of relying on a role-level `service_tier` override. If the launcher is unavailable, use the actual available tier or implement directly and report the resource change; do not claim Fast was applied when it was not.
 

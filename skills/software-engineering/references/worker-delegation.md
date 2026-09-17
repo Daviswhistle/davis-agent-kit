@@ -20,6 +20,7 @@ Scope: <included files/components/behavior>
 Out of scope: <nearby work to leave alone>
 Constraints: <project, safety, compatibility, user choices>
 Authority: <read/edit/test/commit permission>
+Resources: <role, model, reasoning effort, service tier, history propagation; brief selection reason>
 Validation: <required checks/evidence>
 Return: <changed files, effect, raw results, skipped checks, uncertainty, blockers>
 ```
@@ -28,16 +29,9 @@ Send minimal history and only the artifacts needed to act. Resolve missing produ
 
 For coordinated or changing tasks, add the current contract revision, pinned workspace/branch baseline, writer or stable-reader ownership, integration owner and the point at which writers stop. Define domain-specific tolerances or stochastic criteria when needed for acceptance.
 
-## Resource defaults
+## Resource routing
 
-Choose role first, then model, reasoning effort, service tier and history propagation.
-
-1. bounded implementation worker: `gpt-5.6-luna` + Max + Fast when available and sufficient;
-2. CRA reviewer: `gpt-6-astra` + High + default/non-Fast tier; `references/cra-loop.md` owns the exact invocation;
-3. explorer: cheapest available model that can answer the bounded discovery question reliably;
-4. orchestrator and other specialists: choose a role-appropriate resource using the current launcher and available capacity; do not inherit the implementation worker default automatically.
-
-Verify the launcher can express the selected settings when this matters. An example config is not runtime evidence.
+Use the selection requirements and role defaults in [SKILL.md](../SKILL.md#resource-defaults). This reference supplies launcher details; [cra-loop.md](cra-loop.md) owns the exact CRA invocation.
 
 ### Luna + Fast routing
 
@@ -52,6 +46,7 @@ Scope: ...
 Out of scope: ...
 Constraints: ...
 Authority: read/edit/test; no remote mutation
+Resources: implementation worker; gpt-5.6-luna; Max; Fast; bounded contract only; precise implementation scope fits the first candidate
 Validation: ...
 Return: changed files, effect, raw results, skipped checks, uncertainty, blockers
 CONTRACT
@@ -85,4 +80,4 @@ Prefer a self-contained handoff with no history or the smallest useful history s
 
 ## Return evidence
 
-Require changed files, behavioral effect, commands actually run, exit status and useful raw output/artifact locations, skipped checks, uncertainty and blockers. Record model/effort/tier only when it matters to reproducibility.
+Require changed files, behavioral effect, commands actually run, exit status and useful raw output/artifact locations, skipped checks, uncertainty and blockers. Return available runtime model/effort/tier evidence or identify what could not be verified; an example config or requested setting is not runtime evidence.

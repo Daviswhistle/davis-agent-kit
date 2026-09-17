@@ -119,7 +119,9 @@ def load_history(path: Path) -> History:
         latency_ms = _require_number(raw_node.get("latency_ms", 0), f"{path}: node {node_id}: latency_ms")
         if latency_ms < 0:
             raise ValueError(f"{path}: node {node_id}: latency_ms must be >= 0")
-        quality = _require_number(raw_node.get("quality", 0), f"{path}: node {node_id}: quality")
+        if "quality" not in raw_node:
+            raise ValueError(f"{path}: node {node_id}: quality is required")
+        quality = _require_number(raw_node["quality"], f"{path}: node {node_id}: quality")
 
         nodes[node_id] = Node(
             node_id=node_id,
@@ -135,6 +137,10 @@ def load_history(path: Path) -> History:
         raise ValueError(f"{path}: root_id {root_id!r} is missing")
     if nodes[root_id].parent_id is not None:
         raise ValueError(f"{path}: root node must have parent_id=null")
+    if nodes[root_id].calls != 0:
+        raise ValueError(f"{path}: root node calls must be 0")
+    if nodes[root_id].terminal and nodes[root_id].children:
+        raise ValueError(f"{path}: terminal root node cannot declare children")
     for node in nodes.values():
         if node.node_id == root_id:
             continue
@@ -143,6 +149,10 @@ def load_history(path: Path) -> History:
         if node.parent_id not in nodes:
             raise ValueError(
                 f"{path}: node {node.node_id!r}: missing parent {node.parent_id!r}"
+            )
+        if node.terminal and node.children:
+            raise ValueError(
+                f"{path}: terminal node {node.node_id!r} cannot declare children"
             )
 
     referenced_as_child: set[str] = set()
@@ -377,6 +387,14 @@ def _load_many(paths: Sequence[str]) -> list[History]:
     return [load_history(Path(item)) for item in paths]
 
 
+def ensure_disjoint_runs(train_histories: Sequence[History], holdout_histories: Sequence[History]) -> None:
+    train_ids = {history.run_id for history in train_histories}
+    holdout_ids = {history.run_id for history in holdout_histories}
+    overlap = sorted(train_ids & holdout_ids)
+    if overlap:
+        raise ValueError(f"train and holdout run_id sets overlap: {overlap}")
+
+
 def _policy_from_args(args: argparse.Namespace) -> Policy:
     return Policy(
         strategy=args.strategy,
@@ -406,6 +424,9 @@ def cmd_replay(args: argparse.Namespace) -> int:
 def cmd_optimize(args: argparse.Namespace) -> int:
     train_histories = _load_many(args.train)
     holdout_histories = _load_many(args.holdout) if args.holdout else []
+    ensure_disjoint_runs(train_histories, holdout_histories)
+    if args.min_train_improvement < 0:
+        raise ValueError("min_train_improvement must be non-negative")
     baseline = _policy_from_args(args)
     selected, train_result, baseline_train = optimize(
         train_histories,

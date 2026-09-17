@@ -5,6 +5,7 @@ import argparse
 from dataclasses import asdict, dataclass
 import itertools
 import json
+import math
 from pathlib import Path
 import statistics
 import sys
@@ -78,11 +79,26 @@ class FrontierItem:
 def _require_number(value: object, label: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"{label} must be numeric")
-    return float(value)
+    try:
+        number = float(value)
+    except (OverflowError, ValueError) as exc:
+        raise ValueError(f"{label} must be a finite number") from exc
+    if not math.isfinite(number):
+        raise ValueError(f"{label} must be a finite number")
+    return number
+
+
+def _require_nonnegative_number(value: object, label: str) -> float:
+    number = _require_number(value, label)
+    if number < 0:
+        raise ValueError(f"{label} must be >= 0")
+    return number
 
 
 def load_history(path: Path) -> History:
     raw = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise ValueError(f"{path}: top-level JSON must be an object")
     if raw.get("schema_version") != SCHEMA_VERSION:
         raise ValueError(
             f"{path}: schema_version must be {SCHEMA_VERSION}, got {raw.get('schema_version')!r}"
@@ -112,6 +128,9 @@ def load_history(path: Path) -> History:
             raise ValueError(f"{path}: node {node_id}: parent_id must be a string or null")
         if not isinstance(children, list) or not all(isinstance(item, str) for item in children):
             raise ValueError(f"{path}: node {node_id}: children must be a list of strings")
+        terminal = raw_node.get("terminal", False)
+        if not isinstance(terminal, bool):
+            raise ValueError(f"{path}: node {node_id}: terminal must be a boolean")
 
         calls = raw_node.get("calls", 1 if parent_id is not None else 0)
         if isinstance(calls, bool) or not isinstance(calls, int) or calls < 0:
@@ -130,7 +149,7 @@ def load_history(path: Path) -> History:
             quality=quality,
             calls=calls,
             latency_ms=latency_ms,
-            terminal=bool(raw_node.get("terminal", False)),
+            terminal=terminal,
         )
 
     if root_id not in nodes:
@@ -216,8 +235,10 @@ def replay(
     latency_penalty_per_second: float = 0.0,
 ) -> ReplayResult:
     policy.validate()
-    if call_penalty < 0 or latency_penalty_per_second < 0:
-        raise ValueError("penalties must be non-negative")
+    call_penalty = _require_nonnegative_number(call_penalty, "call_penalty")
+    latency_penalty_per_second = _require_nonnegative_number(
+        latency_penalty_per_second, "latency_penalty_per_second"
+    )
 
     root = history.nodes[history.root_id]
     best_quality = root.quality
@@ -425,15 +446,16 @@ def cmd_optimize(args: argparse.Namespace) -> int:
     train_histories = _load_many(args.train)
     holdout_histories = _load_many(args.holdout) if args.holdout else []
     ensure_disjoint_runs(train_histories, holdout_histories)
-    if args.min_train_improvement < 0:
-        raise ValueError("min_train_improvement must be non-negative")
+    min_train_improvement = _require_nonnegative_number(
+        args.min_train_improvement, "min_train_improvement"
+    )
     baseline = _policy_from_args(args)
     selected, train_result, baseline_train = optimize(
         train_histories,
         baseline=baseline,
         call_penalty=args.call_penalty,
         latency_penalty_per_second=args.latency_penalty,
-        min_train_improvement=args.min_train_improvement,
+        min_train_improvement=min_train_improvement,
     )
 
     payload: dict[str, object] = {

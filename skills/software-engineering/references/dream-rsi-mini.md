@@ -72,13 +72,13 @@ One JSON file represents one completed historical tree:
 }
 ```
 
-`children` order is part of the historical proposal order. A node's `quality`, `calls`, and `latency_ms` become observable only when that node is replayed. Unknown extra fields are preserved by the source trace but ignored by this v1 controller, so a recorder may attach provenance such as evaluator identity, failure class, workspace snapshot, ReasoningBank references, token usage, or artifact locations without changing replay semantics.
+`children` order is part of the historical proposal order. A node's `quality` becomes observable only when that node is replayed. `calls` is treated as recorded cost metadata and may be used before visiting a node to test whether the action fits the hard call budget; `latency_ms` is charged after a node is visited. This cost-aware replay is valid for a live experiment only when an equivalent pre-action cost estimate is available; do not substitute post-hoc actual cost for an unavailable estimate. Unknown extra fields are preserved by the source trace but ignored by this v1 controller, so a recorder may attach provenance such as evaluator identity, failure class, workspace snapshot, ReasoningBank references, token usage, or artifact locations without changing replay semantics.
 
 Each non-root node must have exactly one parent and must appear in that parent's `children` list. The helper rejects disconnected nodes, duplicate IDs, broken parent/child links, and cycles.
 
 ## Replay without hindsight leakage
 
-The controller starts with only the root observed. Visiting a node reveals at most the first `branch_limit` children recorded for that node. It cannot rank children by their eventual quality before visiting them.
+The controller starts with only the root observed. Visiting a node reveals at most the first `branch_limit` children recorded for that node. It cannot rank children by their eventual quality before visiting them; recorded cost metadata is the explicit exception used for budget feasibility.
 
 That boundary is deliberate. Reading every historical child score before choosing would turn replay into hindsight optimization rather than a simulation of what the controller could have known during the live run.
 

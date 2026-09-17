@@ -217,6 +217,57 @@ class DreamRSIReplayTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "quality is required"):
                 MODULE.load_history(path)
 
+    def test_loader_rejects_nonfinite_metric(self) -> None:
+        raw = {
+            "schema_version": 1,
+            "run_id": "nonfinite",
+            "root_id": "root",
+            "nodes": [
+                {"id": "root", "parent_id": None, "children": [], "quality": float("nan")},
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "nonfinite.json"
+            path.write_text(json.dumps(raw), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "finite number"):
+                MODULE.load_history(path)
+
+    def test_loader_rejects_non_boolean_terminal(self) -> None:
+        raw = {
+            "schema_version": 1,
+            "run_id": "bad-terminal",
+            "root_id": "root",
+            "nodes": [
+                {
+                    "id": "root",
+                    "parent_id": None,
+                    "children": [],
+                    "quality": 0,
+                    "terminal": "false",
+                },
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bad-terminal.json"
+            path.write_text(json.dumps(raw), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "terminal must be a boolean"):
+                MODULE.load_history(path)
+
+    def test_loader_rejects_non_object_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "list.json"
+            path.write_text("[]", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "top-level JSON must be an object"):
+                MODULE.load_history(path)
+
+    def test_replay_rejects_nonfinite_penalty(self) -> None:
+        with self.assertRaisesRegex(ValueError, "finite number"):
+            MODULE.replay(
+                self.history,
+                MODULE.Policy(max_calls=1),
+                call_penalty=float("nan"),
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

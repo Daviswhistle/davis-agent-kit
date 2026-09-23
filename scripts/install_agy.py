@@ -2,51 +2,47 @@
 from __future__ import annotations
 
 import argparse
-import os
 from pathlib import Path
 import sys
 
 from install_codex import InstallError, InstallResult, ensure_dir, preflight_link, same_link
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_RULES_HOME = Path("~/.gemini/antigravity-cli/rules")
+RULE_NAME = "davis-agent-kit.md"
 
 
-def default_gemini_home() -> Path:
-    cli_home = os.environ.get("GEMINI_CLI_HOME")
-    return Path(cli_home).expanduser() / ".gemini" if cli_home else Path("~/.gemini")
+def expected_link(repo_root: Path, rules_home: Path) -> tuple[Path, Path]:
+    return rules_home / RULE_NAME, repo_root / "providers" / "agy" / RULE_NAME
 
 
-def expected_link(repo_root: Path, gemini_home: Path) -> tuple[Path, Path]:
-    return gemini_home / "GEMINI.md", repo_root / "providers" / "gemini" / "GEMINI.md"
-
-
-def check(repo_root: Path, gemini_home: Path) -> list[str]:
-    path, target = expected_link(repo_root, gemini_home)
+def check(repo_root: Path, rules_home: Path) -> list[str]:
+    path, target = expected_link(repo_root, rules_home)
     problems = []
     if not target.is_file():
-        problems.append(f"missing Gemini guidance source: {target}")
+        problems.append(f"missing AGY guidance source: {target}")
     if not same_link(path, target):
-        problems.append(f"global GEMINI.md is not the expected symlink: {path}")
+        problems.append(f"AGY global rule is not the expected symlink: {path}")
     return problems
 
 
-def install(repo_root: Path, gemini_home: Path) -> InstallResult:
-    path, target = expected_link(repo_root, gemini_home)
+def install(repo_root: Path, rules_home: Path) -> InstallResult:
+    path, target = expected_link(repo_root, rules_home)
     if not target.is_file():
-        raise InstallError(f"missing Gemini guidance source: {target}")
+        raise InstallError(f"missing AGY guidance source: {target}")
 
-    create = preflight_link(path, target, "global GEMINI.md")
+    create = preflight_link(path, target, "AGY global rule")
     result = InstallResult()
     if not create:
         result.messages.append(f"KEEP {path}")
         return result
 
     try:
-        ensure_dir(gemini_home, result)
+        ensure_dir(rules_home, result)
         path.symlink_to(target)
         result.created_links.append(path)
         result.messages.append(f"LINK {path} -> {target}")
-        problems = check(repo_root, gemini_home)
+        problems = check(repo_root, rules_home)
         if problems:
             raise InstallError("; ".join(problems))
     except (OSError, RuntimeError, InstallError):
@@ -58,19 +54,19 @@ def install(repo_root: Path, gemini_home: Path) -> InstallResult:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Install Davis Agent Kit Gemini quality guidance."
+        description="Install Davis Agent Kit quality guidance for Antigravity CLI (agy)."
     )
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
     parser.add_argument(
-        "--gemini-home",
+        "--rules-home",
         type=Path,
-        default=default_gemini_home(),
-        help="Gemini CLI config directory (default: $GEMINI_CLI_HOME/.gemini or ~/.gemini)",
+        default=DEFAULT_RULES_HOME,
+        help="AGY global rules directory (default: ~/.gemini/antigravity-cli/rules)",
     )
     parser.add_argument(
         "--check",
         action="store_true",
-        help="verify the global GEMINI.md link without changing it",
+        help="verify the AGY global rule link without changing it",
     )
     return parser.parse_args()
 
@@ -78,26 +74,26 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     repo_root = args.root.expanduser().resolve()
-    gemini_home = args.gemini_home.expanduser().resolve(strict=False)
+    rules_home = args.rules_home.expanduser().resolve(strict=False)
 
     try:
         if args.check:
-            problems = check(repo_root, gemini_home)
+            problems = check(repo_root, rules_home)
             if problems:
                 for problem in problems:
                     print(f"FAIL: {problem}")
                 return 1
-            print("PASS: Davis Agent Kit Gemini guidance link is correct")
+            print("PASS: Davis Agent Kit AGY rule link is correct")
             return 0
-        result = install(repo_root, gemini_home)
+        result = install(repo_root, rules_home)
     except (InstallError, OSError, RuntimeError) as exc:
         print(f"Install failed: {exc}", file=sys.stderr)
         return 1
 
     for message in result.messages:
         print(message)
-    print("Gemini guidance is ready.")
-    print("Start a new Gemini CLI session or run /memory reload to load it.")
+    print("AGY guidance is ready.")
+    print("Start a new agy session to load the rule.")
     return 0
 
 

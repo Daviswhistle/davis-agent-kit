@@ -80,7 +80,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Run a bounded implementation worker in a separate Codex root session pinned to "
-            "GPT-5.6 Luna, Max reasoning, Fast/priority tier, and workspace-write sandbox."
+            "gpt-6 Luna, Max reasoning, Fast/priority tier, and workspace-write sandbox."
         )
     )
     parser.add_argument(

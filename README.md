@@ -9,6 +9,7 @@ davis-agent-kit/
 ├── AGENTS.md
 ├── AGENTS.override.md
 ├── skills/
+│   ├── capability-map/
 │   ├── translation-quality/
 │   ├── handoff-agent-builder/
 │   ├── software-engineering/
@@ -39,12 +40,33 @@ Codex의 자동 지침 로딩 계약에 맞춰 성격·말투·상호작용 원�
 
 ## Skills
 
+- `capability-map`: 코드 스냅샷에서 탐색 가능한 동작 지도, 한국어 설명서, 코드 없는 Astra 판단 패킷 생성
 - `translation-quality`: 비단순 한국어 번역, transcript·재무보고서 번역, source/numeric/format QA
 - `handoff-agent-builder`: Codex가 자동 발견하는 repo-local handoff skill 설계와 멀티턴 검증
 - `software-engineering`: 직접 실행·구현 위임과 로컬 검증, 필요할 때 CRA/TCA 또는 별도 오케스트레이터가 작업자를 구성하는 Teamwork
 - `writing-quality`: 글쓰기 자체가 품질 병목인 원고·장문 분석·게시용 문서 작성과 편집
 
 Codex는 skill을 먼저 metadata로 발견하고 선택된 skill의 `SKILL.md`와 필요한 reference만 읽습니다. 따라서 전역 원칙은 AGENTS에, 조건부 절차는 skill 내부에만 둡니다.
+
+### 코드베이스 지도 만들기
+
+설치 후 대상 저장소에서 새 에이전트 세션을 열고 요청합니다.
+
+```text
+$capability-map 이 저장소를 코드만 보고 지도화해줘.
+```
+
+백서 작성이나 JSON 준비는 필요하지 않습니다. 스킬이 소스 분석, 근거 검사, 고정 렌더러 실행을 맡고 `map.html`, `guide.md`, `astra-packet.json`을 생성합니다. 지도는 설치 없이 브라우저로 열 수 있습니다.
+
+Codex에서 별도 Luna mapper를 바로 실행하려면:
+
+```bash
+python3 ~/.agents/skills/capability-map/scripts/map.py run --repo .
+```
+
+Python 3.10+, Git, 기존 로그인된 Codex CLI를 사용합니다. helper 자체에 pip/npm 설치나 별도 API 키는 필요하지 않습니다. 기본 요청은 Luna + Max + priority/Fast이며 사용 가능한 모델·effort·tier는 실제 계정과 CLI가 결정합니다. 지원되지 않는 설정은 자동 대체하지 않습니다. 다른 에이전트는 스킬의 `prepare → 분석 → build` 경로를 사용할 수 있습니다.
+
+대상은 깨끗한 committed HEAD입니다. 변경 중인 tracked 파일이 있으면 중단하고, untracked 파일은 입력에 포함하지 않습니다. 결과의 `public/`만 공유하며, 소스·근거 경로·작업 로그가 있는 `private/`는 공개하지 않습니다. 소스 해석은 실제 실행 검증이나 현재 운영 상태의 증명이 아니며, 이 스킬만으로 OS 수준 읽기 격리를 보장하지 않습니다.
 
 ## 모델 운용
 

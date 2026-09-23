@@ -8,6 +8,9 @@
 davis-agent-kit/
 ├── AGENTS.md
 ├── AGENTS.override.md
+├── providers/
+│   └── gemini/
+│       └── GEMINI.md
 ├── skills/
 │   ├── translation-quality/
 │   ├── handoff-agent-builder/
@@ -22,6 +25,7 @@ davis-agent-kit/
 
 - `AGENTS.md`: 모든 작업의 기본 자세, 권한, 완료 기준과 skill routing
 - `AGENTS.override.md`: 이 저장소 자체를 수정할 때의 관리 규칙
+- `providers/gemini/GEMINI.md`: Gemini의 누락·검증 부족을 보정하는 선택형 전역 지침
 - `skills/`: 반복 workflow와 그 workflow에만 필요한 references, agents, scripts, tests
 - `pets/hwito/`: 선택해서 설치할 수 있는 Codex custom pet
 - `scripts/install_codex.py`: 전역 AGENTS와 user skills를 심링크
@@ -89,6 +93,22 @@ Codex는 skill을 먼저 metadata로 발견하고 선택된 skill의 `SKILL.md`�
 `--check`는 kit의 전역 `AGENTS.md`·user skill 링크와 전역 override 우선순위를 검사하며 custom pet은 검사하지 않습니다. 실제 Codex 세션의 전체 지침 로딩이나 프로젝트별 override까지 검증했다는 뜻은 아닙니다.
 
 `AGENTS.md` 또는 skill 설치·변경 뒤에는 새 Codex 세션을 시작합니다.
+
+### 선택: Gemini 품질 보정
+
+Gemini CLI에도 이 kit의 보정 지침을 전역으로 적용하려면:
+
+```bash
+python3 scripts/install_gemini.py
+```
+
+설치기는 `~/.gemini/GEMINI.md`를 `providers/gemini/GEMINI.md`에 연결합니다. 기존 `GEMINI.md`가 있으면 덮어쓰지 않고 중단합니다. 설치 상태만 확인하려면:
+
+```bash
+python3 scripts/install_gemini.py --check
+```
+
+이 overlay는 Codex용 skill이나 모델 선택 규칙을 Gemini에 복제하지 않습니다. Gemini가 상위 수준의 그럴듯한 답에서 멈추지 않고 전제·실패 모드·실제 control/data flow·downstream 효과·필수 검증을 끝까지 확인하도록 보정합니다. 적용 뒤에는 새 Gemini CLI 세션을 시작하거나 `/memory reload`를 실행합니다.
 
 ### 선택: Hwito
 

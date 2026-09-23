@@ -11,6 +11,11 @@ from install_codex import InstallError, InstallResult, ensure_dir, preflight_lin
 DEFAULT_ROOT = Path(__file__).resolve().parents[1]
 
 
+def default_gemini_home() -> Path:
+    cli_home = os.environ.get("GEMINI_CLI_HOME")
+    return Path(cli_home).expanduser() / ".gemini" if cli_home else Path("~/.gemini")
+
+
 def expected_link(repo_root: Path, gemini_home: Path) -> tuple[Path, Path]:
     return gemini_home / "GEMINI.md", repo_root / "providers" / "gemini" / "GEMINI.md"
 
@@ -59,8 +64,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--gemini-home",
         type=Path,
-        default=Path(os.environ.get("GEMINI_HOME") or "~/.gemini"),
-        help="Gemini CLI user home (default: GEMINI_HOME or ~/.gemini)",
+        default=default_gemini_home(),
+        help="Gemini CLI config directory (default: $GEMINI_CLI_HOME/.gemini or ~/.gemini)",
     )
     parser.add_argument(
         "--check",

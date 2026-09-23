@@ -17,6 +17,13 @@ import install_gemini  # noqa: E402
 
 @unittest.skipIf(os.name == "nt", "symlink contract is POSIX-oriented")
 class GeminiInstallerTests(unittest.TestCase):
+    def test_default_home_follows_gemini_cli_home(self) -> None:
+        with mock.patch.dict(os.environ, {"GEMINI_CLI_HOME": "/tmp/gemini-user"}):
+            self.assertEqual(
+                install_gemini.default_gemini_home(),
+                Path("/tmp/gemini-user/.gemini"),
+            )
+
     def test_install_is_idempotent_and_checkable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             gemini_home = Path(tmp) / ".gemini"

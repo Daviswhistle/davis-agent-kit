@@ -102,7 +102,7 @@ Gemini CLI에도 이 kit의 보정 지침을 전역으로 적용하려면:
 python3 scripts/install_gemini.py
 ```
 
-설치기는 `~/.gemini/GEMINI.md`를 `providers/gemini/GEMINI.md`에 연결합니다. 기존 `GEMINI.md`가 있으면 덮어쓰지 않고 중단합니다. 설치 상태만 확인하려면:
+설치기는 Gemini CLI의 사용자 설정 위치(`$GEMINI_CLI_HOME/.gemini`, 미설정 시 `~/.gemini`)의 `GEMINI.md`를 `providers/gemini/GEMINI.md`에 연결합니다. 기존 `GEMINI.md`가 있으면 덮어쓰지 않고 중단합니다. 설치 상태만 확인하려면:
 
 ```bash
 python3 scripts/install_gemini.py --check

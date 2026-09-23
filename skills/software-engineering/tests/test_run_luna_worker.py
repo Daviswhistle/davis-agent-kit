@@ -22,7 +22,7 @@ class LunaWorkerLauncherTests(unittest.TestCase):
     def test_build_command_pins_worker_resources(self) -> None:
         command = MODULE.build_command("codex", Path("/repo"), False)
         self.assertEqual(command[:3], ["codex", "exec", "--strict-config"])
-        self.assertIn("gpt-5.6-luna", command)
+        self.assertIn("gpt-6-luna", command)
         self.assertIn("workspace-write", command)
         self.assertIn('model_reasoning_effort="max"', command)
         self.assertIn('service_tier="priority"', command)
@@ -83,7 +83,7 @@ class LunaWorkerLauncherTests(unittest.TestCase):
             observed = json.loads(record.read_text(encoding="utf-8"))
             self.assertEqual(observed["stdin"], "Goal: change one file")
             self.assertEqual(observed["argv"][:2], ["exec", "--strict-config"])
-            self.assertIn("gpt-5.6-luna", observed["argv"])
+            self.assertIn("gpt-6-luna", observed["argv"])
             self.assertIn('service_tier="priority"', observed["argv"])
             self.assertEqual(observed["argv"][-1], "-")
 

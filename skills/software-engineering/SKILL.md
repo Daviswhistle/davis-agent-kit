@@ -26,7 +26,7 @@ Do not create workflow ceremony merely because a task is difficult or has many s
 
 Before initial delegation or reusing an agent for a changed role or scope, explicitly select the role, model, reasoning effort, service tier and history propagation. Record the selection and a brief reason in the handoff or existing task record before dispatch. Reuse and inherited settings require the same assessment; convenience or context continuity alone does not justify retaining more expensive resources.
 
-- bounded implementation worker: first candidate `gpt-5.6-luna`, Max reasoning, Fast tier
+- bounded implementation worker: first candidate `gpt-6-luna`, Max reasoning, Fast tier
 - independent CRA reviewer: `gpt-6-astra`, High reasoning, default/non-Fast service tier
 - explorer: cheapest available model that can answer the bounded discovery question reliably
 - Teamwork orchestrator and non-implementation specialists: choose resources proportionate to the planning or verification risk using the current launcher and available account/runtime capacity; the implementation worker default does not automatically govern these roles

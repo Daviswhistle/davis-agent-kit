@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import sys
 
-MODEL = "gpt-5.6-luna"
+MODEL = "gpt-6-luna"
 REASONING_EFFORT = "max"
 SERVICE_TIER = "priority"
 SANDBOX_MODE = "workspace-write"

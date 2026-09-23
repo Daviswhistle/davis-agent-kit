@@ -35,7 +35,7 @@ Use the selection requirements and role defaults in [SKILL.md](../SKILL.md#resou
 
 ### Luna + Fast routing
 
-Current Codex native subagents inherit the root service tier, so a non-Fast primary cannot make only one native Luna child Fast. In that case launch the implementation worker as an independent root with `scripts/run_luna_worker.py`. The helper pins `gpt-5.6-luna`, Max reasoning, `service_tier=priority`, `workspace-write`, and `approval_policy=never`, injects the bounded worker instructions as developer instructions, and uses `--strict-config` so an installed CLI that does not recognize a pinned setting fails instead of silently downgrading it.
+Current Codex native subagents inherit the root service tier, so a non-Fast primary cannot make only one native Luna child Fast. In that case launch the implementation worker as an independent root with `scripts/run_luna_worker.py`. The helper pins `gpt-6-luna`, Max reasoning, `service_tier=priority`, `workspace-write`, and `approval_policy=never`, injects the bounded worker instructions as developer instructions, and uses `--strict-config` so an installed CLI that does not recognize a pinned setting fails instead of silently downgrading it.
 
 Pass the handoff contract on stdin so shell quoting does not become part of the task:
 
@@ -46,7 +46,7 @@ Scope: ...
 Out of scope: ...
 Constraints: ...
 Authority: read/edit/test; no remote mutation
-Resources: implementation worker; gpt-5.6-luna; Max; Fast; bounded contract only; precise implementation scope fits the first candidate
+Resources: implementation worker; gpt-6-luna; Max; Fast; bounded contract only; precise implementation scope fits the first candidate
 Validation: ...
 Return: changed files, effect, raw results, skipped checks, uncertainty, blockers
 CONTRACT

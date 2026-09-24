@@ -54,6 +54,12 @@ CONTRACT
 
 Wait for this writer to exit before the primary or another writer edits the same worktree. Inspect the actual diff and validation afterward. Because this is a nested `codex exec`, the outer shell execution must be allowed to reach the Codex backend; if its sandbox blocks network access, use an explicitly approved network-capable execution path or do not delegate rather than bypassing that boundary silently. If the root session is already Fast, native delegation remains acceptable when its other constraints fit.
 
+### Dream-RSI mini replay experiment
+
+For repeated, comparable search or delegation work, an opt-in offline experiment may use completed search trees to compare where a controller would have spent its budget. Read [dream-rsi-mini.md](dream-rsi-mini.md) before using `scripts/dream_rsi_replay.py`.
+
+The replay helper is advisory only: it does not launch Codex, generate missing branches, edit a worktree, or grant live delegation authority. Keep the current controller as the baseline, separate training histories from whole-run holdouts, and treat any replay-selected policy as a shadow/recommendation candidate until held-out evidence and later live runs support promotion. Historical child quality outcomes that were not yet visited by the replay policy must remain hidden from that policy; recorded cost metadata is used only for the explicit budget-feasibility rule documented in `dream-rsi-mini.md`.
+
 ## Context
 
 Use the runtime default context for every role. Do not increase `model_context_window` or `model_auto_compact_token_limit`.

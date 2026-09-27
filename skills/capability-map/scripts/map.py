@@ -45,8 +45,14 @@ def read_json(path):
                       parse_constant=lambda value: (_ for _ in ()).throw(MapError('Nonfinite JSON')))
 
 def git(repo, *args):
-    result = subprocess.run(['git', '-C', str(repo), *args], capture_output=True, check=False)
+    env = os.environ.copy()
+    env['GIT_NO_LAZY_FETCH'] = '1'
+    env['GIT_OPTIONAL_LOCKS'] = '0'
+    result = subprocess.run(['git', '-c', 'core.fsmonitor=false', '-C', str(repo), *args],
+                            capture_output=True, check=False, env=env)
     if result.returncode:
+        if args[:2] == ('cat-file', 'blob'):
+            raise MapError('Required committed blob is unavailable locally; fetch missing Git objects before mapping.')
         raise MapError('Git command failed: ' + ' '.join(args[:2]))
     return result.stdout
 
@@ -196,8 +202,17 @@ def validate(work, model):
     reviewed = set(model['reviewed_files'])
     if len(reviewed) != len(model['reviewed_files']) or not reviewed.issubset(files):
         raise MapError('Invalid reviewed file inventory')
-    if not model['nodes'] or not model['rules'] or not model['summary'].strip() or not reviewed:
+    if not model['nodes'] or not model['rules'] or not reviewed:
         raise MapError('Empty map is not a completed analysis')
+    required_text = [('title', model['title']), ('summary', model['summary'])]
+    required_text += [('node.' + n['id'] + '.label', n['label']) for n in model['nodes']]
+    required_text += [('node.' + n['id'] + '.purpose', n['purpose']) for n in model['nodes']]
+    required_text += [('rule.' + r['id'] + '.title', r['title']) for r in model['rules']]
+    required_text += [('rule.' + r['id'] + '.text', r['text']) for r in model['rules']]
+    required_text += [('relation.' + r['id'] + '.label', r['label']) for r in model['relations']]
+    for where, value in required_text:
+        if not value.strip():
+            raise MapError(where + ': blank required text')
     all_ids = set()
     for group in ('nodes', 'rules', 'relations', 'evidence'):
         for item in model[group]:
@@ -231,9 +246,15 @@ def validate(work, model):
 def public_model(model, manifest, files):
     result = {k: v for k, v in model.items() if k not in {'evidence', 'reviewed_files'}}
     result['evidence'] = [{'id': e['id'], 'kind': e['kind'], 'status': 'not_runtime_verified'} for e in model['evidence']]
+    excluded_by_reason = {}
+    for item in manifest['files']:
+        if item['status'] != 'available':
+            excluded_by_reason[item['reason']] = excluded_by_reason.get(item['reason'], 0) + 1
     result['coverage'] = {'available_files': len(files), 'reviewed_files': len(model['reviewed_files']),
        'unreviewed_files': len(files) - len(model['reviewed_files']),
-       'excluded_files': len(manifest['files']) - len(files)}
+       'excluded_files': len(manifest['files']) - len(files),
+       'excluded_by_reason': dict(sorted(excluded_by_reason.items()))}
+    result['input_limitations'] = list(manifest['limitations'])
     result['commit'] = manifest['commit']
     result['limitations'] = ['Static interpretation, not approved intent or execution proof.',
         'Evidence reference checks do not establish semantic correctness.',
@@ -242,14 +263,19 @@ def public_model(model, manifest, files):
         'Coverage counts files, not fully inspected branches; influence is a candidate set.']
     # Fail on obvious accidental path disclosure; prose quality still requires review.
     public_text = json.dumps(result, ensure_ascii=False)
-    if '```' in public_text or any(path in public_text for path in files):
+    source_path_tokens = set(files)
+    for path in files:
+        parts = PurePosixPath(path).parts
+        source_path_tokens.update('/'.join(parts[i:]) for i in range(1, len(parts)))
+    source_path_tokens |= {token.replace('/', '\\') for token in source_path_tokens if '/' in token}
+    if '```' in public_text or any(token and token in public_text for token in source_path_tokens):
         raise MapError('Source path/code fence in public prose; remove it before publishing')
     return result
 
 def guide(public):
     lines = ['# ' + public['title'], '', public['summary'], '',
              '기준 커밋: ' + public['commit'], '상태: 소스 정적 해석 · 실행 미검증', '',
-             '## 범위와 한계', *['- ' + s for s in public['limitations'] + public['unknowns']], '']
+             '## 범위와 한계', *['- ' + s for s in public['input_limitations'] + public['limitations'] + public['unknowns']], '']
     for n in public['nodes']:
         lines += ['## ' + n['label'], n['purpose'], '']
         for field, label in [('inputs', '입력'), ('outputs', '출력'), ('state', '기억하는 상태'), ('unknowns', '미확인')]:
@@ -293,16 +319,19 @@ def run_mapper(work, codex_bin='codex', model='gpt-6-luna', effort='max', tier='
         raise MapError('Codex is unavailable. Use prepare/build with the current source-reading agent.')
     private = work / 'private'
     help_result = subprocess.run([binary, 'exec', '--help'], capture_output=True, text=True, timeout=15)
-    for flag in ('--output-schema', '--output-last-message', '--sandbox', '--skip-git-repo-check'):
+    for flag in ('--output-schema', '--output-last-message', '--sandbox', '--skip-git-repo-check',
+                 '--ephemeral', '--ignore-user-config', '--ignore-rules'):
         if flag not in help_result.stdout:
             raise MapError('Installed Codex lacks required flag: ' + flag)
     candidate = private / 'candidate.json'
-    command = [binary, 'exec', '--strict-config', '--model', model, '--sandbox', 'read-only', '--cd', str(private / 'input'),
+    command = [binary, 'exec', '--strict-config', '--ephemeral', '--ignore-user-config', '--ignore-rules',
+        '--model', model, '--sandbox', 'read-only', '--cd', str(private / 'input'),
         '--skip-git-repo-check', '--output-schema', str(private / 'model.schema.json'),
         '--output-last-message', str(candidate), '-c', 'approval_policy="never"',
         '-c', 'model_reasoning_effort=' + json.dumps(effort), '-c', 'service_tier=' + json.dumps(tier), '-']
     write_json(private / 'launch.json', {'requested': {'model': model, 'effort': effort, 'tier': tier},
-        'actual_settings': 'unverified', 'read_isolation': 'not_os_enforced'})
+        'actual_settings': 'unverified', 'read_isolation': 'not_os_enforced',
+        'session_persistence': 'ephemeral', 'user_config': 'ignored', 'execpolicy_rules': 'ignored'})
     # Raw worker messages never flow into the parent model's context.
     with (private / 'worker.log').open('wb') as log:
         try:

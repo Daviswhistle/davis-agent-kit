@@ -64,7 +64,7 @@ Codex에서 별도 Luna mapper를 바로 실행하려면:
 python3 ~/.agents/skills/capability-map/scripts/map.py run --repo .
 ```
 
-Python 3.10+, Git, 기존 로그인된 Codex CLI를 사용합니다. helper 자체에 pip/npm 설치나 별도 API 키는 필요하지 않습니다. 기본 요청은 Luna + Max + priority/Fast이며 사용 가능한 모델·effort·tier는 실제 계정과 CLI가 결정합니다. 지원되지 않는 설정은 자동 대체하지 않습니다. 다른 에이전트는 스킬의 `prepare → 분석 → build` 경로를 사용할 수 있습니다.
+Python 3.10+, Git, 기존 로그인된 Codex CLI를 사용합니다. helper 자체에 pip/npm 설치나 별도 API 키는 필요하지 않습니다. 기본 요청은 Luna + Max + priority/Fast이며 사용 가능한 모델·effort·tier는 실제 계정과 CLI가 결정합니다. 지원되지 않는 설정은 자동 대체하지 않습니다. 별도 mapper는 ephemeral session으로 실행되고 사용자 `config.toml`과 user/project execpolicy rules를 읽지 않으며, 필요한 CLI 옵션이 없으면 실패합니다. 다른 에이전트는 스킬의 `prepare → 분석 → build` 경로를 사용할 수 있습니다.
 
 대상은 깨끗한 committed HEAD입니다. 변경 중인 tracked 파일이 있으면 중단하고, untracked 파일은 입력에 포함하지 않습니다. 결과의 `public/`만 공유하며, 소스·근거 경로·작업 로그가 있는 `private/`는 공개하지 않습니다. 소스 해석은 실제 실행 검증이나 현재 운영 상태의 증명이 아니며, 이 스킬만으로 OS 수준 읽기 격리를 보장하지 않습니다.
 

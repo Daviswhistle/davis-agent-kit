@@ -205,7 +205,7 @@ class MapTests(unittest.TestCase):
         def fake_run(command, **kwargs):
             calls.append((command, kwargs))
             if command[-1] == '--help':
-                return subprocess.CompletedProcess(command, 0, stdout='--output-schema --output-last-message --sandbox --skip-git-repo-check')
+                return subprocess.CompletedProcess(command, 0, stdout='--output-schema --output-last-message --sandbox --skip-git-repo-check --ephemeral --ignore-user-config --ignore-rules')
             candidate = Path(command[command.index('--output-last-message')+1])
             m.write_json(candidate, self.model)
             self.assertIsNotNone(kwargs['stdout'])
@@ -217,13 +217,75 @@ class MapTests(unittest.TestCase):
         command = calls[-1][0]
         self.assertEqual(command[command.index('--sandbox')+1], 'read-only')
         self.assertIn('gpt-6-luna', command)
-        self.assertEqual(m.read_json(self.work / 'private/launch.json')['actual_settings'], 'unverified')
+        launch = m.read_json(self.work / 'private/launch.json')
+        self.assertEqual(launch['actual_settings'], 'unverified')
+        self.assertEqual(launch['session_persistence'], 'ephemeral')
+        for flag in ('--ephemeral', '--ignore-user-config', '--ignore-rules'):
+            self.assertIn(flag, command)
 
     def test_runner_failure_not_success(self):
-        help_text = '--output-schema --output-last-message --sandbox --skip-git-repo-check'
+        help_text = '--output-schema --output-last-message --sandbox --skip-git-repo-check --ephemeral --ignore-user-config --ignore-rules'
         with patch.object(m.shutil, 'which', return_value='/fake/codex'), patch.object(m.subprocess, 'run', side_effect=[subprocess.CompletedProcess([], 0, stdout=help_text), subprocess.CompletedProcess([], 1)]):
             with self.assertRaises(m.MapError): m.run_mapper(self.work)
         self.assertFalse((self.work / 'public').exists())
+
+    def test_git_reads_disable_fsmonitor_lazy_fetch_and_optional_writes(self):
+        completed = subprocess.CompletedProcess([], 0, stdout=b'', stderr=b'')
+        with patch.object(m.subprocess, 'run', return_value=completed) as run:
+            m.git(self.repo, 'status', '--porcelain')
+        command = run.call_args.args[0]
+        env = run.call_args.kwargs['env']
+        self.assertEqual(command[:4], ['git', '-c', 'core.fsmonitor=false', '-C'])
+        self.assertEqual(env['GIT_NO_LAZY_FETCH'], '1')
+        self.assertEqual(env['GIT_OPTIONAL_LOCKS'], '0')
+
+    def test_missing_committed_blob_reports_local_object_requirement(self):
+        completed = subprocess.CompletedProcess([], 1, stdout=b'', stderr=b'missing')
+        with patch.object(m.subprocess, 'run', return_value=completed):
+            with self.assertRaisesRegex(m.MapError, 'unavailable locally'):
+                m.git(self.repo, 'cat-file', 'blob', 'deadbeef')
+
+    def test_blank_required_display_text_rejected(self):
+        cases = [
+            ('title', lambda x: x.__setitem__('title', '   ')),
+            ('node label', lambda x: x['nodes'][0].__setitem__('label', '\t')),
+            ('node purpose', lambda x: x['nodes'][0].__setitem__('purpose', '\n')),
+            ('rule title', lambda x: x['rules'][0].__setitem__('title', ' ')),
+            ('rule text', lambda x: x['rules'][0].__setitem__('text', ' ')),
+        ]
+        for name, mutate in cases:
+            with self.subTest(name=name):
+                candidate = copy.deepcopy(self.model)
+                mutate(candidate)
+                with self.assertRaises(m.MapError):
+                    m.validate(self.work, candidate)
+
+    def test_nested_source_basename_cannot_leak_publicly(self):
+        nested = self.repo / 'src'
+        nested.mkdir()
+        (nested / 'helper.py').write_text('VALUE = 1\n', 'utf-8')
+        self.git('add', '.'); self.git('commit', '-qm', 'nested source')
+        work = m.prepare(self.repo, self.root / 'nested')
+        manifest = m.read_json(work / 'private/manifest.json')
+        candidate = copy.deepcopy(self.model)
+        candidate['snapshot'] = manifest['snapshot']
+        candidate['summary'] = 'helper.py contains the behavior.'
+        m.write_json(work / 'private/model.json', candidate)
+        with self.assertRaises(m.MapError):
+            m.build(work)
+
+    def test_public_packet_exposes_input_scope_and_exclusion_reasons(self):
+        self.save()
+        packet = m.read_json(m.build(self.work) / 'astra-packet.json')
+        self.assertTrue(any('untracked' in x.lower() for x in packet['input_limitations']))
+        self.assertEqual(packet['coverage']['excluded_by_reason']['sensitive_name'], 1)
+        self.assertEqual(packet['coverage']['excluded_by_reason']['non_source'], 1)
+
+    def test_viewer_projects_relations_before_impact_reachability(self):
+        content = (m.SKILL / 'assets/viewer.html').read_text('utf-8')
+        self.assertIn('reach(selected,ids)', content)
+        self.assertIn('projected(e.from,visible)', content)
+        self.assertIn('projected(e.to,visible)', content)
 
 if __name__ == '__main__':
     unittest.main()

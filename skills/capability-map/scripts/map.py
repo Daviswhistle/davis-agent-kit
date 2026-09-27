@@ -146,6 +146,7 @@ def prepare(repo, out=None):
     inputs.mkdir(parents=True)
     manifest = {'version': 1, 'commit': commit, 'repository': root.name, 'files': [],
                 'limitations': ['HEAD only; untracked and ignored worktree files are not inputs.',
+                 'Only recognized source extensions and config candidates are available; other languages/resources are excluded as non_source.',
                  'Config candidates require semantic classification by the mapper.',
                  'Source filtering is not OS read isolation or a complete secret detector.']}
     for entry in git(root, 'ls-tree', '-r', '-z', '--full-tree', commit).split(b'\0'):
@@ -263,8 +264,8 @@ def public_model(model, manifest, files):
         'Coverage counts files, not fully inspected branches; influence is a candidate set.']
     # Fail on obvious accidental path disclosure; prose quality still requires review.
     public_text = json.dumps(result, ensure_ascii=False)
-    source_path_tokens = set(files)
-    for path in files:
+    source_path_tokens = {item['path'] for item in manifest['files']}
+    for path in list(source_path_tokens):
         parts = PurePosixPath(path).parts
         source_path_tokens.update('/'.join(parts[i:]) for i in range(1, len(parts)))
     source_path_tokens |= {token.replace('/', '\\') for token in source_path_tokens if '/' in token}

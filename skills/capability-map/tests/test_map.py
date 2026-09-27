@@ -278,8 +278,26 @@ class MapTests(unittest.TestCase):
         self.save()
         packet = m.read_json(m.build(self.work) / 'astra-packet.json')
         self.assertTrue(any('untracked' in x.lower() for x in packet['input_limitations']))
+        self.assertTrue(any('other languages/resources' in x for x in packet['input_limitations']))
         self.assertEqual(packet['coverage']['excluded_by_reason']['sensitive_name'], 1)
         self.assertEqual(packet['coverage']['excluded_by_reason']['non_source'], 1)
+
+    def test_excluded_manifest_basename_cannot_leak_publicly(self):
+        candidate = copy.deepcopy(self.model)
+        candidate['summary'] = 'README.md was intentionally ignored.'
+        m.write_json(self.work / 'private/model.json', candidate)
+        with self.assertRaises(m.MapError):
+            m.build(self.work)
+
+    @unittest.skipIf(os.name == 'nt', 'fsmonitor executable fixture is POSIX-only')
+    def test_prepare_does_not_execute_configured_fsmonitor(self):
+        marker = self.root / 'fsmonitor-ran'
+        hook = self.root / 'fsmonitor-hook.sh'
+        hook.write_text('#!/bin/sh\nprintf x > "' + str(marker) + '"\nprintf "0\\n"\n', 'utf-8')
+        hook.chmod(0o755)
+        self.git('config', 'core.fsmonitor', str(hook))
+        m.prepare(self.repo, self.root / 'fsmonitor-safe')
+        self.assertFalse(marker.exists())
 
     def test_viewer_projects_relations_before_impact_reachability(self):
         content = (m.SKILL / 'assets/viewer.html').read_text('utf-8')

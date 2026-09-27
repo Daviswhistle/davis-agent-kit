@@ -1,0 +1,4 @@
+interface:
+  display_name: "Capability Map"
+  short_description: "코드에서 탐색 가능한 의미 지도·설명서 생성"
+  default_prompt: "Use $capability-map to create an interactive source-grounded map of this repository, a Korean guide, and a source-free architect packet. Produce the files, not a plan."

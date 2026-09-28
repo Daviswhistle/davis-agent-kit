@@ -81,6 +81,22 @@ class MapTests(unittest.TestCase):
         files = m.read_json(w / 'private/manifest.json')['files']
         self.assertEqual(next(x for x in files if x['path'] == 'linked.py')['reason'], 'symlink_or_submodule')
 
+    @unittest.skipIf(os.name == 'nt', 'Git executable-mode fixture is POSIX-only')
+    def test_manifest_preserves_committed_executable_mode(self):
+        entry = self.repo / 'entry.sh'
+        helper = self.repo / 'helper.sh'
+        entry.write_text('#!/bin/sh\necho entry\n', 'utf-8')
+        helper.write_text('#!/bin/sh\necho helper\n', 'utf-8')
+        entry.chmod(0o755)
+        helper.chmod(0o644)
+        self.git('add', 'entry.sh', 'helper.sh'); self.git('commit', '-qm', 'script modes')
+        work = m.prepare(self.repo, self.root / 'modes')
+        files = {x['path']: x for x in m.read_json(work / 'private/manifest.json')['files']}
+        self.assertEqual(files['entry.sh']['mode'], '100755')
+        self.assertEqual(files['helper.sh']['mode'], '100644')
+        self.assertEqual((work / 'private/input/entry.sh').stat().st_mode & 0o111, 0)
+        self.assertEqual((work / 'private/input/helper.sh').stat().st_mode & 0o111, 0)
+
     def test_sensitive_content_rejected(self):
         (self.repo / 'token.py').write_text('v="ghp_' + 'a'*30 + '"')
         self.git('add', '.'); self.git('commit', '-qm', 'token')

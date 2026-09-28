@@ -299,21 +299,34 @@ def public_model(model, manifest, files):
         raise MapError('Source path/code fence in public prose; remove it before publishing')
     return result
 
+MARKDOWN_SPECIAL = re.compile(r'([\\`*_{}\[\]()#+.!|>~=\-])')
+
+def markdown_text(value):
+    lines = value.replace('\r\n', '\n').replace('\r', '\n').split('\n')
+    escaped = []
+    for line in lines:
+        line = html.escape(line.lstrip(' \t'), quote=False)
+        line = MARKDOWN_SPECIAL.sub(lambda match: '\\' + match.group(0), line)
+        escaped.append(line)
+    return '  \n'.join(escaped)
+
 def guide(public):
-    lines = ['# ' + public['title'], '', public['summary'], '',
-             '기준 커밋: ' + public['commit'], '상태: 소스 정적 해석 · 실행 미검증', '',
-             '## 범위와 한계', *['- ' + s for s in public['input_limitations'] + public['limitations'] + public['unknowns']], '']
+    lines = ['# ' + markdown_text(public['title']), '', markdown_text(public['summary']), '',
+             '기준 커밋: ' + markdown_text(public['commit']), '상태: 소스 정적 해석 · 실행 미검증', '',
+             '## 범위와 한계', *['- ' + markdown_text(s) for s in public['input_limitations'] + public['limitations'] + public['unknowns']], '']
     for n in public['nodes']:
-        lines += ['## ' + n['label'], n['purpose'], '']
+        lines += ['## ' + markdown_text(n['label']), markdown_text(n['purpose']), '']
         for field, label in [('inputs', '입력'), ('outputs', '출력'), ('state', '기억하는 상태'), ('unknowns', '미확인')]:
-            lines += ['**' + label + '**: ' + (' / '.join(n[field]) or '명시된 항목 없음')]
+            values = ' / '.join(markdown_text(value) for value in n[field])
+            lines += ['**' + label + '**: ' + (values or '명시된 항목 없음')]
         for r in public['rules']:
             if r['node'] == n['id']:
-                lines += ['', '### ' + r['title'], r['text'], '근거: ' + ', '.join(r['evidence'])]
+                lines += ['', '### ' + markdown_text(r['title']), markdown_text(r['text']),
+                          '근거: ' + ', '.join(markdown_text(e) for e in r['evidence'])]
         for r in public['relations']:
             if r['from'] == n['id'] or r['to'] == n['id']:
-                lines += ['', '연결 ' + r['from'] + ' → ' + r['to'] + ': ' + r['label'],
-                          '조건: ' + r['condition'] + ' / 시점: ' + r['timing']]
+                lines += ['', '연결 ' + markdown_text(r['from']) + ' → ' + markdown_text(r['to']) + ': ' + markdown_text(r['label']),
+                          '조건: ' + markdown_text(r['condition']) + ' / 시점: ' + markdown_text(r['timing'])]
         lines += ['']
     return '\n'.join(lines) + '\n'
 

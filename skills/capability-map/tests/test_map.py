@@ -177,6 +177,22 @@ class MapTests(unittest.TestCase):
         self.save()
         with self.assertRaises(m.MapError): m.build(self.work)
 
+    def test_guide_escapes_model_markdown_and_html(self):
+        candidate = copy.deepcopy(self.model)
+        candidate['title'] = 'Title <b>unsafe</b>'
+        candidate['summary'] = '<img src="https://attacker.invalid/x">\n# injected\n![x](https://attacker.invalid/x)'
+        candidate['nodes'][0]['purpose'] = '> quote\n    indented code'
+        candidate['rules'][0]['text'] = '*bold* [link](https://attacker.invalid/x)'
+        m.write_json(self.work / 'private/model.json', candidate)
+        guide = (m.build(self.work) / 'guide.md').read_text('utf-8')
+        self.assertNotIn('<img', guide)
+        self.assertNotIn('<b>', guide)
+        self.assertNotIn('\n# injected', guide)
+        self.assertNotIn('![x](', guide)
+        self.assertIn('&lt;img', guide)
+        self.assertIn('\\# injected', guide)
+        self.assertIn('\\!\\[x\\]\\(', guide)
+
     def test_script_injection_escaped(self):
         self.model['title'] = '</script><img src=x onerror=alert(1)>'
         self.save(); output = m.build(self.work)

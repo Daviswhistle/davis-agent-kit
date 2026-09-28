@@ -200,6 +200,22 @@ class MapTests(unittest.TestCase):
         self.assertNotIn('</script><img', content)
         self.assertIn('\\u003c/script', content)
 
+    def test_viewer_placeholders_inside_model_text_remain_literal(self):
+        candidate = copy.deepcopy(self.model)
+        candidate['title'] = 'Title __MAP_JSON__'
+        candidate['summary'] = 'Literal __PAGE_TITLE__ token'
+        m.write_json(self.work / 'private/model.json', candidate)
+        output = m.build(self.work)
+        content = (output / 'map.html').read_text('utf-8')
+        prefix = '<script id="map-data" type="application/json">'
+        suffix = '</script><script>'
+        embedded = json.loads(content.split(prefix, 1)[1].split(suffix, 1)[0])
+        packet = m.read_json(output / 'astra-packet.json')
+        self.assertEqual(embedded, packet)
+        self.assertEqual(embedded['summary'], 'Literal __PAGE_TITLE__ token')
+        self.assertEqual(embedded['title'], 'Title __MAP_JSON__')
+        self.assertIn('<title>Title __MAP_JSON__ · Capability Map</title>', content)
+
     def test_path_traversal_and_symlink(self):
         with self.assertRaises(m.MapError): m.safe_path(self.root, '../escape')
         with self.assertRaises(m.MapError): m.safe_path(self.root, '/absolute')

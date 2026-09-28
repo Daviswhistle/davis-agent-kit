@@ -330,6 +330,14 @@ def guide(public):
         lines += ['']
     return '\n'.join(lines) + '\n'
 
+VIEWER_PLACEHOLDER = re.compile(r'__(?:PAGE_TITLE|MAP_JSON)__')
+
+def render_viewer(template, title, data):
+    replacements = {'__PAGE_TITLE__': html.escape(title), '__MAP_JSON__': data}
+    if any(template.count(token) != 1 for token in replacements):
+        raise MapError('Invalid viewer template placeholders')
+    return VIEWER_PLACEHOLDER.sub(lambda match: replacements[match.group(0)], template)
+
 def build(work):
     work = work.resolve()
     model = read_json(work / 'private/model.json')
@@ -337,8 +345,7 @@ def build(work):
     public = public_model(model, manifest, files)
     template = (SKILL / 'assets/viewer.html').read_text('utf-8')
     data = encoded(public).decode().replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
-    rendered = template.replace('__MAP_JSON__', data)
-    rendered = rendered.replace('__PAGE_TITLE__', html.escape(public['title']))
+    rendered = render_viewer(template, public['title'], data)
     output = work / 'public'
     if output.is_symlink():
         raise MapError('Public output must not be a symlink')

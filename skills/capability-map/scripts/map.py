@@ -6,6 +6,7 @@ import hashlib
 import html
 import json
 import os
+import signal
 from pathlib import Path, PurePosixPath
 import re
 import shutil
@@ -333,6 +334,37 @@ def build(work):
         path.write_text(content, 'utf-8')
     return output
 
+def terminate_mapper_process_tree(process):
+    if os.name == 'nt':
+        try:
+            subprocess.run(['taskkill', '/PID', str(process.pid), '/T', '/F'],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+        except OSError:
+            pass
+        if process.poll() is None:
+            process.kill()
+    else:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            if process.poll() is None:
+                process.kill()
+    process.wait()
+
+def run_mapper_process(command, input_bytes, log, timeout):
+    popen_options = {}
+    if os.name == 'nt':
+        popen_options['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
+    else:
+        popen_options['start_new_session'] = True
+    process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=log, stderr=log, **popen_options)
+    try:
+        process.communicate(input=input_bytes, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        terminate_mapper_process_tree(process)
+        raise
+    return process.returncode
+
 def run_mapper(work, codex_bin='codex', model='gpt-6-luna', effort='max', tier='priority', timeout=1800):
     binary = shutil.which(codex_bin)
     if not binary:
@@ -355,11 +387,11 @@ def run_mapper(work, codex_bin='codex', model='gpt-6-luna', effort='max', tier='
     # Raw worker messages never flow into the parent model's context.
     with (private / 'worker.log').open('wb') as log:
         try:
-            result = subprocess.run(command, input=(private / 'mapper-task.txt').read_bytes(),
-                stdout=log, stderr=log, timeout=timeout, check=False)
+            returncode = run_mapper_process(
+                command, (private / 'mapper-task.txt').read_bytes(), log, timeout)
         except subprocess.TimeoutExpired as exc:
             raise MapError('Mapper timed out; partial artifacts remain private. No fallback was run.') from exc
-    if result.returncode or not candidate.is_file():
+    if returncode or not candidate.is_file():
         raise MapError('Mapper failed; inspect privately or delegate diagnosis. No model fallback was run.')
     candidate_model = read_json(candidate)
     validate(work, candidate_model)

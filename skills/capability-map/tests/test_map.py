@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -202,18 +203,19 @@ class MapTests(unittest.TestCase):
 
     def test_runner_captures_raw_output_and_renders(self):
         calls = []
-        def fake_run(command, **kwargs):
-            calls.append((command, kwargs))
-            if command[-1] == '--help':
-                return subprocess.CompletedProcess(command, 0, stdout='--output-schema --output-last-message --sandbox --skip-git-repo-check --ephemeral --ignore-user-config --ignore-rules')
+        help_text = '--output-schema --output-last-message --sandbox --skip-git-repo-check --ephemeral --ignore-user-config --ignore-rules'
+        def fake_process(command, input_bytes, log, timeout):
+            calls.append((command, input_bytes, timeout))
             candidate = Path(command[command.index('--output-last-message')+1])
             m.write_json(candidate, self.model)
-            self.assertIsNotNone(kwargs['stdout'])
-            self.assertIs(kwargs['stdout'], kwargs['stderr'])
-            return subprocess.CompletedProcess(command, 0)
-        with patch.object(m.shutil, 'which', return_value='/fake/codex'), patch.object(m.subprocess, 'run', side_effect=fake_run):
+            log.write(b'worker output')
+            return 0
+        with patch.object(m.shutil, 'which', return_value='/fake/codex'), \
+             patch.object(m.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, stdout=help_text)), \
+             patch.object(m, 'run_mapper_process', side_effect=fake_process):
             output = m.run_mapper(self.work)
         self.assertTrue((output / 'map.html').is_file())
+        self.assertEqual((self.work / 'private/worker.log').read_bytes(), b'worker output')
         command = calls[-1][0]
         self.assertEqual(command[command.index('--sandbox')+1], 'read-only')
         self.assertIn('gpt-6-luna', command)
@@ -225,8 +227,33 @@ class MapTests(unittest.TestCase):
 
     def test_runner_failure_not_success(self):
         help_text = '--output-schema --output-last-message --sandbox --skip-git-repo-check --ephemeral --ignore-user-config --ignore-rules'
-        with patch.object(m.shutil, 'which', return_value='/fake/codex'), patch.object(m.subprocess, 'run', side_effect=[subprocess.CompletedProcess([], 0, stdout=help_text), subprocess.CompletedProcess([], 1)]):
+        with patch.object(m.shutil, 'which', return_value='/fake/codex'), \
+             patch.object(m.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, stdout=help_text)), \
+             patch.object(m, 'run_mapper_process', return_value=1):
             with self.assertRaises(m.MapError): m.run_mapper(self.work)
+        self.assertFalse((self.work / 'public').exists())
+
+    @unittest.skipIf(os.name == 'nt', 'process-group fixture is POSIX-only')
+    def test_mapper_timeout_kills_descendant_process_group(self):
+        marker = self.root / 'descendant-ran'
+        fake = self.root / 'fake-codex'
+        help_text = '--output-schema --output-last-message --sandbox --skip-git-repo-check --ephemeral --ignore-user-config --ignore-rules'
+        child_code = ("import time; from pathlib import Path; time.sleep(0.8); "
+                      "Path(" + repr(str(marker)) + ").write_text('x')")
+        fake.write_text(
+            '#!/usr/bin/env python3\n'
+            'import subprocess, sys, time\n'
+            'if "--help" in sys.argv:\n'
+            '    print(' + repr(help_text) + ')\n'
+            '    raise SystemExit(0)\n'
+            'subprocess.Popen([sys.executable, "-c", ' + repr(child_code) + '])\n'
+            'time.sleep(10)\n',
+            'utf-8')
+        fake.chmod(0o755)
+        with self.assertRaisesRegex(m.MapError, 'timed out'):
+            m.run_mapper(self.work, codex_bin=str(fake), timeout=0.2)
+        time.sleep(1.0)
+        self.assertFalse(marker.exists())
         self.assertFalse((self.work / 'public').exists())
 
     def test_git_reads_disable_fsmonitor_lazy_fetch_and_optional_writes(self):

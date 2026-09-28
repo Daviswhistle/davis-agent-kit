@@ -244,6 +244,35 @@ def validate(work, model):
         raise MapError('Every node requires a supported rule')
     return manifest, files
 
+def string_values(value):
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for child in value.values():
+            yield from string_values(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from string_values(child)
+
+def source_path_tokens(manifest):
+    tokens = set()
+    for item in manifest['files']:
+        parts = PurePosixPath(item['path']).parts
+        for i in range(len(parts)):
+            token = '/'.join(parts[i:])
+            basename = PurePosixPath(token).name
+            if '/' in token or '.' in basename or len(token) >= 4:
+                tokens.add(token)
+                if '/' in token:
+                    tokens.add(token.replace('/', '\\'))
+    return tokens
+
+def contains_source_path(text, token):
+    if '/' in token or '\\' in token:
+        return token in text
+    pattern = r'(?<![A-Za-z0-9_.-])' + re.escape(token) + r'(?![A-Za-z0-9_.-])'
+    return re.search(pattern, text) is not None
+
 def public_model(model, manifest, files):
     result = {k: v for k, v in model.items() if k not in {'evidence', 'reviewed_files'}}
     result['evidence'] = [{'id': e['id'], 'kind': e['kind'], 'status': 'not_runtime_verified'} for e in model['evidence']]
@@ -262,14 +291,11 @@ def public_model(model, manifest, files):
         'No live account, deployment, model inference or project test run was performed.',
         'Filtered inputs and separate artifacts are not OS-enforced context isolation.',
         'Coverage counts files, not fully inspected branches; influence is a candidate set.']
-    # Fail on obvious accidental path disclosure; prose quality still requires review.
-    public_text = json.dumps(result, ensure_ascii=False)
-    source_path_tokens = {item['path'] for item in manifest['files']}
-    for path in list(source_path_tokens):
-        parts = PurePosixPath(path).parts
-        source_path_tokens.update('/'.join(parts[i:]) for i in range(1, len(parts)))
-    source_path_tokens |= {token.replace('/', '\\') for token in source_path_tokens if '/' in token}
-    if '```' in public_text or any(token and token in public_text for token in source_path_tokens):
+    # Fail on obvious accidental path disclosure; inspect values, not serialized JSON keys.
+    public_strings = list(string_values(result))
+    path_tokens = source_path_tokens(manifest)
+    if any('```' in text for text in public_strings) or any(
+            contains_source_path(text, token) for text in public_strings for token in path_tokens):
         raise MapError('Source path/code fence in public prose; remove it before publishing')
     return result
 

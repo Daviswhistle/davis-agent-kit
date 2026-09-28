@@ -162,6 +162,16 @@ class MapTests(unittest.TestCase):
         self.assertNotIn('file', packet['evidence'][0])
         self.assertEqual(packet['evidence'][0]['status'], 'not_runtime_verified')
 
+    def test_short_root_filename_does_not_poison_public_output(self):
+        (self.repo / 'a').write_text('metadata\n', 'utf-8')
+        self.git('add', 'a'); self.git('commit', '-qm', 'short filename')
+        work = m.prepare(self.repo, self.root / 'short-name')
+        manifest = m.read_json(work / 'private/manifest.json')
+        candidate = copy.deepcopy(self.model)
+        candidate['snapshot'] = manifest['snapshot']
+        m.write_json(work / 'private/model.json', candidate)
+        self.assertTrue((m.build(work) / 'map.html').is_file())
+
     def test_public_path_leak_rejected(self):
         self.model['summary'] = 'Read app.py'
         self.save()

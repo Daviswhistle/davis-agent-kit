@@ -19,7 +19,9 @@ CONFIG_EXT = {'.json', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.lock'}
 EXCLUDED_DIRS = {'.git', '.agents', '.codex', '.claude', 'node_modules', 'vendor', '.venv', 'venv', 'dist', 'build', '__pycache__', 'docs', 'reports', 'output', 'outputs', 'coverage'}
 SECRET_NAME = re.compile(r'(^\.env($|\.)|(^|[._-])(credentials?|secrets?|id_rsa|id_ed25519)($|[._-])|\.(pem|key|p12|pfx)$)', re.I)
 SECRET_BYTES = re.compile(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\b(?:ghp_|github_pat_)[A-Za-z0-9_]{20,}|\bAKIA[A-Z0-9]{16}\b')
-ID = re.compile(r'^[A-Za-z][A-Za-z0-9_-]{0,79}$')
+ID_PATTERN = r'^[A-Za-z][A-Za-z0-9_-]{0,79}$'
+OPTIONAL_ID_PATTERN = r'^(?:[A-Za-z][A-Za-z0-9_-]{0,79})?$'
+ID = re.compile(ID_PATTERN)
 
 class MapError(ValueError):
     pass
@@ -64,16 +66,19 @@ def array(item):
 
 def schema():
     s = {'type': 'string'}
+    id_s = {'type': 'string', 'pattern': ID_PATTERN}
+    optional_id_s = {'type': 'string', 'pattern': OPTIONAL_ID_PATTERN}
     strings = array(s)
+    ids = array(id_s)
     return object_schema({
         'version': {'type': 'integer', 'enum': [1]}, 'snapshot': s, 'title': s, 'summary': s,
-        'nodes': array(object_schema({'id': s, 'label': s, 'parent': s, 'purpose': s,
+        'nodes': array(object_schema({'id': id_s, 'label': s, 'parent': optional_id_s, 'purpose': s,
              'inputs': strings, 'outputs': strings, 'state': strings, 'unknowns': strings})),
-        'relations': array(object_schema({'id': s, 'from': s, 'to': s,
+        'relations': array(object_schema({'id': id_s, 'from': id_s, 'to': id_s,
              'kind': {'type': 'string', 'enum': ['data', 'control', 'state', 'dependency']},
-             'label': s, 'condition': s, 'timing': s, 'evidence': strings})),
-        'rules': array(object_schema({'id': s, 'node': s, 'title': s, 'text': s, 'evidence': strings})),
-        'evidence': array(object_schema({'id': s, 'file': s, 'start': {'type': 'integer', 'minimum': 1},
+             'label': s, 'condition': s, 'timing': s, 'evidence': ids})),
+        'rules': array(object_schema({'id': id_s, 'node': id_s, 'title': s, 'text': s, 'evidence': ids})),
+        'evidence': array(object_schema({'id': id_s, 'file': s, 'start': {'type': 'integer', 'minimum': 1},
              'end': {'type': 'integer', 'minimum': 1},
              'kind': {'type': 'string', 'enum': ['source_interpretation', 'test_expectation']}})),
         'reviewed_files': strings, 'unknowns': strings,
@@ -87,6 +92,8 @@ def shape(value, spec, where='$'):
         raise MapError(where + ': invalid value')
     if 'minimum' in spec and value < spec['minimum']:
         raise MapError(where + ': below minimum')
+    if 'pattern' in spec and not re.fullmatch(spec['pattern'], value):
+        raise MapError(where + ': invalid format')
     if isinstance(value, dict):
         if set(value) != set(spec['properties']):
             raise MapError(where + ': missing or extra fields')

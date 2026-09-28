@@ -289,6 +289,36 @@ class MapTests(unittest.TestCase):
         with self.assertRaises(m.MapError):
             m.build(self.work)
 
+    @unittest.skipIf(os.name == 'nt', 'clean-filter executable fixture is POSIX-only')
+    def test_prepare_does_not_execute_configured_clean_filter(self):
+        marker = self.root / 'clean-filter-ran'
+        hook = self.root / 'clean-filter.sh'
+        hook.write_text('#!/bin/sh\nprintf x >> "' + str(marker) + '"\ncat\n', 'utf-8')
+        hook.chmod(0o755)
+        (self.repo / '.gitattributes').write_text('app.py filter=unsafe\n', 'utf-8')
+        self.git('add', '.gitattributes'); self.git('commit', '-qm', 'filter attributes')
+        self.git('config', 'filter.unsafe.clean', str(hook))
+        self.git('config', 'filter.unsafe.required', 'true')
+        stat = (self.repo / 'app.py').stat()
+        os.utime(self.repo / 'app.py', (stat.st_atime, stat.st_mtime + 5))
+        m.prepare(self.repo, self.root / 'clean-filter-safe')
+        self.assertFalse(marker.exists())
+
+    @unittest.skipIf(os.name == 'nt', 'clean-filter executable fixture is POSIX-only')
+    def test_dirty_tracked_still_fails_with_clean_filter_suppressed(self):
+        marker = self.root / 'clean-filter-ran'
+        hook = self.root / 'clean-filter.sh'
+        hook.write_text('#!/bin/sh\nprintf x >> "' + str(marker) + '"\ncat\n', 'utf-8')
+        hook.chmod(0o755)
+        (self.repo / '.gitattributes').write_text('app.py filter=unsafe\n', 'utf-8')
+        self.git('add', '.gitattributes'); self.git('commit', '-qm', 'filter attributes')
+        self.git('config', 'filter.unsafe.clean', str(hook))
+        self.git('config', 'filter.unsafe.required', 'true')
+        (self.repo / 'app.py').write_text('changed\n', 'utf-8')
+        with self.assertRaises(m.MapError):
+            m.prepare(self.repo, self.root / 'clean-filter-dirty')
+        self.assertFalse(marker.exists())
+
     @unittest.skipIf(os.name == 'nt', 'fsmonitor executable fixture is POSIX-only')
     def test_prepare_does_not_execute_configured_fsmonitor(self):
         marker = self.root / 'fsmonitor-ran'

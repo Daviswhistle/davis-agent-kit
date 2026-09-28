@@ -20,6 +20,7 @@ EXCLUDED_DIRS = {'.git', '.agents', '.codex', '.claude', 'node_modules', 'vendor
 SECRET_NAME = re.compile(r'(^\.env($|\.)|(^|[._-])(credentials?|secrets?|id_rsa|id_ed25519)($|[._-])|\.(pem|key|p12|pfx)$)', re.I)
 SECRET_BYTES = re.compile(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\b(?:ghp_|github_pat_)[A-Za-z0-9_]{20,}|\bAKIA[A-Z0-9]{16}\b')
 ID = re.compile(r'^[A-Za-z][A-Za-z0-9_-]{0,79}$')
+FILTER_CONFIG = re.compile(r'^filter\.(.+)\.(?:clean|process|required)$', re.I)
 
 class MapError(ValueError):
     pass
@@ -44,17 +45,34 @@ def read_json(path):
     return json.loads(path.read_text('utf-8'), object_pairs_hook=pairs,
                       parse_constant=lambda value: (_ for _ in ()).throw(MapError('Nonfinite JSON')))
 
-def git(repo, *args):
+def git(repo, *args, config=(), ok=(0,)):
     env = os.environ.copy()
     env['GIT_NO_LAZY_FETCH'] = '1'
     env['GIT_OPTIONAL_LOCKS'] = '0'
-    result = subprocess.run(['git', '-c', 'core.fsmonitor=false', '-C', str(repo), *args],
-                            capture_output=True, check=False, env=env)
-    if result.returncode:
+    command = ['git', '-c', 'core.fsmonitor=false']
+    for entry in config:
+        command += ['-c', entry]
+    command += ['-C', str(repo), *args]
+    result = subprocess.run(command, capture_output=True, check=False, env=env)
+    if result.returncode not in ok:
         if args[:2] == ('cat-file', 'blob'):
             raise MapError('Required committed blob is unavailable locally; fetch missing Git objects before mapping.')
         raise MapError('Git command failed: ' + ' '.join(args[:2]))
     return result.stdout
+
+def git_filter_overrides(repo):
+    raw = git(repo, 'config', '--null', '--name-only', '--get-regexp',
+              r'^filter\..*\.(clean|process|required)$', ok=(0, 1))
+    drivers = set()
+    for key in raw.decode('utf-8').split('\0'):
+        match = FILTER_CONFIG.fullmatch(key)
+        if match:
+            drivers.add(match.group(1))
+    overrides = []
+    for driver in sorted(drivers):
+        overrides += [f'filter.{driver}.clean=', f'filter.{driver}.process=',
+                      f'filter.{driver}.required=false']
+    return overrides
 
 def object_schema(properties):
     return {'type': 'object', 'properties': properties, 'required': list(properties), 'additionalProperties': False}
@@ -130,7 +148,8 @@ def snapshot_id(manifest):
 def prepare(repo, out=None):
     repo = repo.expanduser().resolve()
     root = Path(git(repo, 'rev-parse', '--show-toplevel').decode().strip()).resolve()
-    if git(root, 'status', '--porcelain', '--untracked-files=no').strip():
+    filter_overrides = git_filter_overrides(root)
+    if git(root, 'status', '--porcelain', '--untracked-files=no', config=filter_overrides).strip():
         raise MapError('Tracked changes exist. Commit or stash them first; nothing was changed.')
     commit = git(root, 'rev-parse', 'HEAD').decode().strip()
     if out is None:

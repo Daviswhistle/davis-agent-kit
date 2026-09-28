@@ -238,6 +238,17 @@ class MapTests(unittest.TestCase):
         self.assertEqual(command[:4], ['git', '-c', 'core.fsmonitor=false', '-C'])
         self.assertEqual(env['GIT_NO_LAZY_FETCH'], '1')
         self.assertEqual(env['GIT_OPTIONAL_LOCKS'], '0')
+        self.assertEqual(env['GIT_NO_REPLACE_OBJECTS'], '1')
+
+    def test_prepare_ignores_replace_objects(self):
+        original = self.git('rev-parse', 'HEAD:app.py').decode().strip()
+        replacement_source = self.root / 'replacement.py'
+        replacement_source.write_text('def accept(value):\n    return False\n', 'utf-8')
+        replacement = self.git('hash-object', '-w', str(replacement_source)).decode().strip()
+        self.git('replace', original, replacement)
+        work = m.prepare(self.repo, self.root / 'replace-safe')
+        self.assertEqual((work / 'private/input/app.py').read_bytes(),
+                         self.git('cat-file', 'blob', original))
 
     def test_missing_committed_blob_reports_local_object_requirement(self):
         completed = subprocess.CompletedProcess([], 1, stdout=b'', stderr=b'missing')

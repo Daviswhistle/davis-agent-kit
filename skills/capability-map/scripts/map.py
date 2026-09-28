@@ -48,6 +48,7 @@ def git(repo, *args):
     env = os.environ.copy()
     env['GIT_NO_LAZY_FETCH'] = '1'
     env['GIT_OPTIONAL_LOCKS'] = '0'
+    env['GIT_NO_REPLACE_OBJECTS'] = '1'
     result = subprocess.run(['git', '-c', 'core.fsmonitor=false', '-C', str(repo), *args],
                             capture_output=True, check=False, env=env)
     if result.returncode:

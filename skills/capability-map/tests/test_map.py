@@ -82,6 +82,22 @@ class MapTests(unittest.TestCase):
         files = m.read_json(w / 'private/manifest.json')['files']
         self.assertEqual(next(x for x in files if x['path'] == 'linked.py')['reason'], 'symlink_or_submodule')
 
+    @unittest.skipIf(os.name == 'nt', 'Git executable-mode fixture is POSIX-only')
+    def test_manifest_preserves_committed_executable_mode(self):
+        entry = self.repo / 'entry.sh'
+        helper = self.repo / 'helper.sh'
+        entry.write_text('#!/bin/sh\necho entry\n', 'utf-8')
+        helper.write_text('#!/bin/sh\necho helper\n', 'utf-8')
+        entry.chmod(0o755)
+        helper.chmod(0o644)
+        self.git('add', 'entry.sh', 'helper.sh'); self.git('commit', '-qm', 'script modes')
+        work = m.prepare(self.repo, self.root / 'modes')
+        files = {x['path']: x for x in m.read_json(work / 'private/manifest.json')['files']}
+        self.assertEqual(files['entry.sh']['mode'], '100755')
+        self.assertEqual(files['helper.sh']['mode'], '100644')
+        self.assertEqual((work / 'private/input/entry.sh').stat().st_mode & 0o111, 0)
+        self.assertEqual((work / 'private/input/helper.sh').stat().st_mode & 0o111, 0)
+
     def test_sensitive_content_rejected(self):
         (self.repo / 'token.py').write_text('v="ghp_' + 'a'*30 + '"')
         self.git('add', '.'); self.git('commit', '-qm', 'token')
@@ -265,6 +281,19 @@ class MapTests(unittest.TestCase):
         self.assertEqual(command[:4], ['git', '-c', 'core.fsmonitor=false', '-C'])
         self.assertEqual(env['GIT_NO_LAZY_FETCH'], '1')
         self.assertEqual(env['GIT_OPTIONAL_LOCKS'], '0')
+        self.assertEqual(env['GIT_NO_REPLACE_OBJECTS'], '1')
+
+    def test_prepare_ignores_replace_objects(self):
+        original_bytes = (self.repo / 'app.py').read_bytes()
+        original = self.git('rev-parse', 'HEAD:app.py').decode().strip()
+        replacement_source = self.root / 'replacement.py'
+        replacement_source.write_text('def accept(value):\n    return False\n', 'utf-8')
+        replacement = self.git('hash-object', '-w', str(replacement_source)).decode().strip()
+        self.git('replace', original, replacement)
+        work = m.prepare(self.repo, self.root / 'replace-safe')
+        copied = (work / 'private/input/app.py').read_bytes()
+        self.assertEqual(copied, original_bytes)
+        self.assertNotEqual(copied, replacement_source.read_bytes())
 
     def test_missing_committed_blob_reports_local_object_requirement(self):
         completed = subprocess.CompletedProcess([], 1, stdout=b'', stderr=b'missing')

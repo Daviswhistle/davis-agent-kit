@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -81,6 +82,22 @@ class MapTests(unittest.TestCase):
         files = m.read_json(w / 'private/manifest.json')['files']
         self.assertEqual(next(x for x in files if x['path'] == 'linked.py')['reason'], 'symlink_or_submodule')
 
+    @unittest.skipIf(os.name == 'nt', 'Git executable-mode fixture is POSIX-only')
+    def test_manifest_preserves_committed_executable_mode(self):
+        entry = self.repo / 'entry.sh'
+        helper = self.repo / 'helper.sh'
+        entry.write_text('#!/bin/sh\necho entry\n', 'utf-8')
+        helper.write_text('#!/bin/sh\necho helper\n', 'utf-8')
+        entry.chmod(0o755)
+        helper.chmod(0o644)
+        self.git('add', 'entry.sh', 'helper.sh'); self.git('commit', '-qm', 'script modes')
+        work = m.prepare(self.repo, self.root / 'modes')
+        files = {x['path']: x for x in m.read_json(work / 'private/manifest.json')['files']}
+        self.assertEqual(files['entry.sh']['mode'], '100755')
+        self.assertEqual(files['helper.sh']['mode'], '100644')
+        self.assertEqual((work / 'private/input/entry.sh').stat().st_mode & 0o111, 0)
+        self.assertEqual((work / 'private/input/helper.sh').stat().st_mode & 0o111, 0)
+
     def test_sensitive_content_rejected(self):
         (self.repo / 'token.py').write_text('v="ghp_' + 'a'*30 + '"')
         self.git('add', '.'); self.git('commit', '-qm', 'token')
@@ -136,6 +153,30 @@ class MapTests(unittest.TestCase):
         self.model['relations'] = [{'id': 'edge1', 'from': 'gate', 'to': 'absent', 'kind': 'data',
                                    'label': 'link', 'condition': '', 'timing': '', 'evidence': ['E1']}]
         with self.assertRaises(m.MapError): m.validate(self.work, self.model)
+
+    def test_schema_exposes_validator_id_contract(self):
+        spec = m.schema()['properties']
+        node = spec['nodes']['items']['properties']
+        relation = spec['relations']['items']['properties']
+        rule = spec['rules']['items']['properties']
+        evidence = spec['evidence']['items']['properties']
+        self.assertEqual(node['id']['pattern'], m.ID_PATTERN)
+        self.assertEqual(node['parent']['pattern'], m.OPTIONAL_ID_PATTERN)
+        for field in ('id', 'from', 'to'):
+            self.assertEqual(relation[field]['pattern'], m.ID_PATTERN)
+        self.assertEqual(relation['evidence']['items']['pattern'], m.ID_PATTERN)
+        for field in ('id', 'node'):
+            self.assertEqual(rule[field]['pattern'], m.ID_PATTERN)
+        self.assertEqual(rule['evidence']['items']['pattern'], m.ID_PATTERN)
+        self.assertEqual(evidence['id']['pattern'], m.ID_PATTERN)
+
+    def test_schema_rejects_invalid_id_formats(self):
+        for value in ('한글', 'foo.bar', '_leading', 'a' * 81):
+            with self.subTest(value=value):
+                candidate = copy.deepcopy(self.model)
+                candidate['nodes'][0]['id'] = value
+                with self.assertRaisesRegex(m.MapError, 'invalid format'):
+                    m.validate(self.work, candidate)
 
     def test_schema_rejects_boolean_integer(self):
         self.model['evidence'][0]['start'] = True
@@ -244,18 +285,19 @@ class MapTests(unittest.TestCase):
 
     def test_runner_captures_raw_output_and_renders(self):
         calls = []
-        def fake_run(command, **kwargs):
-            calls.append((command, kwargs))
-            if command[-1] == '--help':
-                return subprocess.CompletedProcess(command, 0, stdout='--output-schema --output-last-message --sandbox --skip-git-repo-check --ephemeral --ignore-user-config --ignore-rules')
+        help_text = '--output-schema --output-last-message --sandbox --skip-git-repo-check --ephemeral --ignore-user-config --ignore-rules'
+        def fake_process(command, input_bytes, log, timeout):
+            calls.append((command, input_bytes, timeout))
             candidate = Path(command[command.index('--output-last-message')+1])
             m.write_json(candidate, self.model)
-            self.assertIsNotNone(kwargs['stdout'])
-            self.assertIs(kwargs['stdout'], kwargs['stderr'])
-            return subprocess.CompletedProcess(command, 0)
-        with patch.object(m.shutil, 'which', return_value='/fake/codex'), patch.object(m.subprocess, 'run', side_effect=fake_run):
+            log.write(b'worker output')
+            return 0
+        with patch.object(m.shutil, 'which', return_value='/fake/codex'), \
+             patch.object(m, 'mapper_help', return_value=help_text), \
+             patch.object(m, 'run_mapper_process', side_effect=fake_process):
             output = m.run_mapper(self.work)
         self.assertTrue((output / 'map.html').is_file())
+        self.assertEqual((self.work / 'private/worker.log').read_bytes(), b'worker output')
         command = calls[-1][0]
         self.assertEqual(command[command.index('--sandbox')+1], 'read-only')
         self.assertIn('gpt-6-luna', command)
@@ -267,8 +309,33 @@ class MapTests(unittest.TestCase):
 
     def test_runner_failure_not_success(self):
         help_text = '--output-schema --output-last-message --sandbox --skip-git-repo-check --ephemeral --ignore-user-config --ignore-rules'
-        with patch.object(m.shutil, 'which', return_value='/fake/codex'), patch.object(m.subprocess, 'run', side_effect=[subprocess.CompletedProcess([], 0, stdout=help_text), subprocess.CompletedProcess([], 1)]):
+        with patch.object(m.shutil, 'which', return_value='/fake/codex'), \
+             patch.object(m, 'mapper_help', return_value=help_text), \
+             patch.object(m, 'run_mapper_process', return_value=1):
             with self.assertRaises(m.MapError): m.run_mapper(self.work)
+        self.assertFalse((self.work / 'public').exists())
+
+    @unittest.skipUnless(sys.platform == 'linux', 'lifetime supervision requires Linux')
+    def test_mapper_timeout_kills_descendant_process_group(self):
+        marker = self.root / 'descendant-ran'
+        fake = self.root / 'fake-codex'
+        help_text = '--output-schema --output-last-message --sandbox --skip-git-repo-check --ephemeral --ignore-user-config --ignore-rules'
+        child_code = ("import time; from pathlib import Path; time.sleep(0.8); "
+                      "Path(" + repr(str(marker)) + ").write_text('x')")
+        fake.write_text(
+            '#!/usr/bin/env python3\n'
+            'import subprocess, sys, time\n'
+            'if "--help" in sys.argv:\n'
+            '    print(' + repr(help_text) + ')\n'
+            '    raise SystemExit(0)\n'
+            'subprocess.Popen([sys.executable, "-c", ' + repr(child_code) + '])\n'
+            'time.sleep(10)\n',
+            'utf-8')
+        fake.chmod(0o755)
+        with self.assertRaisesRegex(m.MapError, 'timed out'):
+            m.run_mapper(self.work, codex_bin=str(fake), timeout=0.2)
+        time.sleep(1.0)
+        self.assertFalse(marker.exists())
         self.assertFalse((self.work / 'public').exists())
 
     def test_git_reads_disable_fsmonitor_lazy_fetch_and_optional_writes(self):
@@ -280,6 +347,19 @@ class MapTests(unittest.TestCase):
         self.assertEqual(command[:4], ['git', '-c', 'core.fsmonitor=false', '-C'])
         self.assertEqual(env['GIT_NO_LAZY_FETCH'], '1')
         self.assertEqual(env['GIT_OPTIONAL_LOCKS'], '0')
+        self.assertEqual(env['GIT_NO_REPLACE_OBJECTS'], '1')
+
+    def test_prepare_ignores_replace_objects(self):
+        original_bytes = (self.repo / 'app.py').read_bytes()
+        original = self.git('rev-parse', 'HEAD:app.py').decode().strip()
+        replacement_source = self.root / 'replacement.py'
+        replacement_source.write_text('def accept(value):\n    return False\n', 'utf-8')
+        replacement = self.git('hash-object', '-w', str(replacement_source)).decode().strip()
+        self.git('replace', original, replacement)
+        work = m.prepare(self.repo, self.root / 'replace-safe')
+        copied = (work / 'private/input/app.py').read_bytes()
+        self.assertEqual(copied, original_bytes)
+        self.assertNotEqual(copied, replacement_source.read_bytes())
 
     def test_missing_committed_blob_reports_local_object_requirement(self):
         completed = subprocess.CompletedProcess([], 1, stdout=b'', stderr=b'missing')
@@ -330,6 +410,36 @@ class MapTests(unittest.TestCase):
         m.write_json(self.work / 'private/model.json', candidate)
         with self.assertRaises(m.MapError):
             m.build(self.work)
+
+    @unittest.skipIf(os.name == 'nt', 'clean-filter executable fixture is POSIX-only')
+    def test_prepare_does_not_execute_configured_clean_filter(self):
+        marker = self.root / 'clean-filter-ran'
+        hook = self.root / 'clean-filter.sh'
+        hook.write_text('#!/bin/sh\nprintf x >> "' + str(marker) + '"\ncat\n', 'utf-8')
+        hook.chmod(0o755)
+        (self.repo / '.gitattributes').write_text('app.py filter=unsafe\n', 'utf-8')
+        self.git('add', '.gitattributes'); self.git('commit', '-qm', 'filter attributes')
+        self.git('config', 'filter.unsafe.clean', str(hook))
+        self.git('config', 'filter.unsafe.required', 'true')
+        stat = (self.repo / 'app.py').stat()
+        os.utime(self.repo / 'app.py', (stat.st_atime, stat.st_mtime + 5))
+        m.prepare(self.repo, self.root / 'clean-filter-safe')
+        self.assertFalse(marker.exists())
+
+    @unittest.skipIf(os.name == 'nt', 'clean-filter executable fixture is POSIX-only')
+    def test_dirty_tracked_still_fails_with_clean_filter_suppressed(self):
+        marker = self.root / 'clean-filter-ran'
+        hook = self.root / 'clean-filter.sh'
+        hook.write_text('#!/bin/sh\nprintf x >> "' + str(marker) + '"\ncat\n', 'utf-8')
+        hook.chmod(0o755)
+        (self.repo / '.gitattributes').write_text('app.py filter=unsafe\n', 'utf-8')
+        self.git('add', '.gitattributes'); self.git('commit', '-qm', 'filter attributes')
+        self.git('config', 'filter.unsafe.clean', str(hook))
+        self.git('config', 'filter.unsafe.required', 'true')
+        (self.repo / 'app.py').write_text('changed\n', 'utf-8')
+        with self.assertRaises(m.MapError):
+            m.prepare(self.repo, self.root / 'clean-filter-dirty')
+        self.assertFalse(marker.exists())
 
     @unittest.skipIf(os.name == 'nt', 'fsmonitor executable fixture is POSIX-only')
     def test_prepare_does_not_execute_configured_fsmonitor(self):

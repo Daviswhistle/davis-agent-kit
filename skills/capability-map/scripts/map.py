@@ -6,7 +6,7 @@ import hashlib
 import html
 import json
 import os
-import signal
+import math
 from pathlib import Path, PurePosixPath
 import re
 import shutil
@@ -334,46 +334,50 @@ def build(work):
         path.write_text(content, 'utf-8')
     return output
 
-def terminate_mapper_process_tree(process):
-    if os.name == 'nt':
-        try:
-            subprocess.run(['taskkill', '/PID', str(process.pid), '/T', '/F'],
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-        except OSError:
-            pass
-        if process.poll() is None:
-            process.kill()
-    else:
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            if process.poll() is None:
-                process.kill()
-    process.wait()
-
 def run_mapper_process(command, input_bytes, log, timeout):
-    popen_options = {}
-    if os.name == 'nt':
-        popen_options['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
-    else:
-        popen_options['start_new_session'] = True
-    process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=log, stderr=log, **popen_options)
+    if not math.isfinite(timeout) or timeout <= 0:
+        raise MapError('Mapper timeout must be finite and positive')
+    if sys.platform != 'linux':
+        raise MapError('Verified mapper lifetime supervision requires Linux. Use prepare/build instead.')
+    supervisor = SKILL / 'scripts/mapper_supervisor.py'
+    launch = [sys.executable, '-I', str(supervisor), str(timeout), *command]
+    process = subprocess.Popen(launch, stdin=subprocess.PIPE, stdout=log, stderr=log,
+                               start_new_session=True)
     try:
-        process.communicate(input=input_bytes, timeout=timeout)
-    except subprocess.TimeoutExpired:
-        terminate_mapper_process_tree(process)
+        # The isolated supervisor owns the deadline AND descendant reaping.
+        # Never put a second timeout here that could kill it before cleanup.
+        process.communicate(input=input_bytes)
+    except BaseException:
+        process.terminate()
+        process.wait()
         raise
+    if process.returncode == 124:
+        raise subprocess.TimeoutExpired(command, timeout)
+    if process.returncode == 125:
+        raise MapError('Mapper lifetime supervision unavailable or failed; inspect private log. Use prepare/build.')
     return process.returncode
+
+def mapper_help(binary):
+    # The CLI capability probe must not bypass lifetime supervision either.
+    with tempfile.TemporaryFile() as log:
+        try:
+            code = run_mapper_process([binary, 'exec', '--help'], b'', log, 15)
+        except subprocess.TimeoutExpired as exc:
+            raise MapError('Mapper preflight timed out; no mapper was started.') from exc
+        if code:
+            raise MapError('Mapper preflight failed; no mapper was started.')
+        log.seek(0)
+        return log.read().decode('utf-8', errors='replace')
 
 def run_mapper(work, codex_bin='codex', model='gpt-6-luna', effort='max', tier='priority', timeout=1800):
     binary = shutil.which(codex_bin)
     if not binary:
         raise MapError('Codex is unavailable. Use prepare/build with the current source-reading agent.')
     private = work / 'private'
-    help_result = subprocess.run([binary, 'exec', '--help'], capture_output=True, text=True, timeout=15)
+    help_text = mapper_help(binary)
     for flag in ('--output-schema', '--output-last-message', '--sandbox', '--skip-git-repo-check',
                  '--ephemeral', '--ignore-user-config', '--ignore-rules'):
-        if flag not in help_result.stdout:
+        if flag not in help_text:
             raise MapError('Installed Codex lacks required flag: ' + flag)
     candidate = private / 'candidate.json'
     command = [binary, 'exec', '--strict-config', '--ephemeral', '--ignore-user-config', '--ignore-rules',
@@ -383,7 +387,8 @@ def run_mapper(work, codex_bin='codex', model='gpt-6-luna', effort='max', tier='
         '-c', 'model_reasoning_effort=' + json.dumps(effort), '-c', 'service_tier=' + json.dumps(tier), '-']
     write_json(private / 'launch.json', {'requested': {'model': model, 'effort': effort, 'tier': tier},
         'actual_settings': 'unverified', 'read_isolation': 'not_os_enforced',
-        'session_persistence': 'ephemeral', 'user_config': 'ignored', 'execpolicy_rules': 'ignored'})
+        'session_persistence': 'ephemeral', 'user_config': 'ignored', 'execpolicy_rules': 'ignored',
+        'lifetime_supervisor': 'linux_subreaper', 'cleanup': 'wait_for_all_descendants'})
     # Raw worker messages never flow into the parent model's context.
     with (private / 'worker.log').open('wb') as log:
         try:

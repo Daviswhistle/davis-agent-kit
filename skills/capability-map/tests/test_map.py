@@ -211,7 +211,7 @@ class MapTests(unittest.TestCase):
             log.write(b'worker output')
             return 0
         with patch.object(m.shutil, 'which', return_value='/fake/codex'), \
-             patch.object(m.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, stdout=help_text)), \
+             patch.object(m, 'mapper_help', return_value=help_text), \
              patch.object(m, 'run_mapper_process', side_effect=fake_process):
             output = m.run_mapper(self.work)
         self.assertTrue((output / 'map.html').is_file())
@@ -228,12 +228,12 @@ class MapTests(unittest.TestCase):
     def test_runner_failure_not_success(self):
         help_text = '--output-schema --output-last-message --sandbox --skip-git-repo-check --ephemeral --ignore-user-config --ignore-rules'
         with patch.object(m.shutil, 'which', return_value='/fake/codex'), \
-             patch.object(m.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, stdout=help_text)), \
+             patch.object(m, 'mapper_help', return_value=help_text), \
              patch.object(m, 'run_mapper_process', return_value=1):
             with self.assertRaises(m.MapError): m.run_mapper(self.work)
         self.assertFalse((self.work / 'public').exists())
 
-    @unittest.skipIf(os.name == 'nt', 'process-group fixture is POSIX-only')
+    @unittest.skipUnless(sys.platform == 'linux', 'lifetime supervision requires Linux')
     def test_mapper_timeout_kills_descendant_process_group(self):
         marker = self.root / 'descendant-ran'
         fake = self.root / 'fake-codex'

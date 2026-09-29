@@ -154,6 +154,30 @@ class MapTests(unittest.TestCase):
                                    'label': 'link', 'condition': '', 'timing': '', 'evidence': ['E1']}]
         with self.assertRaises(m.MapError): m.validate(self.work, self.model)
 
+    def test_schema_exposes_validator_id_contract(self):
+        spec = m.schema()['properties']
+        node = spec['nodes']['items']['properties']
+        relation = spec['relations']['items']['properties']
+        rule = spec['rules']['items']['properties']
+        evidence = spec['evidence']['items']['properties']
+        self.assertEqual(node['id']['pattern'], m.ID_PATTERN)
+        self.assertEqual(node['parent']['pattern'], m.OPTIONAL_ID_PATTERN)
+        for field in ('id', 'from', 'to'):
+            self.assertEqual(relation[field]['pattern'], m.ID_PATTERN)
+        self.assertEqual(relation['evidence']['items']['pattern'], m.ID_PATTERN)
+        for field in ('id', 'node'):
+            self.assertEqual(rule[field]['pattern'], m.ID_PATTERN)
+        self.assertEqual(rule['evidence']['items']['pattern'], m.ID_PATTERN)
+        self.assertEqual(evidence['id']['pattern'], m.ID_PATTERN)
+
+    def test_schema_rejects_invalid_id_formats(self):
+        for value in ('한글', 'foo.bar', '_leading', 'a' * 81):
+            with self.subTest(value=value):
+                candidate = copy.deepcopy(self.model)
+                candidate['nodes'][0]['id'] = value
+                with self.assertRaisesRegex(m.MapError, 'invalid format'):
+                    m.validate(self.work, candidate)
+
     def test_schema_rejects_boolean_integer(self):
         self.model['evidence'][0]['start'] = True
         with self.assertRaises(m.MapError): m.validate(self.work, self.model)

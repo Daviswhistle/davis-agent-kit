@@ -272,6 +272,51 @@ def validate(work, model):
         raise MapError('Every node requires a supported rule')
     return manifest, files
 
+def string_values(value):
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for child in value.values():
+            yield from string_values(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from string_values(child)
+
+def public_prose(public):
+    # Structural IDs/references and host-authored metadata are not prose.
+    # Keep the ID grammar independent of repository filenames.
+    for field in ('title', 'summary', 'unknowns'):
+        yield from string_values(public[field])
+    excluded = {
+        'nodes': {'id', 'parent'},
+        'rules': {'id', 'node', 'evidence'},
+        'relations': {'id', 'from', 'to', 'kind', 'evidence'},
+    }
+    for group, structural in excluded.items():
+        for item in public[group]:
+            for key, value in item.items():
+                if key not in structural:
+                    yield from string_values(value)
+
+def source_path_tokens(manifest):
+    tokens = set()
+    for item in manifest['files']:
+        parts = PurePosixPath(item['path']).parts
+        for i in range(len(parts)):
+            token = '/'.join(parts[i:])
+            basename = PurePosixPath(token).name
+            if '/' in token or '.' in basename or len(token) >= 4:
+                tokens.add(token)
+                if '/' in token:
+                    tokens.add(token.replace('/', '\\'))
+    return tokens
+
+def contains_source_path(text, token):
+    if '/' in token or '\\' in token:
+        return token in text
+    pattern = r'(?<![A-Za-z0-9_.-])' + re.escape(token) + r'(?![A-Za-z0-9_-]|\.+[A-Za-z0-9_-])'
+    return re.search(pattern, text) is not None
+
 def public_model(model, manifest, files):
     result = {k: v for k, v in model.items() if k not in {'evidence', 'reviewed_files'}}
     result['evidence'] = [{'id': e['id'], 'kind': e['kind'], 'status': 'not_runtime_verified'} for e in model['evidence']]
@@ -290,34 +335,52 @@ def public_model(model, manifest, files):
         'No live account, deployment, model inference or project test run was performed.',
         'Filtered inputs and separate artifacts are not OS-enforced context isolation.',
         'Coverage counts files, not fully inspected branches; influence is a candidate set.']
-    # Fail on obvious accidental path disclosure; prose quality still requires review.
-    public_text = json.dumps(result, ensure_ascii=False)
-    source_path_tokens = {item['path'] for item in manifest['files']}
-    for path in list(source_path_tokens):
-        parts = PurePosixPath(path).parts
-        source_path_tokens.update('/'.join(parts[i:]) for i in range(1, len(parts)))
-    source_path_tokens |= {token.replace('/', '\\') for token in source_path_tokens if '/' in token}
-    if '```' in public_text or any(token and token in public_text for token in source_path_tokens):
+    # Fail on obvious accidental path disclosure in model-authored public prose.
+    public_strings = list(public_prose(result))
+    path_tokens = source_path_tokens(manifest)
+    if any('```' in text for text in public_strings) or any(
+            contains_source_path(text, token) for text in public_strings for token in path_tokens):
         raise MapError('Source path/code fence in public prose; remove it before publishing')
     return result
 
+MARKDOWN_SPECIAL = re.compile(r'([\\`*_{}\[\]()#+.!|>~=\-])')
+
+def markdown_text(value):
+    lines = value.replace('\r\n', '\n').replace('\r', '\n').split('\n')
+    escaped = []
+    for line in lines:
+        line = html.escape(line.lstrip(' \t'), quote=False)
+        line = MARKDOWN_SPECIAL.sub(lambda match: '\\' + match.group(0), line)
+        escaped.append(line)
+    return '  \n'.join(escaped)
+
 def guide(public):
-    lines = ['# ' + public['title'], '', public['summary'], '',
-             '기준 커밋: ' + public['commit'], '상태: 소스 정적 해석 · 실행 미검증', '',
-             '## 범위와 한계', *['- ' + s for s in public['input_limitations'] + public['limitations'] + public['unknowns']], '']
+    lines = ['# ' + markdown_text(public['title']), '', markdown_text(public['summary']), '',
+             '기준 커밋: ' + markdown_text(public['commit']), '상태: 소스 정적 해석 · 실행 미검증', '',
+             '## 범위와 한계', *['- ' + markdown_text(s) for s in public['input_limitations'] + public['limitations'] + public['unknowns']], '']
     for n in public['nodes']:
-        lines += ['## ' + n['label'], n['purpose'], '']
+        lines += ['## ' + markdown_text(n['label']), markdown_text(n['purpose']), '']
         for field, label in [('inputs', '입력'), ('outputs', '출력'), ('state', '기억하는 상태'), ('unknowns', '미확인')]:
-            lines += ['**' + label + '**: ' + (' / '.join(n[field]) or '명시된 항목 없음')]
+            values = ' / '.join(markdown_text(value) for value in n[field])
+            lines += ['**' + label + '**: ' + (values or '명시된 항목 없음')]
         for r in public['rules']:
             if r['node'] == n['id']:
-                lines += ['', '### ' + r['title'], r['text'], '근거: ' + ', '.join(r['evidence'])]
+                lines += ['', '### ' + markdown_text(r['title']), markdown_text(r['text']),
+                          '근거: ' + ', '.join(markdown_text(e) for e in r['evidence'])]
         for r in public['relations']:
             if r['from'] == n['id'] or r['to'] == n['id']:
-                lines += ['', '연결 ' + r['from'] + ' → ' + r['to'] + ': ' + r['label'],
-                          '조건: ' + r['condition'] + ' / 시점: ' + r['timing']]
+                lines += ['', '연결 ' + markdown_text(r['from']) + ' → ' + markdown_text(r['to']) + ': ' + markdown_text(r['label']),
+                          '조건: ' + markdown_text(r['condition']) + ' / 시점: ' + markdown_text(r['timing'])]
         lines += ['']
     return '\n'.join(lines) + '\n'
+
+VIEWER_PLACEHOLDER = re.compile(r'__(?:PAGE_TITLE|MAP_JSON)__')
+
+def render_viewer(template, title, data):
+    replacements = {'__PAGE_TITLE__': html.escape(title), '__MAP_JSON__': data}
+    if any(template.count(token) != 1 for token in replacements):
+        raise MapError('Invalid viewer template placeholders')
+    return VIEWER_PLACEHOLDER.sub(lambda match: replacements[match.group(0)], template)
 
 def build(work):
     work = work.resolve()
@@ -326,8 +389,7 @@ def build(work):
     public = public_model(model, manifest, files)
     template = (SKILL / 'assets/viewer.html').read_text('utf-8')
     data = encoded(public).decode().replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
-    rendered = template.replace('__MAP_JSON__', data)
-    rendered = rendered.replace('__PAGE_TITLE__', html.escape(public['title']))
+    rendered = render_viewer(template, public['title'], data)
     output = work / 'public'
     if output.is_symlink():
         raise MapError('Public output must not be a symlink')

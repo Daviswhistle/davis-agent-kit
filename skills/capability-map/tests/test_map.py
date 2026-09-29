@@ -203,10 +203,36 @@ class MapTests(unittest.TestCase):
         self.assertNotIn('file', packet['evidence'][0])
         self.assertEqual(packet['evidence'][0]['status'], 'not_runtime_verified')
 
+    def test_short_root_filename_does_not_poison_public_output(self):
+        (self.repo / 'a').write_text('metadata\n', 'utf-8')
+        self.git('add', 'a'); self.git('commit', '-qm', 'short filename')
+        work = m.prepare(self.repo, self.root / 'short-name')
+        manifest = m.read_json(work / 'private/manifest.json')
+        candidate = copy.deepcopy(self.model)
+        candidate['snapshot'] = manifest['snapshot']
+        m.write_json(work / 'private/model.json', candidate)
+        self.assertTrue((m.build(work) / 'map.html').is_file())
+
     def test_public_path_leak_rejected(self):
         self.model['summary'] = 'Read app.py'
         self.save()
         with self.assertRaises(m.MapError): m.build(self.work)
+
+    def test_guide_escapes_model_markdown_and_html(self):
+        candidate = copy.deepcopy(self.model)
+        candidate['title'] = 'Title <b>unsafe</b>'
+        candidate['summary'] = '<img src="https://attacker.invalid/x">\n# injected\n![x](https://attacker.invalid/x)'
+        candidate['nodes'][0]['purpose'] = '> quote\n    indented code'
+        candidate['rules'][0]['text'] = '*bold* [link](https://attacker.invalid/x)'
+        m.write_json(self.work / 'private/model.json', candidate)
+        guide = (m.build(self.work) / 'guide.md').read_text('utf-8')
+        self.assertNotIn('<img', guide)
+        self.assertNotIn('<b>', guide)
+        self.assertNotIn('\n# injected', guide)
+        self.assertNotIn('![x](', guide)
+        self.assertIn('&lt;img', guide)
+        self.assertIn('\\# injected', guide)
+        self.assertIn('\\!\\[x\\]\\(', guide)
 
     def test_script_injection_escaped(self):
         self.model['title'] = '</script><img src=x onerror=alert(1)>'
@@ -214,6 +240,22 @@ class MapTests(unittest.TestCase):
         content = (output / 'map.html').read_text('utf-8')
         self.assertNotIn('</script><img', content)
         self.assertIn('\\u003c/script', content)
+
+    def test_viewer_placeholders_inside_model_text_remain_literal(self):
+        candidate = copy.deepcopy(self.model)
+        candidate['title'] = 'Title __MAP_JSON__'
+        candidate['summary'] = 'Literal __PAGE_TITLE__ token'
+        m.write_json(self.work / 'private/model.json', candidate)
+        output = m.build(self.work)
+        content = (output / 'map.html').read_text('utf-8')
+        prefix = '<script id="map-data" type="application/json">'
+        suffix = '</script><script>'
+        embedded = json.loads(content.split(prefix, 1)[1].split(suffix, 1)[0])
+        packet = m.read_json(output / 'astra-packet.json')
+        self.assertEqual(embedded, packet)
+        self.assertEqual(embedded['summary'], 'Literal __PAGE_TITLE__ token')
+        self.assertEqual(embedded['title'], 'Title __MAP_JSON__')
+        self.assertIn('<title>Title __MAP_JSON__ · Capability Map</title>', content)
 
     def test_path_traversal_and_symlink(self):
         with self.assertRaises(m.MapError): m.safe_path(self.root, '../escape')

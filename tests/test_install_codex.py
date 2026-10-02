@@ -39,7 +39,41 @@ class InstallerTests(unittest.TestCase):
                     (skills_home / name).resolve(strict=True),
                     (ROOT / "skills" / name).resolve(),
                 )
+            for name in install_codex.discover_pets(ROOT):
+                self.assertEqual(
+                    (codex_home / "pets" / name).resolve(strict=True),
+                    (ROOT / "pets" / name).resolve(),
+                )
             self.assertEqual(install_codex.check(ROOT, codex_home, skills_home), [])
+
+    def test_existing_identical_pet_directory_is_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            codex_home, skills_home = self.homes(tmp)
+            pet_name = install_codex.discover_pets(ROOT)[0]
+            source = ROOT / "pets" / pet_name
+            destination = codex_home / "pets" / pet_name
+            import shutil
+            shutil.copytree(source, destination)
+
+            install_codex.install(ROOT, codex_home, skills_home)
+
+            self.assertFalse(destination.is_symlink())
+            self.assertEqual(install_codex.check(ROOT, codex_home, skills_home), [])
+
+    def test_different_existing_pet_blocks_before_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            codex_home, skills_home = self.homes(tmp)
+            pet_name = install_codex.discover_pets(ROOT)[0]
+            destination = codex_home / "pets" / pet_name
+            destination.mkdir(parents=True)
+            (destination / "keep.txt").write_text("custom", encoding="utf-8")
+
+            with self.assertRaises(install_codex.InstallError):
+                install_codex.install(ROOT, codex_home, skills_home)
+
+            self.assertEqual((destination / "keep.txt").read_text(), "custom")
+            self.assertFalse((codex_home / "AGENTS.md").exists())
+            self.assertFalse(skills_home.exists())
 
     def test_conflict_fails_before_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

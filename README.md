@@ -1,8 +1,163 @@
 # Davis Agent Kit
 
-한국어로 작업하는 Codex가 사용자의 목적과 판단 기준을 일관되게 적용하도록 만드는 작은 전역 지침 + skill 묶음입니다.
+한국어로 작업하는 Codex가 사용자의 목적과 판단 기준을 일관되게 적용하도록 만드는 전역 지침 + reusable skills + custom pets 묶음입니다.
 
-## 구조
+단순히 요청을 수행하는 데서 끝나지 않고, 실제 목적·근본 원인·완료 기준을 확인하며 필요한 경우 전문 workflow를 자동으로 불러오도록 구성되어 있습니다.
+
+## 설치
+
+저장소 루트에서 실행합니다.
+
+```bash
+./scripts/install_codex.sh
+```
+
+설치 후에는 새 Codex 세션을 시작하세요.
+
+설치 상태만 확인하려면:
+
+```bash
+./scripts/install_codex.sh --check
+```
+
+다른 위치에서 시험하거나 격리하려면:
+
+```bash
+./scripts/install_codex.sh \
+  --codex-home /tmp/codex-home \
+  --skills-home /tmp/agents/skills
+```
+
+## 무엇이 설치되나
+
+기본 설치 명령 하나로 다음 항목을 함께 설치합니다.
+
+- **Global instructions** — `${CODEX_HOME:-$HOME/.codex}/AGENTS.md`
+- **User skills** — `$HOME/.agents/skills/<skill-name>`
+- **Custom pets** — `pets/` 아래에서 `pet.json`을 가진 모든 펫
+
+새 skill이나 pet을 개별적으로 골라 설치할 필요는 없습니다. 이 kit가 관리하는 항목은 설치기가 자동으로 발견합니다.
+
+## 사용
+
+대부분의 기능은 별도 명령 없이 Codex가 작업에 맞는 skill을 선택해 사용합니다.
+
+예를 들어 번역, 소프트웨어 구현, 장문 글쓰기처럼 품질 기준이 다른 작업은 각각 전용 skill의 절차와 검증 규칙을 사용합니다.
+
+코드베이스를 탐색 가능한 지도로 만들고 싶다면 대상 저장소의 새 Codex 세션에서:
+
+```text
+$capability-map 이 저장소를 코드만 보고 지도화해줘.
+```
+
+를 요청할 수 있습니다.
+
+## Skills
+
+현재 포함된 주요 skill은 다음과 같습니다.
+
+- `capability-map` — 코드 스냅샷에서 탐색 가능한 동작 지도, 한국어 설명서, 코드 없는 Astra 판단 패킷 생성
+- `translation-quality` — 비단순 한국어 번역, transcript·재무보고서 번역, source/numeric/format QA
+- `handoff-agent-builder` — Codex가 자동 발견하는 repo-local handoff skill 설계와 멀티턴 검증
+- `software-engineering` — 직접 실행·구현 위임과 로컬 검증, 필요할 때 CRA/TCA 또는 별도 오케스트레이터가 작업자를 구성하는 Teamwork
+- `writing-quality` — 글쓰기 자체가 품질 병목인 원고·장문 분석·게시용 문서 작성과 편집
+
+Codex는 먼저 skill metadata를 보고 필요한 skill을 선택한 뒤, 선택된 `SKILL.md`와 필요한 reference만 읽습니다. 전역 원칙은 `AGENTS.md`에, 조건부 workflow는 각 skill 내부에 둡니다.
+
+## Custom pets
+
+기본 설치 명령이 `pets/` 아래의 모든 custom pet을 자동으로 설치합니다.
+
+현재 제공되는 pet 목록과 새 pet 추가 방법은 [`pets/`](./pets/)를 참고하세요.
+
+새 pet은 `pets/<id>/pet.json`과 sprite 파일을 추가하면 다음 설치부터 자동으로 포함됩니다. 루트 README나 설치 목록을 별도로 수정할 필요는 없습니다.
+
+## 기본 동작 원칙
+
+목적 소유와 주인·파트너 관점은 별도 skill이 아니라 전역 `AGENTS.md`의 기본값입니다. 모델은 표면 과업보다 실제 결과를 보고, 잘못된 전제를 고치며, 근본 원인과 높은 레버리지의 개선을 찾습니다.
+
+동시에 새로운 가치 선택, 비용, 외부 write, 비가역적 위험과 실질적인 범위 확대는 사용자 권한으로 남깁니다.
+
+긴 작업에서 continuity가 실제 문제일 때만 작은 checkpoint를 남기고, 재개할 때 현재 저장소·산출물·검증과 다시 대조합니다.
+
+## 설치 관리
+
+### 기존 override
+
+전역 위치의 `AGENTS.override.md`에 내용이 있으면 Codex는 일반 `AGENTS.md` 대신 override를 선택합니다.
+
+설치기는 다른 지침을 담은 override를 감지하면 링크를 만들기 전에 중단합니다. 기존 override를 자동 삭제·덮어쓰기·병합하지 않습니다.
+
+빈 파일·공백뿐인 파일이나 kit의 규범 원본 `AGENTS.md` 자체를 가리키는 링크는 허용합니다.
+
+저장소 안의 프로젝트용 `AGENTS.override.md`는 전역 검사 대상이 아니며 설치하지 않습니다.
+
+### 이전 설치에서 migration
+
+이 kit의 과거 버전은 `${CODEX_HOME:-$HOME/.codex}/skills`를 사용했습니다. Codex가 이 위치를 호환 목적으로 읽을 수 있기 때문에, 과거 kit skill이 남아 있으면 중복 로딩을 막기 위해 설치를 중단합니다.
+
+이 경우 메시지에 표시된 과거 링크를 확인해 제거한 뒤 다시 실행하세요.
+
+`--check`는 kit의 전역 `AGENTS.md`, user skill 링크, custom pet 설치 상태와 전역 override 우선순위를 검사합니다. 실제 Codex 세션의 전체 지침 로딩이나 프로젝트별 override까지 검증한다는 뜻은 아닙니다.
+
+## Advanced
+
+### Capability Map 직접 실행
+
+Codex에서 별도 Luna mapper를 직접 실행하려면:
+
+```bash
+python3 ~/.agents/skills/capability-map/scripts/map.py run --repo .
+```
+
+Python 3.10+, Git, 기존 로그인된 Codex CLI를 사용합니다. helper 자체에 pip/npm 설치나 별도 API key는 필요하지 않습니다.
+
+기본 요청은 Luna + Max + priority/Fast이며 사용 가능한 모델·effort·tier는 실제 계정과 CLI가 결정합니다. 지원되지 않는 설정은 자동 대체하지 않습니다.
+
+별도 mapper는 ephemeral session으로 실행되고 사용자 `config.toml`과 user/project execpolicy rules를 읽지 않으며, 필요한 CLI 옵션이 없으면 실패합니다. 다른 에이전트는 skill의 `prepare → 분석 → build` 경로를 사용할 수 있습니다.
+
+대상은 깨끗한 committed HEAD입니다. 변경 중인 tracked 파일이 있으면 중단하고, untracked 파일은 입력에 포함하지 않습니다.
+
+결과 중 `public/`만 공유하며, 소스·근거 경로·작업 로그가 있는 `private/`는 공개하지 않습니다. 소스 해석은 실제 실행 검증이나 현재 운영 상태의 증명이 아니며, 이 skill만으로 OS 수준 읽기 격리를 보장하지 않습니다.
+
+### 모델 운용
+
+- 모든 역할은 런타임 기본 컨텍스트를 사용합니다. 이 kit는 context window나 auto-compaction limit을 늘리지 않습니다.
+- bounded implementation worker의 첫 후보는 `gpt-6-luna` + Max + Fast입니다.
+- CRA reviewer의 기본은 `gpt-6.1-sol` + Max + default/non-Fast service tier입니다.
+- 더 비싼 자원은 오류 비용·모호성·실제 품질 실패 같은 구체적 이유가 있을 때만 사용합니다.
+
+### AGY 품질 보정
+
+Antigravity CLI(`agy`)에도 이 kit의 보정 지침을 전역으로 적용하려면:
+
+```bash
+python3 scripts/install_agy.py
+```
+
+설치 상태만 확인하려면:
+
+```bash
+python3 scripts/install_agy.py --check
+```
+
+설치기는 AGY의 전역 rules 디렉터리인 `~/.gemini/antigravity-cli/rules/`에 `davis-agent-kit.md` 심링크를 만듭니다. 같은 이름의 기존 rule이 있으면 덮어쓰지 않고 중단합니다.
+
+이 rule은 Codex용 skill routing이나 모델 선택 규칙을 AGY에 복제하지 않습니다. Gemini 계열 모델이 상위 수준의 그럴듯한 답에서 멈추지 않도록 전제·실패 모드·실제 control/data flow·downstream 효과·필수 검증을 끝까지 확인하게 보정합니다.
+
+적용 뒤에는 새 AGY 세션을 시작하세요.
+
+## 검증
+
+```bash
+python3 scripts/validate_kit.py
+```
+
+CI도 같은 진입점을 사용합니다.
+
+검증 대상은 skill frontmatter/resource 경로, installer 계약, 실제 helper와 실행 코드의 tests입니다. 특정 Markdown 문구나 모델 판단 품질을 정적 테스트로 고정하지 않습니다.
+
+## Repository structure
 
 ```text
 davis-agent-kit/
@@ -18,134 +173,22 @@ davis-agent-kit/
 │   ├── software-engineering/
 │   └── writing-quality/
 ├── pets/
-│   ├── hwito/
-│   └── mochi/
 ├── scripts/
 ├── tests/
 └── .github/
 ```
 
-- `AGENTS.md`: 모든 작업의 기본 자세, 권한, 완료 기준과 skill routing
-- `AGENTS.override.md`: 이 저장소 자체를 수정할 때의 관리 규칙
-- `providers/agy/davis-agent-kit.md`: AGY에서 Gemini 계열 모델의 누락·검증 부족을 보정하는 선택형 전역 rule
-- `skills/`: 반복 workflow와 그 workflow에만 필요한 references, agents, scripts, tests
-- `pets/`: Codex custom pets. 설치기가 `pet.json`을 가진 모든 펫을 자동 발견
-- `scripts/install_codex.py`: 전역 AGENTS, user skills, custom pets를 설치
-- `scripts/validate_kit.py`: active skill 계약과 실행 가능한 tests/helpers 검증
-
-과거 의사결정 기록, raw model trace, 수동 평가 archive, 빈 template/inbox/user-model 디렉터리는 제품 트리에 유지하지 않습니다. 변경 이유는 Git history와 PR이 보존합니다.
+- `AGENTS.md` — 모든 작업의 기본 자세, 권한, 완료 기준과 skill routing
+- `AGENTS.override.md` — 이 저장소 자체를 수정할 때의 관리 규칙
+- `providers/agy/davis-agent-kit.md` — AGY에서 Gemini 계열 모델의 누락·검증 부족을 보정하는 선택형 전역 rule
+- `skills/` — 반복 workflow와 그 workflow에만 필요한 references, agents, scripts, tests
+- `pets/` — Codex custom pets
+- `scripts/install_codex.py` — 전역 AGENTS, user skills, custom pets 설치
+- `scripts/validate_kit.py` — active skill 계약과 실행 가능한 tests/helpers 검증
 
 Codex의 자동 지침 로딩 계약에 맞춰 성격·말투·상호작용 원칙도 전역 `AGENTS.md`에 둡니다. 별도 `SOUL.md`를 추가해 자동 로딩되지 않는 문서를 만들지 않습니다.
 
-## 기본 자세
-
-목적 소유와 주인·파트너 관점은 별도 skill이 아니라 `AGENTS.md`의 상시 기본값입니다. 모델은 표면 과업보다 실제 결과를 보고, 잘못된 전제를 고치며, 근본 원인과 높은 레버리지의 개선을 찾습니다. 동시에 새로운 가치 선택, 비용, 외부 write, 비가역적 위험과 실질적인 범위 확대는 사용자 권한으로 남깁니다.
-
-긴 작업에서 continuity가 실제 문제일 때만 작은 checkpoint를 남기고, 재개할 때 현재 저장소·산출물·검증과 다시 대조합니다. 별도 mission database나 ownership runtime은 두지 않습니다.
-
-## Skills
-
-- `capability-map`: 코드 스냅샷에서 탐색 가능한 동작 지도, 한국어 설명서, 코드 없는 Astra 판단 패킷 생성
-- `translation-quality`: 비단순 한국어 번역, transcript·재무보고서 번역, source/numeric/format QA
-- `handoff-agent-builder`: Codex가 자동 발견하는 repo-local handoff skill 설계와 멀티턴 검증
-- `software-engineering`: 직접 실행·구현 위임과 로컬 검증, 필요할 때 CRA/TCA 또는 별도 오케스트레이터가 작업자를 구성하는 Teamwork
-- `writing-quality`: 글쓰기 자체가 품질 병목인 원고·장문 분석·게시용 문서 작성과 편집
-
-Codex는 skill을 먼저 metadata로 발견하고 선택된 skill의 `SKILL.md`와 필요한 reference만 읽습니다. 따라서 전역 원칙은 AGENTS에, 조건부 절차는 skill 내부에만 둡니다.
-
-### 코드베이스 지도 만들기
-
-설치 후 대상 저장소에서 새 에이전트 세션을 열고 요청합니다.
-
-```text
-$capability-map 이 저장소를 코드만 보고 지도화해줘.
-```
-
-백서 작성이나 JSON 준비는 필요하지 않습니다. 스킬이 소스 분석, 근거 검사, 고정 렌더러 실행을 맡고 `map.html`, `guide.md`, `astra-packet.json`을 생성합니다. 지도는 설치 없이 브라우저로 열 수 있습니다.
-
-Codex에서 별도 Luna mapper를 바로 실행하려면:
-
-```bash
-python3 ~/.agents/skills/capability-map/scripts/map.py run --repo .
-```
-
-Python 3.10+, Git, 기존 로그인된 Codex CLI를 사용합니다. helper 자체에 pip/npm 설치나 별도 API 키는 필요하지 않습니다. 기본 요청은 Luna + Max + priority/Fast이며 사용 가능한 모델·effort·tier는 실제 계정과 CLI가 결정합니다. 지원되지 않는 설정은 자동 대체하지 않습니다. 별도 mapper는 ephemeral session으로 실행되고 사용자 `config.toml`과 user/project execpolicy rules를 읽지 않으며, 필요한 CLI 옵션이 없으면 실패합니다. 다른 에이전트는 스킬의 `prepare → 분석 → build` 경로를 사용할 수 있습니다.
-
-대상은 깨끗한 committed HEAD입니다. 변경 중인 tracked 파일이 있으면 중단하고, untracked 파일은 입력에 포함하지 않습니다. 결과의 `public/`만 공유하며, 소스·근거 경로·작업 로그가 있는 `private/`는 공개하지 않습니다. 소스 해석은 실제 실행 검증이나 현재 운영 상태의 증명이 아니며, 이 스킬만으로 OS 수준 읽기 격리를 보장하지 않습니다.
-
-## 모델 운용
-
-- 모든 역할은 런타임 기본 컨텍스트를 사용합니다. 이 kit는 context window나 auto-compaction limit을 늘리지 않습니다.
-- bounded implementation worker의 첫 후보는 `gpt-6-luna` + Max + Fast입니다.
-- CRA reviewer의 기본은 `gpt-6.1-sol` + Max + default/non-Fast service tier입니다.
-- 더 비싼 자원은 오류 비용·모호성·실제 품질 실패 같은 구체적 이유가 있을 때만 사용합니다.
-
-## 설치
-
-현재 Codex의 전역 위치를 따릅니다.
-
-- global instructions: `${CODEX_HOME:-$HOME/.codex}/AGENTS.md`
-- user skills: `$HOME/.agents/skills/<skill-name>`
-
-저장소 루트에서:
-
-```bash
-./scripts/install_codex.sh
-```
-
-다른 위치를 시험하거나 격리하려면:
-
-```bash
-./scripts/install_codex.sh \
-  --codex-home /tmp/codex-home \
-  --skills-home /tmp/agents/skills
-```
-
-설치기는 전역 지침과 skills뿐 아니라 `pets/` 아래의 custom pet도 전부 함께 설치합니다. 새 펫은 `pets/<id>/pet.json`과 sprite를 추가하면 다음 설치부터 자동으로 포함됩니다. 기존 파일이나 다른 skill/pet을 덮어쓰지 않으며, 이미 같은 kit의 펫이 복사되어 있거나 정확한 심링크면 그대로 유지합니다.
-
-전역 위치의 `AGENTS.override.md`에 내용이 있으면 Codex는 일반 `AGENTS.md` 대신 그 파일을 선택합니다. 설치기는 다른 지침을 담은 override를 감지하면 링크를 만들기 전에 중단하고, `--check`도 실패로 표시합니다. 빈 파일·공백뿐인 파일이나 kit의 규범 원본 `AGENTS.md` 자체를 가리키는 링크는 허용합니다. 읽을 수 없거나 깨진 override는 선택 상태를 확인할 수 없다고 보고합니다. 기존 override는 자동 삭제·덮어쓰기·병합하지 않으므로 내용을 직접 확인해 별도 보관하거나 필요한 지침을 정리한 뒤 재시도합니다. 저장소 안의 프로젝트용 `AGENTS.override.md`는 이 전역 검사 대상이 아니며 설치하지 않습니다.
-
-이 kit의 과거 버전이 사용하던 `${CODEX_HOME:-$HOME/.codex}/skills`는 Codex가 호환 목적으로 아직 읽을 수 있으므로, 그 위치에 `translation-quality`, `handoff-agent-builder`, `software-engineering`, `writing-quality` 또는 retired kit skill이 남아 있으면 migration을 중단합니다. 중복 로딩을 피하기 위해 해당 과거 링크를 직접 확인해 제거한 뒤 다시 실행합니다.
-
-설치 상태 확인:
-
-```bash
-./scripts/install_codex.sh --check
-```
-
-`--check`는 kit의 전역 `AGENTS.md`, user skill 링크, custom pet 설치 상태와 전역 override 우선순위를 검사합니다. 실제 Codex 세션의 전체 지침 로딩이나 프로젝트별 override까지 검증했다는 뜻은 아닙니다.
-
-`AGENTS.md` 또는 skill 설치·변경 뒤에는 새 Codex 세션을 시작합니다.
-
-### 선택: AGY 품질 보정
-
-Antigravity CLI(`agy`)에도 이 kit의 보정 지침을 전역으로 적용하려면:
-
-```bash
-python3 scripts/install_agy.py
-```
-
-설치기는 AGY의 전역 rules 디렉터리인 `~/.gemini/antigravity-cli/rules/`에 `davis-agent-kit.md` 심링크를 만듭니다. 같은 이름의 기존 rule이 있으면 덮어쓰지 않고 중단합니다. 설치 상태만 확인하려면:
-
-```bash
-python3 scripts/install_agy.py --check
-```
-
-AGY는 전역 rules와 workspace rules를 prompt expansion 때 평가해 적용합니다. 이 rule은 Codex용 skill routing이나 모델 선택 규칙을 AGY에 복제하지 않고, Gemini 계열 모델이 상위 수준의 그럴듯한 답에서 멈추지 않도록 전제·실패 모드·실제 control/data flow·downstream 효과·필수 검증을 끝까지 확인하게 보정합니다. 적용 뒤에는 새 AGY 세션을 시작합니다.
-
-### Custom pets
-
-`./scripts/install_codex.sh`가 [`pets/`](./pets/) 아래의 모든 custom pet을 함께 설치합니다. 펫을 따로 고르거나 별도 설치 명령을 실행할 필요가 없습니다.
-
-새 펫도 `pets/<id>/`에 추가하기만 하면 자동으로 설치 대상에 포함됩니다. Codex에서 custom pet 목록을 새로고침한 뒤 원하는 펫을 선택하면 됩니다.
-
-## 검증
-
-```bash
-python3 scripts/validate_kit.py
-```
-
-CI도 같은 진입점을 사용합니다. 검증 대상은 skill frontmatter/resource 경로, installer 계약, 실제 helper와 실행 코드의 tests입니다. 특정 Markdown 문구나 모델 판단 품질을 정적 테스트로 고정하지 않습니다.
+과거 의사결정 기록, raw model trace, 수동 평가 archive 같은 유지보수용 기록은 제품 트리에 두지 않고 Git history와 PR에서 관리합니다.
 
 ## 수정 원칙
 

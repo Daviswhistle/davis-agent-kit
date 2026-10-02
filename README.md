@@ -133,31 +133,17 @@ python3 scripts/install_agy.py --check
 
 AGY는 전역 rules와 workspace rules를 prompt expansion 때 평가해 적용합니다. 이 rule은 Codex용 skill routing이나 모델 선택 규칙을 AGY에 복제하지 않고, Gemini 계열 모델이 상위 수준의 그럴듯한 답에서 멈추지 않도록 전제·실패 모드·실제 control/data flow·downstream 효과·필수 검증을 끝까지 확인하게 보정합니다. 적용 뒤에는 새 AGY 세션을 시작합니다.
 
-### 선택: Hwito
+### 선택: Custom pets
 
-`Hwito`는 kit 동작과 무관한 선택형 Codex custom pet입니다. 기본 설치기는 펫을 설치하지 않습니다.
-
-기존 `hwito` custom pet이 없을 때 저장소 루트에서:
+이 저장소에는 선택해서 설치할 수 있는 Codex custom pet들이 포함되어 있습니다. 사용 가능한 펫, 공통 설치법과 설치 상태 확인은 [`pets/`](./pets/)에서 안내합니다.
 
 ```bash
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/pets"
-cp -R pets/hwito "${CODEX_HOME:-$HOME/.codex}/pets/"
+python3 scripts/install_pet.py --list
+python3 scripts/install_pet.py mochi
+python3 scripts/install_pet.py mochi --check
 ```
 
-Codex에서 custom pet 목록을 새로고침한 뒤 `Hwito`를 선택합니다. `Hwito`는 수동 설치 항목이므로 위 `--check`의 검증 대상이 아닙니다.
-
-### 선택: 모찌
-
-`모찌`는 분홍 귀와 동그란 흰 몸을 가진 토끼 Codex custom pet입니다. 9가지 상태 애니메이션과 16방향 시선 프레임을 담은 v2 스프라이트 시트를 사용합니다. 기본 설치기는 펫을 설치하지 않습니다.
-
-기존 `mochi` custom pet이 없을 때 저장소 루트에서:
-
-```bash
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/pets"
-cp -R pets/mochi "${CODEX_HOME:-$HOME/.codex}/pets/"
-```
-
-Codex에서 custom pet 목록을 새로고침한 뒤 `모찌`를 선택합니다. 모찌도 수동 설치 항목이므로 위 `--check`의 검증 대상이 아닙니다.
+기본 kit 설치기는 custom pet을 설치하지 않으며, pet 설치 여부는 `./scripts/install_codex.sh --check`의 검증 대상이 아닙니다.
 
 ## 검증
 

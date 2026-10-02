@@ -18,7 +18,8 @@ davis-agent-kit/
 │   ├── software-engineering/
 │   └── writing-quality/
 ├── pets/
-│   └── hwito/
+│   ├── hwito/
+│   └── mochi/
 ├── scripts/
 ├── tests/
 └── .github/
@@ -28,7 +29,7 @@ davis-agent-kit/
 - `AGENTS.override.md`: 이 저장소 자체를 수정할 때의 관리 규칙
 - `providers/agy/davis-agent-kit.md`: AGY에서 Gemini 계열 모델의 누락·검증 부족을 보정하는 선택형 전역 rule
 - `skills/`: 반복 workflow와 그 workflow에만 필요한 references, agents, scripts, tests
-- `pets/hwito/`: 선택해서 설치할 수 있는 Codex custom pet
+- `pets/hwito/`, `pets/mochi/`: 선택해서 설치할 수 있는 Codex custom pets
 - `scripts/install_codex.py`: 전역 AGENTS와 user skills를 심링크
 - `scripts/validate_kit.py`: active skill 계약과 실행 가능한 tests/helpers 검증
 
@@ -144,6 +145,19 @@ cp -R pets/hwito "${CODEX_HOME:-$HOME/.codex}/pets/"
 ```
 
 Codex에서 custom pet 목록을 새로고침한 뒤 `Hwito`를 선택합니다. `Hwito`는 수동 설치 항목이므로 위 `--check`의 검증 대상이 아닙니다.
+
+### 선택: 모찌
+
+`모찌`는 분홍 귀와 동그란 흰 몸을 가진 토끼 Codex custom pet입니다. 9가지 상태 애니메이션과 16방향 시선 프레임을 담은 v2 스프라이트 시트를 사용합니다. 기본 설치기는 펫을 설치하지 않습니다.
+
+기존 `mochi` custom pet이 없을 때 저장소 루트에서:
+
+```bash
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/pets"
+cp -R pets/mochi "${CODEX_HOME:-$HOME/.codex}/pets/"
+```
+
+Codex에서 custom pet 목록을 새로고침한 뒤 `모찌`를 선택합니다. 모찌도 수동 설치 항목이므로 위 `--check`의 검증 대상이 아닙니다.
 
 ## 검증
 

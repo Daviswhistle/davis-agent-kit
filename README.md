@@ -29,8 +29,8 @@ davis-agent-kit/
 - `AGENTS.override.md`: 이 저장소 자체를 수정할 때의 관리 규칙
 - `providers/agy/davis-agent-kit.md`: AGY에서 Gemini 계열 모델의 누락·검증 부족을 보정하는 선택형 전역 rule
 - `skills/`: 반복 workflow와 그 workflow에만 필요한 references, agents, scripts, tests
-- `pets/hwito/`, `pets/mochi/`: 선택해서 설치할 수 있는 Codex custom pets
-- `scripts/install_codex.py`: 전역 AGENTS와 user skills를 심링크
+- `pets/`: Codex custom pets. 설치기가 `pet.json`을 가진 모든 펫을 자동 발견
+- `scripts/install_codex.py`: 전역 AGENTS, user skills, custom pets를 설치
 - `scripts/validate_kit.py`: active skill 계약과 실행 가능한 tests/helpers 검증
 
 과거 의사결정 기록, raw model trace, 수동 평가 archive, 빈 template/inbox/user-model 디렉터리는 제품 트리에 유지하지 않습니다. 변경 이유는 Git history와 PR이 보존합니다.
@@ -101,7 +101,7 @@ Python 3.10+, Git, 기존 로그인된 Codex CLI를 사용합니다. helper 자�
   --skills-home /tmp/agents/skills
 ```
 
-설치기는 기존 파일이나 다른 skill을 덮어쓰지 않습니다. 이미 정확한 심링크면 유지하고 충돌하면 변경 전에 중단합니다.
+설치기는 전역 지침과 skills뿐 아니라 `pets/` 아래의 custom pet도 전부 함께 설치합니다. 새 펫은 `pets/<id>/pet.json`과 sprite를 추가하면 다음 설치부터 자동으로 포함됩니다. 기존 파일이나 다른 skill/pet을 덮어쓰지 않으며, 이미 같은 kit의 펫이 복사되어 있거나 정확한 심링크면 그대로 유지합니다.
 
 전역 위치의 `AGENTS.override.md`에 내용이 있으면 Codex는 일반 `AGENTS.md` 대신 그 파일을 선택합니다. 설치기는 다른 지침을 담은 override를 감지하면 링크를 만들기 전에 중단하고, `--check`도 실패로 표시합니다. 빈 파일·공백뿐인 파일이나 kit의 규범 원본 `AGENTS.md` 자체를 가리키는 링크는 허용합니다. 읽을 수 없거나 깨진 override는 선택 상태를 확인할 수 없다고 보고합니다. 기존 override는 자동 삭제·덮어쓰기·병합하지 않으므로 내용을 직접 확인해 별도 보관하거나 필요한 지침을 정리한 뒤 재시도합니다. 저장소 안의 프로젝트용 `AGENTS.override.md`는 이 전역 검사 대상이 아니며 설치하지 않습니다.
 
@@ -113,7 +113,7 @@ Python 3.10+, Git, 기존 로그인된 Codex CLI를 사용합니다. helper 자�
 ./scripts/install_codex.sh --check
 ```
 
-`--check`는 kit의 전역 `AGENTS.md`·user skill 링크와 전역 override 우선순위를 검사하며 custom pet은 검사하지 않습니다. 실제 Codex 세션의 전체 지침 로딩이나 프로젝트별 override까지 검증했다는 뜻은 아닙니다.
+`--check`는 kit의 전역 `AGENTS.md`, user skill 링크, custom pet 설치 상태와 전역 override 우선순위를 검사합니다. 실제 Codex 세션의 전체 지침 로딩이나 프로젝트별 override까지 검증했다는 뜻은 아닙니다.
 
 `AGENTS.md` 또는 skill 설치·변경 뒤에는 새 Codex 세션을 시작합니다.
 
@@ -133,17 +133,11 @@ python3 scripts/install_agy.py --check
 
 AGY는 전역 rules와 workspace rules를 prompt expansion 때 평가해 적용합니다. 이 rule은 Codex용 skill routing이나 모델 선택 규칙을 AGY에 복제하지 않고, Gemini 계열 모델이 상위 수준의 그럴듯한 답에서 멈추지 않도록 전제·실패 모드·실제 control/data flow·downstream 효과·필수 검증을 끝까지 확인하게 보정합니다. 적용 뒤에는 새 AGY 세션을 시작합니다.
 
-### 선택: Custom pets
+### Custom pets
 
-이 저장소에는 선택해서 설치할 수 있는 Codex custom pet들이 포함되어 있습니다. 사용 가능한 펫, 공통 설치법과 설치 상태 확인은 [`pets/`](./pets/)에서 안내합니다.
+`./scripts/install_codex.sh`가 [`pets/`](./pets/) 아래의 모든 custom pet을 함께 설치합니다. 펫을 따로 고르거나 별도 설치 명령을 실행할 필요가 없습니다.
 
-```bash
-python3 scripts/install_pet.py --list
-python3 scripts/install_pet.py mochi
-python3 scripts/install_pet.py mochi --check
-```
-
-기본 kit 설치기는 custom pet을 설치하지 않으며, pet 설치 여부는 `./scripts/install_codex.sh --check`의 검증 대상이 아닙니다.
+새 펫도 `pets/<id>/`에 추가하기만 하면 자동으로 설치 대상에 포함됩니다. Codex에서 custom pet 목록을 새로고침한 뒤 원하는 펫을 선택하면 됩니다.
 
 ## 검증
 

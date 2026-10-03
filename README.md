@@ -123,7 +123,7 @@ Python 3.10+, Git, 기존 로그인된 Codex CLI를 사용합니다. helper 자�
 ### 모델 운용
 
 - 모든 역할은 런타임 기본 컨텍스트를 사용합니다. 이 kit는 context window나 auto-compaction limit을 늘리지 않습니다.
-- bounded implementation worker의 첫 후보는 `gpt-6-luna` + Max + Fast입니다.
+- bounded implementation worker는 `gpt-6-luna` + Max + Fast 고정 profile입니다. 이 profile을 실행할 수 없으면 다른 worker 설정으로 조용히 대체하지 않고 primary가 직접 구현하거나 제한을 보고합니다.
 - CRA reviewer의 기본은 `gpt-6.1-sol` + Max + default/non-Fast service tier입니다.
 - 더 비싼 자원은 오류 비용·모호성·실제 품질 실패 같은 구체적 이유가 있을 때만 사용합니다.
 

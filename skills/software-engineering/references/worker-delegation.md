@@ -4,9 +4,9 @@ Use when a software task is delegated to an implementation worker, explorer, ind
 
 ## Roles
 
-- primary: user intent, authority, user-facing status/steering, integration, completion-critical validation and final response
+- primary: user intent, authority, user-facing status/steering, integration, completion-critical validation and final response; may inspect source, diffs, logs and tests whenever useful
 - orchestrator: a separate child accountable to the primary; decomposes, schedules, delegates and supervises bounded work and retries. It may maintain concise coordination state and integrate authorized outputs after writers stop, but it delegates implementation and does not replace the primary or certify the final outcome
-- implementation worker: assigned implementation and local validation only
+- implementation worker: assigned repository exploration, implementation, local validation and bounded debug loops only; fixed to Luna + Max + Fast
 - explorer: read-only bounded discovery
 - independent reviewer: must not be the author of the change it reviews
 
@@ -33,9 +33,9 @@ For coordinated or changing tasks, add the current contract revision, pinned wor
 
 Use the selection requirements and role defaults in [SKILL.md](../SKILL.md#resource-defaults). This reference supplies launcher details; [cra-loop.md](cra-loop.md) owns the exact CRA invocation.
 
-### Luna + Fast routing
+### Luna Max Fast implementation routing
 
-Current Codex native subagents inherit the root service tier, so a non-Fast primary cannot make only one native Luna child Fast. In that case launch the implementation worker as an independent root with `scripts/run_luna_worker.py`. The helper pins `gpt-6-luna`, Max reasoning, `service_tier=priority`, `workspace-write`, and `approval_policy=never`, injects the bounded worker instructions as developer instructions, and uses `--strict-config` so an installed CLI that does not recognize a pinned setting fails instead of silently downgrading it.
+The implementation-worker profile is fixed: `gpt-6-luna`, Max reasoning and Fast service. Do not route this role to another model, reasoning effort or slower tier. Current Codex native subagents inherit the root service tier, so when the root is not already compatible with that exact profile, launch the implementation worker as an independent root with `scripts/run_luna_worker.py`. The helper pins `gpt-6-luna`, Max reasoning, `service_tier=priority`, `workspace-write`, and `approval_policy=never`, injects the bounded worker instructions as developer instructions, and uses `--strict-config` so an installed CLI that does not recognize a pinned setting fails instead of silently downgrading it.
 
 Pass the handoff contract on stdin so shell quoting does not become part of the task:
 
@@ -46,13 +46,13 @@ Scope: ...
 Out of scope: ...
 Constraints: ...
 Authority: read/edit/test; no remote mutation
-Resources: implementation worker; gpt-6-luna; Max; Fast; bounded contract only; precise implementation scope fits the first candidate
+Resources: implementation worker; gpt-6-luna; Max; Fast; fixed worker profile; bounded contract only
 Validation: ...
 Return: changed files, effect, raw results, skipped checks, uncertainty, blockers
 CONTRACT
 ```
 
-Wait for this writer to exit before the primary or another writer edits the same worktree. Inspect the actual diff and validation afterward. Because this is a nested `codex exec`, the outer shell execution must be allowed to reach the Codex backend; if its sandbox blocks network access, use an explicitly approved network-capable execution path or do not delegate rather than bypassing that boundary silently. If the root session is already Fast, native delegation remains acceptable when its other constraints fit.
+Wait for this writer to exit before the primary or another writer edits the same worktree. Inspect the actual diff and validation afterward. Because this is a nested `codex exec`, the outer shell execution must be allowed to reach the Codex backend; if its sandbox blocks network access, use an explicitly approved network-capable execution path or do not delegate rather than bypassing that boundary silently. If the root session already provides the exact Luna + Max + Fast profile, native delegation remains acceptable when its other constraints fit. If the pinned profile cannot be launched, do not substitute another implementation-worker profile; return implementation to the primary session or report the limitation.
 
 ## Context
 

@@ -61,6 +61,7 @@ $capability-map 이 저장소를 코드만 보고 지도화해줘.
 - `handoff-agent-builder` — Codex가 자동 발견하는 repo-local handoff skill 설계와 멀티턴 검증
 - `software-engineering` — 직접 실행·구현 위임과 로컬 검증, 필요할 때 CRA/TCA 또는 별도 오케스트레이터가 작업자를 구성하는 Teamwork
 - `writing-quality` — 글쓰기 자체가 품질 병목인 원고·장문 분석·게시용 문서 작성과 편집
+- `ari-pet` — 별꼬리 여우 아리의 로컬 별정원, 상호작용·성장, 선택형 Codex 이벤트 연동 (`pets/ari` 네이티브 펫과 함께 제공)
 
 Codex는 먼저 skill metadata를 보고 필요한 skill을 선택한 뒤, 선택된 `SKILL.md`와 필요한 reference만 읽습니다. 전역 원칙은 `AGENTS.md`에, 조건부 workflow는 각 skill 내부에 둡니다.
 

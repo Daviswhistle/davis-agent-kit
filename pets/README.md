@@ -4,6 +4,7 @@ Davis Agent Kit에 포함된 Codex custom pets입니다.
 
 | Pet | ID | Description |
 | --- | --- | --- |
+| 아리 (Ari) | `ari` | 하늘빛 별꼬리를 가진 작은 흰 여우. Codex에서 기다리고 달리고 인사하며 함께해요. |
 | Hwito | `hwito` | A tiny moon-bunny coding companion with a Go stone and a little laptop. |
 | 모찌 | `mochi` | 분홍 귀와 동그란 흰 몸을 가진 사려 깊은 모찌 토끼 |
 

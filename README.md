@@ -59,7 +59,7 @@ $capability-map 이 저장소를 코드만 보고 지도화해줘.
 - `capability-map` — 코드 스냅샷에서 탐색 가능한 동작 지도, 한국어 설명서, 코드 없는 Astra 판단 패킷 생성
 - `translation-quality` — 비단순 한국어 번역, transcript·재무보고서 번역, source/numeric/format QA
 - `handoff-agent-builder` — Codex가 자동 발견하는 repo-local handoff skill 설계와 멀티턴 검증
-- `software-engineering` — 직접 실행·구현 위임과 로컬 검증, 필요할 때 CRA/TCA 또는 별도 오케스트레이터가 작업자를 구성하는 Teamwork
+- `software-engineering` — 필요한 전문 역할 위임과 통합·검증, 필요할 때 CRA/TCA 또는 별도 실행 조정자
 - `writing-quality` — 글쓰기 자체가 품질 병목인 원고·장문 분석·게시용 문서 작성과 편집
 
 Codex는 먼저 skill metadata를 보고 필요한 skill을 선택한 뒤, 선택된 `SKILL.md`와 필요한 reference만 읽습니다. 전역 원칙은 `AGENTS.md`에, 조건부 workflow는 각 skill 내부에 둡니다.

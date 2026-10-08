@@ -1,33 +1,36 @@
 # Worker Delegation
 
-Use when a software task is delegated to an implementation worker, explorer, independent reviewer or separate orchestrator. Delegation moves bounded work and noisy output; it does not transfer the primary's final responsibility.
+Use for every software specialist handoff, including implementation, bounded discovery, independent review and an optional execution coordinator. A handoff assigns professional work to a specialist; it does not transfer the primary's leadership or final responsibility.
 
 ## Roles
 
-- primary: user intent, authority, user-facing status/steering, integration, completion-critical validation and final response
-- orchestrator: a separate child accountable to the primary; decomposes, schedules, delegates and supervises bounded work and retries. It may maintain concise coordination state and integrate authorized outputs after writers stop, but it delegates implementation and does not replace the primary or certify the final outcome
-- implementation worker: assigned implementation and local validation only
-- explorer: read-only bounded discovery
-- independent reviewer: must not be the author of the change it reviews
+- primary/team leader: user intent, priorities, authority, user-facing status and steering, role assignment and scheduling by default, integration responsibility, final acceptance validation and response; may explicitly authorize a coordinator to integrate after writers stop
+- optional execution coordinator: a separate child explicitly delegated team creation and scheduling only when sustained coordination justifies it; it may integrate completed outputs after writers stop when explicitly authorized, but does not replace the primary or accept the result
+- specialist: one defined professional role and its domain deliverable; it may work across all necessary files within that role and runs role-local checks
+- independent reviewer: a specialist role that must not author the change it reviews
+
+Worker, explorer and reviewer labels do not authorize one context to perform unrelated professional work; state the specialist's professional role explicitly, including independent review when that is the assignment. Only the primary or a coordinator explicitly delegated team creation/scheduling may create or schedule agents. Specialists may coordinate with relevant peers through supported tools within their contracts, but may not reassign peers, expand scope, mutate another owner's workspace or create subteams.
 
 ## Handoff contract
 
 Send only what the delegate needs:
 
 ```text
-Goal: <observable outcome>
-Scope: <included files/components/behavior>
+Professional role: <one defined specialty>
+Goal and deliverable: <observable outcome and expected output>
+Scope: <included components; may span necessary files for this same-role deliverable>
+Peers and dependencies: <counterpart role plus current address/task identity; required inputs, expected outputs and dependency order; none if solo>
 Out of scope: <nearby work to leave alone>
 Constraints: <project, safety, compatibility, user choices>
-Authority: <read/edit/test/commit permission>
-Resources: <role, model, reasoning effort, service tier, history propagation; brief selection reason>
-Validation: <required checks/evidence>
+Tools and authority: <allowed tools/actions, read/edit/test/commit permission and forbidden effects>
+Resources: <model, reasoning effort, service tier, history propagation; brief selection reason>
+Validation and evidence: <required checks, evidence and acceptance criteria>
 Return: <changed files, effect, raw results, skipped checks, uncertainty, blockers>
 ```
 
 Send minimal history and only the artifacts needed to act. Resolve missing product decisions in the primary session.
 
-For coordinated or changing tasks, add the current contract revision, pinned workspace/branch baseline, writer or stable-reader ownership, integration owner and the point at which writers stop. Define domain-specific tolerances or stochastic criteria when needed for acceptance.
+For coordinated or changing tasks, add the current contract revision, pinned workspace/branch baseline, writer or stable-reader ownership, the primary as integration owner, any explicitly authorized coordinator integration, and the point at which writers stop. Define domain-specific tolerances or stochastic criteria when needed for acceptance. State the role boundary and deliverable in terms of responsibility; do not restrict a specialist to one filename when the same-role work needs more files.
 
 ## Resource routing
 
@@ -41,13 +44,14 @@ Pass the handoff contract on stdin so shell quoting does not become part of the 
 
 ```bash
 python3 "$HOME/.agents/skills/software-engineering/scripts/run_luna_worker.py" --cwd "$PWD" <<'CONTRACT'
-Goal: ...
+Professional role: <the required implementation specialty>
+Goal and deliverable: ...
 Scope: ...
 Out of scope: ...
 Constraints: ...
-Authority: read/edit/test; no remote mutation
-Resources: implementation worker; gpt-6-luna; Max; Fast; bounded contract only; precise implementation scope fits the first candidate
-Validation: ...
+Tools and authority: read/edit/test; no remote mutation
+Resources: gpt-6-luna; Max; Fast; bounded contract only; precise implementation scope fits the first candidate
+Validation and evidence: ...
 Return: changed files, effect, raw results, skipped checks, uncertainty, blockers
 CONTRACT
 ```
@@ -70,14 +74,14 @@ Prefer a self-contained handoff with no history or the smallest useful history s
 
 ## Execution rules
 
-1. Use one write-capable worker for one coherent change.
+1. Use one write-capable specialist/context for each professional role. A specialist may handle a coherent deliverable across multiple files when all work stays in its role.
 2. Treat one mutable worktree as a single-writer/stable-reader boundary. Parallel writing requires distinct worktrees; disjoint filenames alone are not sufficient. Serialize state-dependent readers until the writer exits, or give them a fixed commit snapshot.
-3. Pin the baseline and name an integration owner before dispatch. Serialize integration and state-dependent validation; an orchestrator may perform authorized integration after active writers stop.
-4. Under TCA, delegate only the active task unit. Under Teamwork, dispatch only ready units whose dependencies and slots are available; reuse idle workers where useful and report when independence cannot be preserved.
+3. Pin the baseline and name the primary as integration owner before dispatch. The primary may explicitly authorize a coordinator to integrate completed outputs after active writers stop; the primary inspects the integrated state and owns final acceptance.
+4. Dispatch only ready role assignments whose dependencies and slots are available. Reuse a specialist only within the same professional role; never repurpose an idle context for a different role. Queue or serialize distinct roles under capacity limits. Do not move specialist work to the primary because delegation is inconvenient or temporarily unavailable; if the host cannot provide a required separate context, report that capability blocker.
 5. A worker does not final-certify or CRA-review its own implementation. Workers run local checks and return raw evidence for independent inspection.
 6. Inspect actual changes, repository state and completion-critical evidence after the delegate returns.
 7. If the delegate finds a contradiction or materially larger scope, it stops and returns evidence instead of expanding silently.
 
 ## Return evidence
 
-Require changed files, behavioral effect, commands actually run, exit status and useful raw output/artifact locations, skipped checks, uncertainty and blockers. Return available runtime model/effort/tier evidence or identify what could not be verified; an example config or requested setting is not runtime evidence.
+Require the role's deliverable, changed files, behavioral effect, commands actually run, exit status and useful raw output/artifact locations, skipped checks, uncertainty and blockers. Return available runtime model/effort/tier evidence or identify what could not be verified; an example config or requested setting is not runtime evidence.

@@ -14,7 +14,9 @@ REASONING_EFFORT = "max"
 SERVICE_TIER = "priority"
 SANDBOX_MODE = "workspace-write"
 
-WORKER_DEVELOPER_INSTRUCTIONS = """You are a bounded implementation worker delegated by a primary Codex session.
+WORKER_DEVELOPER_INSTRUCTIONS = """You are a bounded implementation worker delegated by a primary Codex session for the single professional role named in the contract.
+
+“Implementation worker” describes the execution mechanism, not your professional role or permission to perform unrelated professional work. Keep the deliverable within the assigned role, even when it spans multiple necessary files. Do not change roles or take over work assigned to another specialist.
 
 Follow the supplied implementation contract exactly. Preserve the user's intended outcome, scope, constraints, and completion evidence.
 

@@ -1,11 +1,11 @@
 ---
 name: software-engineering
-description: Use for software implementation, modification, debugging, refactoring, or code review. Define a coherent task contract, choose direct work or bounded delegation, and use CRA, TCA, or conditional Teamwork only when their coordination or independent evidence adds value.
+description: Use for software implementation, modification, debugging, refactoring, or code review. Assign only the needed specialist roles, keep the primary responsible for integration and final verification, and use CRA, TCA, or an optional coordinator when warranted.
 ---
 
 # Software Engineering
 
-The primary session owns user intent, authority, task boundaries, integration, verification and the final response.
+For software execution, the primary is the dedicated team leader and owns user intent, priorities, authority, task boundaries, integration, final acceptance evidence and the response. It forms only the professional roles the task needs. Each specialist has one professional role and a separate context; reuse stays within that role. Specialists author their domain deliverables and run local checks; the primary integrates their work and performs final validation. Ordinary conversation, explanation and decisions stay with the primary without team ceremony.
 
 ## Selection
 
@@ -13,28 +13,28 @@ For software changes:
 
 1. define one coherent task unit, authority and checkable completion criteria;
 2. inspect the actual execution path before editing;
-3. decide whether delegation adds enough value to justify coordination;
-4. if delegating, apply the resource selection below before dispatch, then read `references/worker-delegation.md` and send a bounded contract;
-5. inspect the returned diff/state and independently verify completion-critical evidence;
+3. assign one specialist/context to each professional role needed, including one specialist for a single-role task; there is no fixed roster or headcount;
+4. use the resource selection below and read `references/worker-delegation.md` before each handoff;
+5. inspect the integrated diff/state and independently verify completion-critical evidence;
 6. decide whether CRA is warranted after local validation;
 7. use TCA only when multiple independently reviewable task commits materially improve correctness, recovery or reviewability;
-8. use Teamwork when the user requests a separate orchestrator or dynamic team, or several separable tracks need repeated coordination, steering or context isolation that justifies a separate manager.
+8. read `references/teamwork-loop.md` when multiple roles need coordination; add a separate execution coordinator only when sustained coordination justifies one, with the primary remaining the default team leader.
 
 Do not create workflow ceremony merely because a task is difficult or has many steps.
 
 ## Resource defaults
 
-Before initial delegation or reusing an agent for a changed role or scope, explicitly select the role, model, reasoning effort, service tier and history propagation. Record the selection and a brief reason in the handoff or existing task record before dispatch. Reuse and inherited settings require the same assessment; convenience or context continuity alone does not justify retaining more expensive resources.
+Before dispatch, and before reusing a specialist for materially changed same-role work, explicitly select the professional role, model, reasoning effort, service tier and history propagation. Record the selection and a brief reason in the handoff or existing task record. Never reuse a context for a different professional role. Convenience or context continuity alone does not justify retaining more expensive resources.
 
 - bounded implementation worker: first candidate `gpt-6-luna`, Max reasoning, Fast tier
 - independent CRA reviewer: `gpt-6.1-sol`, Max reasoning, default/non-Fast service tier
 - explorer: cheapest available model that can answer the bounded discovery question reliably
-- Teamwork orchestrator and non-implementation specialists: choose resources proportionate to the planning or verification risk using the current launcher and available account/runtime capacity; the implementation worker default does not automatically govern these roles
+- optional execution coordinator and non-implementation specialists: choose resources proportionate to the coordination, domain-work or verification risk using the current launcher and available account/runtime capacity; the implementation worker default does not automatically govern these roles
 - every role: runtime default context; this kit does not raise context-window or auto-compaction limits
 
 Escalate resources only for a concrete quality reason such as ambiguity, consequence of error, difficult reasoning or an insufficient result, and state that reason before dispatch. Verify that the launcher can express the selected settings; report any unavailable setting and the chosen fallback rather than silently inheriting defaults. Check actual model, effort and tier against runtime evidence when exposed; distinguish selected settings from unverified actual settings and do not claim cost optimization without supporting usage/cost evidence.
 
-Current Codex native subagents share the root session's service tier. When the primary must remain default/non-Fast but the bounded implementation worker should use Luna + Max + Fast, run that worker as a separate root through `scripts/run_luna_worker.py` instead of relying on a role-level `service_tier` override. If the launcher is unavailable, use the actual available tier or implement directly and report the resource change; do not claim Fast was applied when it was not.
+Current Codex native subagents share the root session's service tier. When the primary must remain default/non-Fast but the bounded implementation worker should use Luna + Max + Fast, run that worker as a separate root through `scripts/run_luna_worker.py` instead of relying on a role-level `service_tier` override. If a selected launcher is unavailable, use an available way to provide the same professional role and report the resource change. If the host cannot provide a separate context for a required role, report that capability blocker; do not transfer the specialist's work to the primary or claim Fast was applied when it was not.
 
 ## Local validation
 
@@ -44,9 +44,9 @@ Reuse a prior result only when the target, dependencies, configuration, environm
 
 Passing static checks does not establish deployment readiness or model behavior.
 
-## Delegation
+## Role boundaries
 
-Use a bounded worker for non-trivial implementation when the contract is precise and separation materially improves execution or primary-context quality. Implement directly when the task is trivial, cannot be separated from a live product decision, subagents are unavailable or another handoff would cost more than it saves.
+Do not merge professional roles or move a specialist's deliverable to the primary because the task is small, a worker is idle, slots are scarce or delegation is unavailable. Queue or serialize distinct roles under capacity limits, using a separate context for each role. Worker, explorer and reviewer labels do not authorize unrelated professional work; state the specialist's role explicitly, including independent review when that is the assignment. If the host truly cannot provide a required specialist, report the narrow capability blocker.
 
 Treat one mutable worktree as a single-writer/stable-reader boundary. A writer summary is navigation, not proof.
 
@@ -64,9 +64,9 @@ Use TCA when the user explicitly requests it or a large change has safe, depende
 
 When selected, read `references/tca-loop.md`.
 
-## Teamwork
+## Coordination
 
-Teamwork keeps the primary available to the user while a separate orchestrator child manages an adaptive team. When selected, read `references/teamwork-loop.md` for capability checks, ownership, steering and completion. Use `$software-engineering` with a Teamwork request; `/teamwork-preview` is also recognized as an intent phrase, but this kit does not install that slash command.
+The primary controls team creation and scheduling unless it explicitly delegates those duties to an execution coordinator. Specialists may coordinate directly with relevant peers through supported tools for bounded inputs, outputs, constraints and blockers; send shared-impact decisions to the primary and affected owners. Read `references/teamwork-loop.md` for messaging, capacity and coordinator boundaries. `/teamwork-preview` remains an intent phrase, but this kit does not install that slash command.
 
 ## Boundaries
 

@@ -12,6 +12,8 @@ A local commit or review does not authorize push, deployment, migration or remot
 
 Default: `gpt-6.1-sol`, `max` reasoning, `default` (non-Fast) service tier and runtime default context. Do not enlarge context to fit a task; use coherent, independently reviewable task boundaries instead.
 
+The calling primary leads the CRA loop and owns integration and final acceptance: it evaluates findings, applies authorized amendments and starts re-reviews. The session launched by `codex review` is the already-assigned independent reviewer, including when it runs as a separate CLI root; it reviews the requested commit directly and returns findings to the primary.
+
 Run in the foreground against the current task SHA:
 
 ```bash
@@ -24,7 +26,8 @@ codex review --commit "$COMMIT_SHA" \
   -c "review_model=$CRA_REVIEW_MODEL" \
   -c "model_reasoning_effort=$CRA_REVIEW_EFFORT" \
   -c service_tier=default \
-  -c features.fast_mode=false
+  -c features.fast_mode=false \
+  -c 'developer_instructions="You are the assigned independent commit reviewer. Perform the requested native commit review directly using the native review rubric and output. Do not create a team, perform recursive CRA, or spawn or launch another reviewer. Use read-only inspection and non-destructive validation only; do not edit files, commit, or make remote writes. Return findings to the calling primary."'
 ```
 
 Set both model keys so an existing `review_model` setting cannot select a different reviewer. Read the completed review, not partial output. A zero process exit means the command completed, not that the findings are clean.

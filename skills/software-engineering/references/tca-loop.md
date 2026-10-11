@@ -17,7 +17,7 @@ Entry source and rationale:
 [ ] Task: <goal and scope>
     Dependencies / failure path:
     Validation:
-    Specialist role(s), execution owner and resource-selection record:
+    Execution mode; delegated specialist role(s) and resource selection, if any; execution owner:
     Commit / CRA state / remaining risk:
 ```
 
@@ -25,7 +25,7 @@ Update, merge or remove tasks as facts change. Address blocking failures and pre
 
 ## Per-task loop
 
-1. Select the active task and its completion evidence, then assign its required fixed professional role(s) to separate specialist contexts using `references/worker-delegation.md`. Dispatch only dependency-ready role assignments and queue or serialize the rest under slot limits. Do not have the primary implement specialist deliverables or reuse a specialist across roles; report a capability blocker if the host cannot provide a required context.
+1. Select the dependency-ready task and its completion evidence. If delegating, choose resources through `SKILL.md` and provide the task scope, baseline, write boundary and required checks.
 2. Keep a mutable worktree single-writer/stable-reader. Wait for its writer before repository-state-dependent review, or give readers a separate worktree or fixed commit snapshot.
 3. Inspect actual changes and state. Verify completion-critical results by rerunning them or inspecting independently accessible raw output, exit status and artifacts. A worker's prose summary is not evidence.
 4. Check `git status --short` and the relevant diff. Commit only the active task; exclude unrelated changes, secrets, caches, logs, review output and temporary artifacts.
@@ -49,7 +49,7 @@ An unperformed required check or unavailable CRA is not a successful gate. Do no
 
 Local commits and CRA do not authorize push, deployment, migration, production mutation, purchasing or other external writes. Existing configured resources and account usage may be used; billing, plan, quota, provider or account settings require explicit approval to change. Workers remain within their delegated authority.
 
-Stop when the user cancels, the current boundary becomes unclear, unrelated changes cannot be separated, required evidence is unavailable, or a failure has no safe correction within the assigned specialist role or the host cannot provide a required role context. Resolve changed premises and dependencies before resuming. Obtain authorization for an unapproved external effect; do not repeatedly request authorization for the same already-approved scope. Stop or remove a planned task when it is no longer necessary or coherent.
+Stop when the user cancels, the current boundary becomes unclear, unrelated changes cannot be separated, required evidence is unavailable, or a failure has no safe correction within the assigned specialist role or the host cannot provide an actually-required separate role context or independent evidence. Resolve changed premises and dependencies before resuming. Obtain authorization for an unapproved external effect; do not repeatedly request authorization for the same already-approved scope. Stop or remove a planned task when it is no longer necessary or coherent.
 
 ## Final report
 

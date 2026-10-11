@@ -1,4 +1,4 @@
 interface:
   display_name: "Software Engineering"
-  short_description: "Assign needed specialists and verify the integrated result"
-  default_prompt: "Use $software-engineering to assign only the specialist roles the task needs and verify the integrated result."
+  short_description: "Implement and verify software changes"
+  default_prompt: "Use $software-engineering to implement and verify this change."

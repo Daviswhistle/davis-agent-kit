@@ -9,7 +9,7 @@ from pathlib import Path
 import sys
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[1]
-RETIRED_SKILLS = ("davis-operating-system", "coding-workflow", "outcome-owner")
+RETIRED_SKILLS = ("davis-operating-system", "coding-workflow", "outcome-owner", "agent-team")
 
 
 class InstallError(RuntimeError):

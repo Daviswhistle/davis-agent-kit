@@ -59,10 +59,12 @@ $capability-map 이 저장소를 코드만 보고 지도화해줘.
 - `capability-map` — 코드 스냅샷에서 탐색 가능한 동작 지도, 한국어 설명서, 코드 없는 Astra 판단 패킷 생성
 - `translation-quality` — 비단순 한국어 번역, transcript·재무보고서 번역, source/numeric/format QA
 - `handoff-agent-builder` — Codex가 자동 발견하는 repo-local handoff skill 설계와 멀티턴 검증
-- `software-engineering` — 필요한 전문 역할 위임과 통합·검증, 필요할 때 CRA/TCA 또는 별도 실행 조정자
+- `software-engineering` — 소프트웨어 변경의 구현·검증과 위임 시의 자원 후보, 필요할 때 CRA/TCA
 - `writing-quality` — 글쓰기 자체가 품질 병목인 원고·장문 분석·게시용 문서 작성과 편집
 
 Codex는 먼저 skill metadata를 보고 필요한 skill을 선택한 뒤, 선택된 `SKILL.md`와 필요한 reference만 읽습니다. 전역 원칙은 `AGENTS.md`에, 조건부 workflow는 각 skill 내부에 둡니다.
+
+위임과 팀 구성은 주 모델이 과업에 맞게 결정하며, 직무 분리와 최종 수락 책임은 전역 지침이 정합니다.
 
 ## Custom pets
 
@@ -120,12 +122,9 @@ Python 3.10+, Git, 기존 로그인된 Codex CLI를 사용합니다. helper 자�
 
 결과 중 `public/`만 공유하며, 소스·근거 경로·작업 로그가 있는 `private/`는 공개하지 않습니다. 소스 해석은 실제 실행 검증이나 현재 운영 상태의 증명이 아니며, 이 skill만으로 OS 수준 읽기 격리를 보장하지 않습니다.
 
-### 모델 운용
+### 모델 운용 범위
 
-- 모든 역할은 런타임 기본 컨텍스트를 사용합니다. 이 kit는 context window나 auto-compaction limit을 늘리지 않습니다.
-- bounded implementation worker의 첫 후보는 `gpt-6-luna` + Max + Fast입니다.
-- CRA reviewer의 기본은 `gpt-6.1-sol` + Max + default/non-Fast service tier입니다.
-- 더 비싼 자원은 오류 비용·모호성·실제 품질 실패 같은 구체적 이유가 있을 때만 사용합니다.
+- `software-engineering`의 직무별 자원 후보와 launcher 설정은 위임이 별도로 타당할 때만 적용합니다. 후보를 쓰기 위해 worker를 만들지 않습니다.
 
 ### AGY 품질 보정
 

@@ -6,7 +6,7 @@ CRA means Commit-Review-Amend. Use it after local validation when selected by th
 
 Use one coherent, clean non-merge task commit with a fixed parent. Exclude unrelated changes, secrets and temporary review artifacts. The reviewer must run in a separate session that did not author the change; keep the checkout stable while it runs.
 
-A local commit or review does not authorize push, deployment, migration or remote mutation.
+Follow the user and applicable `AGENTS.md` for action permissions. A local commit or review does not expand that authority.
 
 ## Native review
 

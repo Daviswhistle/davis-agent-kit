@@ -2,7 +2,7 @@
 
 Use when the user explicitly requests TCA or `software-engineering` selects it because independently reviewable task commits improve correctness, recovery or reviewability. Do not split an ordinary multi-step change merely to create a workflow.
 
-TCA means Task-Commit-Approve: complete one coherent task, validate and commit it, run CRA, then decide whether the next task remains necessary. `Approve` is a next-task gate, not user approval or permission for external writes.
+TCA means Task-Commit-Approve: complete one coherent task, validate and commit it, run CRA, then decide whether the next task remains necessary. `Approve` is a next-task gate, not a grant of action permissions.
 
 ## Task boundaries and queue
 
@@ -47,9 +47,9 @@ An unperformed required check or unavailable CRA is not a successful gate. Do no
 
 ## Authority and stopping
 
-Local commits and CRA do not authorize push, deployment, migration, production mutation, purchasing or other external writes. Existing configured resources and account usage may be used; billing, plan, quota, provider or account settings require explicit approval to change. Workers remain within their delegated authority.
+Follow the user and applicable `AGENTS.md` for action permissions. Local commits and CRA do not expand that authority. Existing configured resources and account usage may be used; billing, plan, quota, provider or account settings require explicit approval to change. Workers remain within their delegated authority.
 
-Stop when the user cancels, the current boundary becomes unclear, unrelated changes cannot be separated, required evidence is unavailable, or a failure has no safe correction within the assigned specialist role or the host cannot provide an actually-required separate role context or independent evidence. Resolve changed premises and dependencies before resuming. Obtain authorization for an unapproved external effect; do not repeatedly request authorization for the same already-approved scope. Stop or remove a planned task when it is no longer necessary or coherent.
+Stop when the user cancels, the current boundary becomes unclear, unrelated changes cannot be separated, required evidence is unavailable, or a failure has no safe correction within the assigned specialist role or the host cannot provide an actually-required separate role context or independent evidence. Resolve changed premises and dependencies before resuming. Obtain authorization when the applicable action contract requires it; do not repeatedly request authorization for the same already-approved scope. Stop or remove a planned task when it is no longer necessary or coherent.
 
 ## Final report
 

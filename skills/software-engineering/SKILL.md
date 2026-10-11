@@ -57,7 +57,7 @@ When selected, read `references/tca-loop.md`.
 ## Boundaries
 
 - Workers may not broaden product intent or perform push, deployment, migration, purchases or remote mutation.
-- Local commits are checkpoints, not permission for external writes.
+- Action permissions come from the user and applicable `AGENTS.md`; a local commit or review does not grant additional authority.
 - Existing account usage may be used; billing, plan, quota, provider or account settings may not be changed without explicit approval.
 - Do not weaken validation to obtain a pass.
 

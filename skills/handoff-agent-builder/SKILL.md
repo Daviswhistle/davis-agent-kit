@@ -61,6 +61,6 @@ A useful handoff skill should:
 
 - Do not claim to have opened, run or inspected something without available evidence.
 - Do not mutate the repository when the user asked only for review or design.
-- Do not broaden authority for execution, push, deployment, migration or external writes.
+- Generated guidance must not grant action permissions beyond the user's request and applicable `AGENTS.md`.
 - Do not add prose-presence or banned-phrase tests.
 - Do not use handoff ceremony to duplicate ordinary project documentation.

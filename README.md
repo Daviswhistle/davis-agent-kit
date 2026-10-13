@@ -44,7 +44,15 @@
 
 예를 들어 번역, 소프트웨어 구현, 장문 글쓰기처럼 품질 기준이 다른 작업은 각각 전용 skill의 절차와 검증 규칙을 사용합니다.
 
-코드베이스를 탐색 가능한 지도로 만들고 싶다면 대상 저장소의 새 Codex 세션에서:
+프로젝트의 확인된 맥락을 필요한 구간만 읽고 갱신하려면:
+
+```text
+$section-store 이 프로젝트의 확인된 지식을 PROJECT.md 하나로 관리하고 필요한 섹션만 읽게 해줘.
+```
+
+기존 `section-store` 원본이 있는 프로젝트에서는 색인으로 필요한 맥락을 찾는 것이 기본 경로입니다. 원본이 없는 프로젝트에 파일을 자동으로 만들지는 않습니다. 결정을 바꾸는 사실은 기록된 코드·문서·결과 근거의 현재 상태와 대조합니다.
+
+코드베이스의 동작 관계를 별도로 지도화하려면 대상 저장소의 새 Codex 세션에서:
 
 ```text
 $capability-map 이 저장소를 코드만 보고 지도화해줘.
@@ -56,6 +64,7 @@ $capability-map 이 저장소를 코드만 보고 지도화해줘.
 
 현재 포함된 주요 skill은 다음과 같습니다.
 
+- `section-store` — 단일 Markdown 원본의 자동 색인, 안정적 ID 기반 부분 읽기·수정과 버전 충돌 검사
 - `capability-map` — 코드 스냅샷에서 탐색 가능한 동작 지도, 한국어 설명서, 코드 없는 Astra 판단 패킷 생성
 - `translation-quality` — 비단순 한국어 번역, transcript·재무보고서 번역, source/numeric/format QA
 - `handoff-agent-builder` — Codex가 자동 발견하는 repo-local handoff skill 설계와 멀티턴 검증
@@ -103,6 +112,28 @@ Codex는 먼저 skill metadata를 보고 필요한 skill을 선택한 뒤, 선�
 `--check`는 kit의 전역 `AGENTS.md`, user skill 링크, custom pet 설치 상태와 전역 override 우선순위를 검사합니다. 실제 Codex 세션의 전체 지침 로딩이나 프로젝트별 override까지 검증한다는 뜻은 아닙니다.
 
 ## Advanced
+
+### 단일 파일 프로젝트 지식
+
+프로젝트 지식·규칙·결정을 하나의 원본과 자동 색인으로 관리하려면:
+
+```text
+$section-store 이 프로젝트의 확인된 지식을 PROJECT.md 하나로 관리하고 필요한 섹션만 읽게 해줘.
+```
+
+기존 원본이 section-store 마커를 사용한다면 직접 실행할 수도 있습니다.
+
+```bash
+python3 ~/.agents/skills/section-store/scripts/store.py build --source PROJECT.md
+python3 ~/.agents/skills/section-store/scripts/store.py list --source PROJECT.md --query "검증"
+python3 ~/.agents/skills/section-store/scripts/store.py read --source PROJECT.md --id validation
+```
+
+`PROJECT.md.index.json`은 재생성 가능한 색인입니다. 원본의 의미·요약은 작성자가 명시하고, 줄·byte 범위와 해시는 코드가 계산합니다. helper를 통한 본문 수정은 색인도 갱신하며 직접 편집한 뒤에는 `build`가 필요합니다. 오래된 색인이나 버전 충돌은 거부합니다. 전체 파일을 모델에 전달하지 않지만 원본 버전 확인용 전체 파일 해시 I/O는 수행합니다.
+
+색인 검증은 문서 내용과 코드·운영 상태의 일치를 보증하지 않습니다. 핵심 사실에 근거 위치·확인 버전 또는 결과 시점·적용 범위를 기록하고, 관련 근거가 바뀌면 본문과 검색 메타데이터도 갱신합니다.
+
+원본 형식, 생성·수정 명령과 복구 경계는 [`section-store`](./skills/section-store/SKILL.md)를 참고하세요. 기존 코드나 전역 지침을 자동으로 하나의 파일로 합치지는 않습니다.
 
 ### Capability Map 직접 실행
 
@@ -166,6 +197,7 @@ davis-agent-kit/
 │   └── agy/
 │       └── davis-agent-kit.md
 ├── skills/
+│   ├── section-store/
 │   ├── capability-map/
 │   ├── translation-quality/
 │   ├── handoff-agent-builder/

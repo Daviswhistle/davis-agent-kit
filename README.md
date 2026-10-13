@@ -52,20 +52,11 @@ $section-store 이 프로젝트의 확인된 지식을 PROJECT.md 하나로 관�
 
 기존 `section-store` 원본이 있는 프로젝트에서는 색인으로 필요한 맥락을 찾는 것이 기본 경로입니다. 원본이 없는 프로젝트에 파일을 자동으로 만들지는 않습니다. 결정을 바꾸는 사실은 기록된 코드·문서·결과 근거의 현재 상태와 대조합니다.
 
-코드베이스의 동작 관계를 별도로 지도화하려면 대상 저장소의 새 Codex 세션에서:
-
-```text
-$capability-map 이 저장소를 코드만 보고 지도화해줘.
-```
-
-를 요청할 수 있습니다.
-
 ## Skills
 
 현재 포함된 주요 skill은 다음과 같습니다.
 
 - `section-store` — 단일 Markdown 원본의 자동 색인, 안정적 ID 기반 부분 읽기·수정과 버전 충돌 검사
-- `capability-map` — 코드 스냅샷에서 탐색 가능한 동작 지도, 한국어 설명서, 코드 없는 Astra 판단 패킷 생성
 - `translation-quality` — 비단순 한국어 번역, transcript·재무보고서 번역, source/numeric/format QA
 - `handoff-agent-builder` — Codex가 자동 발견하는 repo-local handoff skill 설계와 멀티턴 검증
 - `software-engineering` — 소프트웨어 변경의 구현·검증과 위임 시의 자원 후보, 필요할 때 CRA/TCA
@@ -109,6 +100,8 @@ Codex는 먼저 skill metadata를 보고 필요한 skill을 선택한 뒤, 선�
 
 이 경우 메시지에 표시된 과거 링크를 확인해 제거한 뒤 다시 실행하세요.
 
+배포에서 제거된 skill이 user skills 또는 과거 Codex skills 위치에 남아 있어도 설치와 `--check`가 실패합니다. 끊어진 링크도 검사합니다. 메시지에 표시된 경로가 이 kit의 과거 설치인지 확인한 뒤 해당 링크를 제거하세요. 설치기는 기존 파일이나 디렉터리를 자동 삭제하지 않습니다.
+
 `--check`는 kit의 전역 `AGENTS.md`, user skill 링크, custom pet 설치 상태와 전역 override 우선순위를 검사합니다. 실제 Codex 세션의 전체 지침 로딩이나 프로젝트별 override까지 검증한다는 뜻은 아닙니다.
 
 ## Advanced
@@ -134,24 +127,6 @@ python3 ~/.agents/skills/section-store/scripts/store.py read --source PROJECT.md
 색인 검증은 문서 내용과 코드·운영 상태의 일치를 보증하지 않습니다. 핵심 사실에 근거 위치·확인 버전 또는 결과 시점·적용 범위를 기록하고, 관련 근거가 바뀌면 본문과 검색 메타데이터도 갱신합니다.
 
 원본 형식, 생성·수정 명령과 복구 경계는 [`section-store`](./skills/section-store/SKILL.md)를 참고하세요. 기존 코드나 전역 지침을 자동으로 하나의 파일로 합치지는 않습니다.
-
-### Capability Map 직접 실행
-
-Codex에서 별도 Luna mapper를 직접 실행하려면:
-
-```bash
-python3 ~/.agents/skills/capability-map/scripts/map.py run --repo .
-```
-
-Python 3.10+, Git, 기존 로그인된 Codex CLI를 사용합니다. helper 자체에 pip/npm 설치나 별도 API key는 필요하지 않습니다.
-
-기본 요청은 Luna + Max + priority/Fast이며 사용 가능한 모델·effort·tier는 실제 계정과 CLI가 결정합니다. 지원되지 않는 설정은 자동 대체하지 않습니다.
-
-별도 mapper는 ephemeral session으로 실행되고 사용자 `config.toml`과 user/project execpolicy rules를 읽지 않으며, 필요한 CLI 옵션이 없으면 실패합니다. 다른 에이전트는 skill의 `prepare → 분석 → build` 경로를 사용할 수 있습니다.
-
-대상은 깨끗한 committed HEAD입니다. 변경 중인 tracked 파일이 있으면 중단하고, untracked 파일은 입력에 포함하지 않습니다.
-
-결과 중 `public/`만 공유하며, 소스·근거 경로·작업 로그가 있는 `private/`는 공개하지 않습니다. 소스 해석은 실제 실행 검증이나 현재 운영 상태의 증명이 아니며, 이 skill만으로 OS 수준 읽기 격리를 보장하지 않습니다.
 
 ### 모델 운용 범위
 
@@ -198,7 +173,6 @@ davis-agent-kit/
 │       └── davis-agent-kit.md
 ├── skills/
 │   ├── section-store/
-│   ├── capability-map/
 │   ├── translation-quality/
 │   ├── handoff-agent-builder/
 │   ├── software-engineering/

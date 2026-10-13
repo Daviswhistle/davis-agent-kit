@@ -108,6 +108,23 @@ class InstallerTests(unittest.TestCase):
             with self.assertRaises(install_codex.InstallError):
                 install_codex.install(ROOT, codex_home, skills_home)
 
+    def test_removed_capability_map_link_blocks_both_install_locations(self) -> None:
+        for legacy in (False, True):
+            with self.subTest(legacy=legacy), tempfile.TemporaryDirectory() as tmp:
+                codex_home, skills_home = self.homes(tmp)
+                parent = codex_home / "skills" if legacy else skills_home
+                parent.mkdir(parents=True)
+                retired = parent / "capability-map"
+                retired.symlink_to(Path(tmp) / "removed-skill", target_is_directory=True)
+
+                self.assertFalse(retired.exists())
+                with self.assertRaises(install_codex.InstallError):
+                    install_codex.install(ROOT, codex_home, skills_home)
+                self.assertTrue(retired.is_symlink())
+                self.assertTrue(any(str(retired) in problem for problem in
+                                    install_codex.check(ROOT, codex_home, skills_home)))
+                self.assertFalse((codex_home / "AGENTS.md").exists())
+
     def test_empty_global_override_does_not_shadow_instructions(self) -> None:
         for content in ("", " \n\t"):
             with self.subTest(content=content), tempfile.TemporaryDirectory() as tmp:

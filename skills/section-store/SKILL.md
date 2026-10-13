@@ -1,6 +1,6 @@
 ---
 name: section-store
-description: Use when the user wants a single structured project knowledge file with an automatic section index, or when navigating/updating an existing section-store source. Retrieve by stable ID instead of repeatedly scanning a repository. Not a code capability map or an instruction-precedence mechanism.
+description: Use as the default project-context retrieval workflow when a project has a section-store PROJECT.md, or when the user requests a single indexed project knowledge source. Read and update relevant sections by stable ID, and verify decision-critical facts against current evidence. Not a code capability map or an instruction-precedence mechanism.
 ---
 
 # Section Store
@@ -12,6 +12,14 @@ description: Use when the user wants a single structured project knowledge file 
 사용자가 지정한 원본을 사용한다. 지정하지 않았다면 현재 프로젝트 루트의 `PROJECT.md`만 확인하며, 원본을 찾으려고 저장소 전체를 순회하지 않는다. 원본이 없다면 사용자가 지식 통합·생성을 요청한 범위의 확인된 내용으로만 만든다. 예시를 프로젝트 사실로 복사하거나 과거 개인 맥락을 공개 저장소에 넣지 않는다.
 
 기존 코드, `AGENTS.md`, 다른 skill의 원본을 무조건 병합하지 않는다. 이 파일은 프로젝트 자료이며 상위 지침·권한을 대체하지 않는다. 색인과 본문 모두 같은 정보 공개 경계를 따른다. 서로 다른 접근 권한의 자료는 하나로 합치지 않는다.
+
+## 근거와 현재성
+
+기존 원본이 있으면 프로젝트 맥락은 색인에서 필요한 섹션을 고르는 것으로 시작한다. 없으면 일반적인 코드·문서 탐색을 사용하며, 사용자의 지식 통합 요청 없이 새 원본을 만들지 않는다. 반복 확인할 가치가 있는 목적·제약·계약·결정과 검증 근거만 유지한다. 원래 코드·규범 문서·결과물은 각자의 원본으로 남기고, 실행 로그·raw 평가 trace·과거 작업 기록을 통째로 복제하지 않는다.
+
+결정을 바꾸는 핵심 사실에는 본문에 근거 위치, 확인한 commit/hash 또는 결과 시점, 적용 범위를 기록한다. 현재 상태로 사용할 때는 해당 근거가 여전히 맞는지 확인한다. 근거가 바뀌었거나 확보되지 않으면 현재 사실로 단정하지 않고 재검증 필요 또는 미확인으로 표시한다. 관련 구현·결정 변경 작업에서는 영향을 받는 사실과 검색 메타데이터도 함께 갱신한다.
+
+`check`는 Markdown 원본과 색인의 일치만 검사한다. 코드·설정·운영 결과와 문서 내용이 맞는지는 검증하지 않으며, 원본 해시가 그대로라는 사실로 핵심 주장의 최신성을 대신하지 않는다.
 
 ## 원본 형식
 
@@ -29,7 +37,7 @@ description: Use when the user wants a single structured project knowledge file 
 
 `id`, `title`, `summary`는 필수다. `tags`, `related`는 생략하면 빈 목록이다. ID는 영문자로 시작하고 영문자·숫자·`.`·`_`·`-`로 구성하며 최대 128자다. 제목이나 위치가 바뀌어도 ID를 유지한다. `related`에는 존재하는 ID를 넣는다.
 
-제목·요약·태그는 작성자가 의미를 명시하는 부분이다. helper는 경계·위치를 자동 계산하지, 자유로운 본문의 의미를 자동 추론하지 않는다. 본문 의미가 바뀌면 요약·태그도 검토한다. 중복 ID, 깨진 메타데이터, 끊어진 참조는 거부한다.
+제목·요약·태그는 작성자가 의미를 명시하는 부분이다. helper는 경계·위치를 자동 계산하지, 자유로운 본문의 의미를 자동 추론하지 않는다. 본문 의미가 바뀌면 요약·태그도 검토하고, 검색 표현이 달라졌다면 원본 마커를 직접 편집한 뒤 `build`한다. 중복 ID, 깨진 메타데이터, 끊어진 참조는 거부한다.
 
 열 0~3의 backtick/tilde fenced code block 안의 마커 예시는 무시한다. 닫히지 않은 fence는 거부한다. 일반 Markdown 전체를 해석하는 parser는 아니므로 마커 예시를 목록·인용문·HTML 주석으로 숨기지 말고 top-level fence로 감싼다.
 
@@ -69,7 +77,7 @@ python3 "$STORE" append --source PROJECT.md --id deployment \
   --body-file deployment.txt --expect-source SHA256_FROM_LAST_READ
 ```
 
-각 쓰기 뒤 해시가 바뀌므로 연속 쓰기는 새 응답의 해시와 현재 내용을 사용한다. `replace`는 본문만 바꾸고 마커·ID를 유지한다. 다음 섹션 앞의 마지막 개행은 필요하면 보충한다. `append`는 새 ID만 허용한다. 본문으로 다른 섹션을 주입하거나 숨기는 변경은 거부한다.
+각 쓰기 뒤 해시가 바뀌므로 연속 쓰기는 새 응답의 해시와 현재 내용을 사용한다. `replace`는 본문만 바꾸고 마커·ID를 유지하며 다른 섹션의 마커·본문이 그대로인지도 검사한다. 다음 섹션 앞의 마지막 개행은 필요하면 보충한다. `append`는 새 ID만 허용한다. 본문으로 다른 섹션을 주입하거나 숨기는 변경은 거부한다.
 
 제목·요약·태그 변경, 섹션 재배치·삭제는 다른 writer가 없는 상태에서 원본을 직접 편집한 뒤 즉시 `build`한다. 직접 편집에 helper의 버전 충돌 보호가 적용된다고 가정하지 않는다. 삭제 전 참조도 함께 정리한다.
 

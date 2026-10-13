@@ -178,6 +178,31 @@ class StoreTests(unittest.TestCase):
                     store.change(self.source, "goal", body, expected)
                 self.assertEqual(self.source.read_bytes(), original)
 
+    def test_replace_cannot_reuse_neighbor_id_and_hide_original_marker(self):
+        for fence in ("`", "~"):
+            with self.subTest(fence=fence):
+                neighbor_body = f"{fence * 5}\n{fence * 3}\n{fence * 5}\nOriginal checks\n"
+                expected = self.seed(section() + section("checks", neighbor_body))
+                original = self.source.read_bytes()
+                cached = store.index_path(self.source).read_bytes()
+                body = section("checks", f"Injected checks\n{fence * 3}\n")
+                with self.assertRaises(store.StoreError):
+                    store.change(self.source, "goal", body, expected)
+                self.assertEqual(self.source.read_bytes(), original)
+                self.assertEqual(store.index_path(self.source).read_bytes(), cached)
+                self.assertEqual(store.read_sections(self.source, ["checks"])["sections"][0]["body"],
+                                 neighbor_body)
+
+    def test_replace_accepts_fenced_marker_example_and_preserves_neighbors(self):
+        expected = self.seed()
+        neighbor = store.read_sections(self.source, ["checks"])["sections"][0]
+        body = b"`````markdown\n" + section("checks", "```\n") + b"`````\n"
+        store.change(self.source, "goal", body, expected)
+        result = store.read_sections(self.source, ["goal", "checks"])
+        self.assertEqual(result["sections"][0]["body"], body.decode("utf-8"))
+        self.assertEqual(result["sections"][1]["sha256"], neighbor["sha256"])
+        self.assertEqual(result["sections"][1]["body"], neighbor["body"])
+
     def test_append_and_reference_existing_id(self):
         expected = self.seed(section(body="no terminal newline"))
         result = store.change(self.source, "checks", b"verified\n", expected, meta("checks", related=["goal"]))

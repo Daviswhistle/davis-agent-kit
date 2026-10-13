@@ -302,6 +302,11 @@ def change(source: Path, section_id: str, body: bytes, expected: str,
         after = make_index(data)
         if [entry["id"] for entry in after["sections"]] != expected_ids:
             raise StoreError("body must not introduce or hide section markers")
+        # Fence changes can move a boundary while retaining the same ID list.
+        if new_meta is None and any(
+                prior["id"] != section_id and prior["sha256"] != current["sha256"]
+                for prior, current in zip(before["sections"], after["sections"])):
+            raise StoreError("replacement must preserve every other section's marker and body")
         if source.read_bytes() != old:
             raise StoreError("source changed outside the writer lock; reconcile before retrying")
         return commit_source(source, data, after)

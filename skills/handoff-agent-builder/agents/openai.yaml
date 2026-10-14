@@ -2,3 +2,5 @@ interface:
   display_name: "Handoff Agent Builder"
   short_description: "Build repo-specific handoff agents"
   default_prompt: "Use $handoff-agent-builder to create a project-specific handoff agent for this repository."
+policy:
+  allow_implicit_invocation: false

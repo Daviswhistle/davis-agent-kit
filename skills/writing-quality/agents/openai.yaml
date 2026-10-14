@@ -3,9 +3,4 @@ interface:
   short_description: "Draft and review polished text and research"
   default_prompt: "Use $writing-quality to draft or revise this text."
 policy:
-  products:
-    - "chatgpt"
-    - "codex"
-    - "api"
-    - "atlas"
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false

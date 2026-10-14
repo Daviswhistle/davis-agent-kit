@@ -1,6 +1,6 @@
 ---
 name: section-store
-description: Use as the default project-context retrieval workflow when a project has a section-store PROJECT.md, or when the user requests a single indexed project knowledge source. Read and update relevant sections by stable ID, and verify decision-critical facts against current evidence. Does not change instruction precedence.
+description: Read and update an explicitly selected indexed project knowledge source by stable section ID. Use an existing section-store PROJECT.md, or create a source when the user requests knowledge consolidation. Verify decision-critical facts against current evidence; does not change instruction precedence.
 ---
 
 # Section Store

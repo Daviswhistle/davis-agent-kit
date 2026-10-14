@@ -1,8 +1,6 @@
 # Davis Agent Kit
 
-한국어로 작업하는 Codex가 사용자의 목적과 판단 기준을 일관되게 적용하도록 만드는 전역 지침 + reusable skills + custom pets 묶음입니다.
-
-단순히 요청을 수행하는 데서 끝나지 않고, 실제 목적·근본 원인·완료 기준을 확인하며 필요한 경우 전문 workflow를 자동으로 불러오도록 구성되어 있습니다.
+한국어 협업·행동 권한·완료 기준을 담은 짧은 전역 지침, 명시적으로 호출하는 skills와 custom pets 묶음입니다. 일반 작업은 Codex 기본 하네스로 수행합니다.
 
 ## 설치
 
@@ -40,9 +38,13 @@
 
 ## 사용
 
-대부분의 기능은 별도 명령 없이 Codex가 작업에 맞는 skill을 선택해 사용합니다.
+이 kit의 스킬은 자동으로 선택하지 않습니다. 전용 절차가 필요할 때 `$skill-name`으로 명시적으로 호출합니다. 설치된 상태에서도 일반 작업의 기본 모델 문맥에 포함되지 않도록 각 스킬의 `agents/openai.yaml`에 `policy.allow_implicit_invocation: false`를 설정합니다. [OpenAI 공식 문서](https://learn.chatgpt.com/docs/build-skills#optional-metadata)
 
-예를 들어 번역, 소프트웨어 구현, 장문 글쓰기처럼 품질 기준이 다른 작업은 각각 전용 skill의 절차와 검증 규칙을 사용합니다.
+소프트웨어 변경에 구현·검증·필요한 독립 리뷰 절차를 적용하려면:
+
+```text
+$software-engineering 이 변경을 구현하고 검증해줘.
+```
 
 프로젝트의 확인된 맥락을 필요한 구간만 읽고 갱신하려면:
 
@@ -50,7 +52,7 @@
 $section-store 이 프로젝트의 확인된 지식을 PROJECT.md 하나로 관리하고 필요한 섹션만 읽게 해줘.
 ```
 
-기존 `section-store` 원본이 있는 프로젝트에서는 색인으로 필요한 맥락을 찾는 것이 기본 경로입니다. 원본이 없는 프로젝트에 파일을 자동으로 만들지는 않습니다. 결정을 바꾸는 사실은 기록된 코드·문서·결과 근거의 현재 상태와 대조합니다.
+`PROJECT.md`가 있다는 이유만으로 스킬을 자동 호출하거나 새 원본을 만들지 않습니다. 스킬을 선택한 작업에서는 색인으로 필요한 섹션을 찾고, 결정을 바꾸는 사실을 현재 근거와 대조합니다. 프로젝트가 이 도구를 계속 사용하려면 해당 프로젝트 지침에 필요한 사용 계약을 둡니다.
 
 ## Skills
 
@@ -62,9 +64,7 @@ $section-store 이 프로젝트의 확인된 지식을 PROJECT.md 하나로 관�
 - `software-engineering` — 소프트웨어 변경의 구현·검증과 위임 시의 자원 후보, 필요할 때 CRA/TCA
 - `writing-quality` — 글쓰기 자체가 품질 병목인 원고·장문 분석·게시용 문서 작성과 편집
 
-Codex는 먼저 skill metadata를 보고 필요한 skill을 선택한 뒤, 선택된 `SKILL.md`와 필요한 reference만 읽습니다. 전역 원칙은 `AGENTS.md`에, 조건부 workflow는 각 skill 내부에 둡니다.
-
-위임과 팀 구성은 주 모델이 과업에 맞게 결정하며, 직무 분리와 최종 수락 책임은 전역 지침이 정합니다.
+명시적으로 호출한 스킬의 `SKILL.md`와 필요한 reference만 읽습니다. 스킬과 helper는 설치 상태로 유지하며, 전역 지침에서 특정 workflow·모델·위임을 강제하지 않습니다.
 
 ## Custom pets
 
@@ -76,11 +76,7 @@ Codex는 먼저 skill metadata를 보고 필요한 skill을 선택한 뒤, 선�
 
 ## 기본 동작 원칙
 
-목적 소유와 주인·파트너 관점은 별도 skill이 아니라 전역 `AGENTS.md`의 기본값입니다. 모델은 표면 과업보다 실제 결과를 보고, 잘못된 전제를 고치며, 근본 원인과 높은 레버리지의 개선을 찾습니다.
-
-저장소 변경 작업은 검증·커밋·일반 push까지 마무리하는 것이 기본입니다. 행동별 권한과 별도 승인 기준은 전역 [`AGENTS.md`](./AGENTS.md)가 정합니다.
-
-긴 작업에서 continuity가 실제 문제일 때만 작은 checkpoint를 남기고, 재개할 때 현재 저장소·산출물·검증과 다시 대조합니다.
+한국어로 결론과 근거를 제시하고, 승인된 변경 작업은 필요한 검증·커밋·일반 push까지 마무리합니다. 행동별 권한과 별도 승인 기준은 전역 [`AGENTS.md`](./AGENTS.md)가 정합니다.
 
 ## 설치 관리
 
@@ -183,15 +179,13 @@ davis-agent-kit/
 └── .github/
 ```
 
-- `AGENTS.md` — 모든 작업의 기본 자세, 권한, 완료 기준과 skill routing
+- `AGENTS.md` — 한국어 협업, 행동 권한과 완료 계약
 - `AGENTS.override.md` — 이 저장소 자체를 수정할 때의 관리 규칙
 - `providers/agy/davis-agent-kit.md` — AGY에서 Gemini 계열 모델의 누락·검증 부족을 보정하는 선택형 전역 rule
 - `skills/` — 반복 workflow와 그 workflow에만 필요한 references, agents, scripts, tests
 - `pets/` — Codex custom pets
 - `scripts/install_codex.py` — 전역 AGENTS, user skills, custom pets 설치
 - `scripts/validate_kit.py` — active skill 계약과 실행 가능한 tests/helpers 검증
-
-Codex의 자동 지침 로딩 계약에 맞춰 성격·말투·상호작용 원칙도 전역 `AGENTS.md`에 둡니다. 별도 `SOUL.md`를 추가해 자동 로딩되지 않는 문서를 만들지 않습니다.
 
 과거 의사결정 기록, raw model trace, 수동 평가 archive 같은 유지보수용 기록은 제품 트리에 두지 않고 Git history와 PR에서 관리합니다.
 

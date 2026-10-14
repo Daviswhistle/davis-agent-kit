@@ -1,0 +1,6 @@
+interface:
+  display_name: "Section Store"
+  short_description: "Read and update indexed project knowledge"
+  default_prompt: "Use $section-store to read or update this project's indexed knowledge."
+policy:
+  allow_implicit_invocation: false

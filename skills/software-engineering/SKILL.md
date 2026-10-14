@@ -5,7 +5,7 @@ description: Use for software implementation, modification, debugging, refactori
 
 # Software Engineering
 
-This skill covers software-specific implementation, validation, CRA/TCA and delegated resource candidates. The global `AGENTS.md` governs execution mode, professional roles and final acceptance responsibility.
+This optional workflow covers software-specific implementation, validation, CRA/TCA and delegated resource candidates. Action permissions come from the user and applicable `AGENTS.md`.
 
 ## Selection
 

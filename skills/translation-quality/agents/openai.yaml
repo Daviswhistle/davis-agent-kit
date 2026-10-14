@@ -1,0 +1,6 @@
+interface:
+  display_name: "Translation Quality"
+  short_description: "Translate and verify Korean documents"
+  default_prompt: "Use $translation-quality to translate or review this document."
+policy:
+  allow_implicit_invocation: false

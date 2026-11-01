@@ -24,15 +24,18 @@ def expected_link(repo_root: Path, rules_home: Path) -> tuple[Path, Path]:
     return rules_home / RULE_NAME, repo_root / "providers" / "agy" / RULE_NAME
 
 
-def is_kit_rule_copy(path: Path) -> bool:
-    """Recognize a copied kit rule while leaving unrelated user rules alone."""
-    if path.is_symlink() or not path.is_file():
-        return False
+def has_kit_rule_header(path: Path) -> bool:
     try:
-        heading = path.open(encoding="utf-8").readline().strip()
+        with path.open(encoding="utf-8") as rule:
+            heading = rule.readline().strip()
     except (OSError, UnicodeError):
         return False
     return heading.startswith(RULE_HEADING) and ("AGY" in heading or "Antigravity" in heading)
+
+
+def is_kit_rule_copy(path: Path) -> bool:
+    """Recognize a copied kit rule while leaving unrelated user rules alone."""
+    return not path.is_symlink() and path.is_file() and has_kit_rule_header(path)
 
 
 def is_previous_kit_link(path: Path) -> bool:
@@ -43,11 +46,15 @@ def is_previous_kit_link(path: Path) -> bool:
         target = (path.parent / os.readlink(path)).resolve(strict=False)
     except (OSError, RuntimeError):
         return False
-    return (
+    if not (
         target.name == RULE_NAME
         and target.parent.name == "agy"
         and target.parent.parent.name == "providers"
-    )
+    ):
+        return False
+    # A live old link must also contain our rule. For a dangling checkout
+    # link, the recognizable source path is the only available evidence.
+    return not path.exists() or (path.is_file() and has_kit_rule_header(path))
 
 
 def install_action(path: Path, target: Path) -> str:

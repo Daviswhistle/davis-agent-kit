@@ -55,6 +55,7 @@ class InstallerTests(unittest.TestCase):
             import shutil
             shutil.copytree(source, destination)
 
+            self.assertTrue(any("pet " in p for p in install_codex.check(ROOT, codex_home, skills_home)))
             install_codex.install(ROOT, codex_home, skills_home)
 
             self.assertTrue(destination.is_symlink())

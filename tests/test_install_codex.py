@@ -57,8 +57,64 @@ class InstallerTests(unittest.TestCase):
 
             install_codex.install(ROOT, codex_home, skills_home)
 
-            self.assertFalse(destination.is_symlink())
+            self.assertTrue(destination.is_symlink())
+            backup = codex_home / ".davis-agent-kit-backups" / "pets" / pet_name
+            self.assertTrue(backup.is_dir())
             self.assertEqual(install_codex.check(ROOT, codex_home, skills_home), [])
+
+    def test_changed_copied_pet_is_backed_up_and_updated(self) -> None:
+        import shutil
+        with tempfile.TemporaryDirectory() as tmp:
+            codex_home, skills_home = self.homes(tmp)
+            pet_name = install_codex.discover_pets(ROOT)[0]
+            destination = codex_home / "pets" / pet_name
+            shutil.copytree(ROOT / "pets" / pet_name, destination)
+            (destination / "local-note.txt").write_text("keep local edits", encoding="utf-8")
+
+            first = install_codex.install(ROOT, codex_home, skills_home)
+            backup = codex_home / ".davis-agent-kit-backups" / "pets" / pet_name
+            self.assertEqual((backup / "local-note.txt").read_text(), "keep local edits")
+            self.assertTrue(destination.is_symlink())
+            self.assertTrue(any(message.startswith("BACKUP") for message in first.messages))
+            second = install_codex.install(ROOT, codex_home, skills_home)
+            self.assertFalse(second.created_links)
+            self.assertEqual(install_codex.check(ROOT, codex_home, skills_home), [])
+
+    def test_obsolete_kit_links_are_reconciled(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            codex_home, skills_home = self.homes(tmp)
+            old = codex_home / "skills" / install_codex.discover_skills(ROOT)[0]
+            retired = skills_home / "capability-map"
+            newly_removed = skills_home / "deleted-skill"
+            for path in (old, retired, newly_removed):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.symlink_to(ROOT / "skills" / path.name, target_is_directory=True)
+
+            self.assertTrue(install_codex.check(ROOT, codex_home, skills_home))
+            result = install_codex.install(ROOT, codex_home, skills_home)
+            self.assertTrue(any(message.startswith("REMOVE") for message in result.messages))
+            for path in (old, retired, newly_removed):
+                self.assertFalse(path.is_symlink())
+            self.assertEqual(install_codex.check(ROOT, codex_home, skills_home), [])
+
+    def test_migration_rollback_restores_old_pet_and_skill_links(self) -> None:
+        import shutil
+        with tempfile.TemporaryDirectory() as tmp:
+            codex_home, skills_home = self.homes(tmp)
+            pet_name = install_codex.discover_pets(ROOT)[0]
+            destination = codex_home / "pets" / pet_name
+            shutil.copytree(ROOT / "pets" / pet_name, destination)
+            (destination / "local-note.txt").write_text("do not lose", encoding="utf-8")
+            old = skills_home / "capability-map"
+            old.parent.mkdir(parents=True)
+            old.symlink_to(ROOT / "skills" / "capability-map", target_is_directory=True)
+            with mock.patch.object(Path, "symlink_to", side_effect=PermissionError("simulated")):
+                with self.assertRaises(PermissionError):
+                    install_codex.install(ROOT, codex_home, skills_home)
+            self.assertFalse(destination.is_symlink())
+            self.assertEqual((destination / "local-note.txt").read_text(), "do not lose")
+            self.assertTrue(old.is_symlink())
+            self.assertFalse((codex_home / ".davis-agent-kit-backups").exists())
 
     def test_different_existing_pet_blocks_before_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

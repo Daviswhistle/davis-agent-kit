@@ -143,7 +143,9 @@ python3 scripts/install_agy.py
 python3 scripts/install_agy.py --check
 ```
 
-설치기는 AGY의 전역 rules 디렉터리인 `~/.gemini/antigravity-cli/rules/`에 `davis-agent-kit.md` 심링크를 만듭니다. 같은 이름의 기존 rule이 있으면 덮어쓰지 않고 중단합니다.
+설치기는 AGY의 전역 rules 디렉터리인 `~/.gemini/antigravity-cli/rules/`에 `davis-agent-kit.md` 심링크를 만듭니다. 설치와 갱신에 같은 명령을 사용합니다. 먼저 로컬 checkout을 `git pull --ff-only` 등으로 최신화해야 하며, 설치 명령이 자동으로 원격 변경사항을 가져오지는 않습니다.
+
+기존 rule이 이 kit의 파일 복사본이면 원본(로컬 수정 포함)을 `~/.gemini/antigravity-cli/.davis-agent-kit-backups/agy/`로 옮긴 뒤 현재 checkout을 가리키는 심링크로 전환합니다. 예전 checkout의 `providers/agy/davis-agent-kit.md`를 가리키는 링크도 자동 갱신합니다. 이 kit의 rule로 식별되지 않는 기존 파일·링크는 건드리지 않고 충돌 경로를 알려줍니다. 이미 올바른 링크라면 아무것도 변경하지 않으며, `--check`는 상태만 확인합니다. 백업은 활성 `rules/` 밖에 보관해 이전 규칙을 중복 적용하지 않습니다.
 
 이 rule은 Codex용 skill routing이나 모델 선택 규칙을 AGY에 복제하지 않습니다. Gemini 계열 모델이 상위 수준의 그럴듯한 답에서 멈추지 않도록 전제·실패 모드·실제 control/data flow·downstream 효과·필수 검증을 끝까지 확인하게 보정합니다.
 

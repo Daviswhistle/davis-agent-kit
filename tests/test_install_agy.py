@@ -57,7 +57,7 @@ class AgyInstallerTests(unittest.TestCase):
             rules_home = Path(tmp) / "rules"
             rules_home.mkdir()
             destination = rules_home / install_agy.RULE_NAME
-            edited = "# Davis Agent Kit — AGY verification rule\\nLocal note: keep this.\\n"
+            edited = "# Davis Agent Kit — AGY verification rule\nLocal note: keep this.\n"
             destination.write_text(edited, encoding="utf-8")
 
             install_agy.install(ROOT, rules_home)
@@ -75,7 +75,7 @@ class AgyInstallerTests(unittest.TestCase):
             previous = backup_dir / install_agy.RULE_NAME
             previous.write_text("previous backup", encoding="utf-8")
             destination = rules_home / install_agy.RULE_NAME
-            destination.write_text("# Davis Agent Kit — AGY verification rule\\nnew copy\\n", encoding="utf-8")
+            destination.write_text("# Davis Agent Kit — AGY verification rule\nnew copy\n", encoding="utf-8")
 
             install_agy.install(ROOT, rules_home)
 
@@ -88,7 +88,7 @@ class AgyInstallerTests(unittest.TestCase):
                 old_source = Path(tmp) / "old-clone" / "providers" / "agy" / install_agy.RULE_NAME
                 if not dangling:
                     old_source.parent.mkdir(parents=True)
-                    old_source.write_text("# Davis Agent Kit — AGY verification rule\\nold\\n", encoding="utf-8")
+                    old_source.write_text("# Davis Agent Kit — AGY verification rule\nold\n", encoding="utf-8")
                 rules_home = Path(tmp) / "cli" / "rules"
                 rules_home.mkdir(parents=True)
                 path = rules_home / install_agy.RULE_NAME
@@ -108,10 +108,10 @@ class AgyInstallerTests(unittest.TestCase):
                 rules_home.mkdir()
                 existing = rules_home / install_agy.RULE_NAME
                 if kind == "file":
-                    existing.write_text("keep my rule\\n", encoding="utf-8")
+                    existing.write_text("keep my rule\n", encoding="utf-8")
                 elif kind == "symlink":
                     other = Path(tmp) / "custom.md"
-                    other.write_text("keep my rule\\n", encoding="utf-8")
+                    other.write_text("keep my rule\n", encoding="utf-8")
                     existing.symlink_to(other)
                 else:
                     existing.mkdir()
@@ -122,9 +122,9 @@ class AgyInstallerTests(unittest.TestCase):
 
                 self.assertTrue(install_agy.check(ROOT, rules_home))
                 if kind == "file":
-                    self.assertEqual(existing.read_text(encoding="utf-8"), "keep my rule\\n")
+                    self.assertEqual(existing.read_text(encoding="utf-8"), "keep my rule\n")
                 elif kind == "symlink":
-                    self.assertEqual(existing.read_text(encoding="utf-8"), "keep my rule\\n")
+                    self.assertEqual(existing.read_text(encoding="utf-8"), "keep my rule\n")
                 else:
                     self.assertEqual((existing / "keep.txt").read_text(encoding="utf-8"), "keep")
                 self.assertFalse((rules_home.parent / ".davis-agent-kit-backups").exists())
@@ -134,7 +134,7 @@ class AgyInstallerTests(unittest.TestCase):
             rules_home = Path(tmp) / "rules"
             rules_home.mkdir()
             destination = rules_home / install_agy.RULE_NAME
-            text = "# Davis Agent Kit — AGY verification rule\\nkeep edits\\n"
+            text = "# Davis Agent Kit — AGY verification rule\nkeep edits\n"
             destination.write_text(text, encoding="utf-8")
 
             with mock.patch.object(Path, "symlink_to", side_effect=PermissionError("simulated")):
@@ -175,7 +175,7 @@ class AgyInstallerTests(unittest.TestCase):
             rules_home = Path(tmp) / "rules"
             rules_home.mkdir()
             rule = rules_home / install_agy.RULE_NAME
-            content = "# Davis Agent Kit — AGY verification rule\\nold copy\\n"
+            content = "# Davis Agent Kit — AGY verification rule\nold copy\n"
             rule.write_text(content, encoding="utf-8")
             checked = subprocess.run(
                 [sys.executable, str(SCRIPTS / "install_agy.py"),

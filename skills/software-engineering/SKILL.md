@@ -13,7 +13,7 @@ For software changes:
 
 1. define one coherent task unit, authority and checkable completion criteria;
 2. inspect the actual execution path before editing;
-3. if delegating, choose from the software candidates below; read `references/implementation-worker-launch.md` only when that launcher fits the selected resources;
+3. if delegating, choose from the software candidates below;
 4. inspect the integrated diff/state and independently verify completion-critical evidence;
 5. decide whether CRA is warranted after local validation;
 6. use TCA only when multiple independently reviewable task commits materially improve correctness, recovery or reviewability.
@@ -24,8 +24,8 @@ Do not create workflow ceremony merely because a task is difficult or has many s
 
 These candidates apply only after delegation is independently warranted; do not delegate just to use a candidate:
 
-- bounded implementation worker: first candidate `gpt-6-luna`, Max reasoning, Fast tier
-- independent CRA reviewer: `gpt-6.1-sol`, Max reasoning, default/non-Fast service tier
+- bounded implementation worker: first candidate `gpt-6.1-tera`, Medium reasoning, default service tier
+- independent CRA reviewer: `gpt-6.1-sol`, Max reasoning, default service tier
 - explorer: cheapest available model that can answer the bounded discovery question reliably
 
 ## Local validation

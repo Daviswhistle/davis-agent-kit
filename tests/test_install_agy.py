@@ -129,6 +129,22 @@ class AgyInstallerTests(unittest.TestCase):
                     self.assertEqual((existing / "keep.txt").read_text(encoding="utf-8"), "keep")
                 self.assertFalse((rules_home.parent / ".davis-agent-kit-backups").exists())
 
+    def test_live_link_to_unrelated_rule_in_kit_shaped_path_is_not_replaced(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            rules_home = Path(tmp) / "rules"
+            rules_home.mkdir()
+            unrelated = Path(tmp) / "other" / "providers" / "agy" / install_agy.RULE_NAME
+            unrelated.parent.mkdir(parents=True)
+            unrelated.write_text("my unrelated rule\n", encoding="utf-8")
+            link = rules_home / install_agy.RULE_NAME
+            link.symlink_to(unrelated)
+
+            with self.assertRaises(install_agy.InstallError):
+                install_agy.install(ROOT, rules_home)
+            self.assertTrue(link.is_symlink())
+            self.assertEqual(link.resolve(), unrelated.resolve())
+            self.assertEqual(unrelated.read_text(encoding="utf-8"), "my unrelated rule\n")
+
     def test_failed_upgrade_restores_original_copy_and_cleans_backup(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             rules_home = Path(tmp) / "rules"

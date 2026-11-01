@@ -108,7 +108,17 @@ class InstallerTests(unittest.TestCase):
             old = skills_home / "capability-map"
             old.parent.mkdir(parents=True)
             old.symlink_to(ROOT / "skills" / "capability-map", target_is_directory=True)
-            with mock.patch.object(Path, "symlink_to", side_effect=PermissionError("simulated")):
+            original_symlink = Path.symlink_to
+            calls = 0
+
+            def fail_first(path: Path, target: Path, target_is_directory: bool = False) -> None:
+                nonlocal calls
+                calls += 1
+                if calls == 1:
+                    raise PermissionError("simulated")
+                original_symlink(path, target, target_is_directory=target_is_directory)
+
+            with mock.patch.object(Path, "symlink_to", new=fail_first):
                 with self.assertRaises(PermissionError):
                     install_codex.install(ROOT, codex_home, skills_home)
             self.assertFalse(destination.is_symlink())

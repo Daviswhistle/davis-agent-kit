@@ -293,8 +293,8 @@ def check(repo_root: Path, codex_home: Path, skills_home: Path) -> list[str]:
         if not same_link(path, target):
             problems.append(f"{label} is not the expected symlink: {path}")
     for path, target, label in expected_pets(repo_root, codex_home, pets):
-        if not (same_link(path, target) or same_tree(path, target)):
-            problems.append(f"{label} is not installed from this kit: {path}")
+        if not same_link(path, target):
+            problems.append(f"{label} is not linked to this kit: {path}")
     guidance_problem = global_guidance_problem(repo_root, codex_home)
     if guidance_problem:
         problems.append(guidance_problem)

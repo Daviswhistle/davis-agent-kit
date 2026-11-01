@@ -14,6 +14,6 @@ Davis Agent Kit에 포함된 Codex custom pets입니다.
 ./scripts/install_codex.sh
 ```
 
-위 기본 설치 명령이 `pets/` 아래에서 `pet.json`을 가진 모든 펫을 찾아 `${CODEX_HOME:-$HOME/.codex}/pets/`에 함께 설치합니다. 이미 같은 kit의 펫이 복사되어 있으면 그대로 인정하고, 다른 내용의 같은 ID 펫은 덮어쓰지 않습니다.
+위 기본 설치 명령이 `pets/` 아래에서 `pet.json`을 가진 모든 펫을 찾아 `${CODEX_HOME:-$HOME/.codex}/pets/`에 링크로 설치합니다. 과거에 설치한 복사본은 다음 실행 시 `${CODEX_HOME:-$HOME/.codex}/.davis-agent-kit-backups/pets/`에 보관하고 링크로 전환합니다. 복사본의 내용이 수정되어도 원본 파일은 백업에 남습니다. 같은 ID지만 kit 복사본인지 확인할 수 없는 다른 경로는 덮어쓰지 않습니다.
 
 새 펫을 추가할 때는 `pets/<id>/` 아래에 `pet.json`과 해당 sprite 파일을 넣으면 됩니다. 루트 README나 설치 목록을 따로 수정할 필요는 없습니다.

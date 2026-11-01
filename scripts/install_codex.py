@@ -94,6 +94,8 @@ class InstallResult:
     messages: list[str] = field(default_factory=list)
     created_links: list[Path] = field(default_factory=list)
     created_dirs: list[Path] = field(default_factory=list)
+    moved_directories: list[tuple[Path, Path]] = field(default_factory=list)
+    removed_symlinks: list[tuple[Path, str]] = field(default_factory=list)
 
     def rollback(self) -> None:
         for path in reversed(self.created_links):
@@ -102,12 +104,23 @@ class InstallResult:
                     path.unlink()
             except OSError:
                 pass
+        for original, backup in reversed(self.moved_directories):
+            try:
+                if path_exists(backup) and not path_exists(original):
+                    backup.rename(original)
+            except OSError:
+                pass
+        for path, target in reversed(self.removed_symlinks):
+            try:
+                if not path_exists(path):
+                    path.symlink_to(target, target_is_directory=True)
+            except OSError:
+                pass
         for path in reversed(self.created_dirs):
             try:
                 path.rmdir()
             except OSError:
                 pass
-
 
 def ensure_dir(path: Path, result: InstallResult) -> None:
     if path_exists(path):
@@ -136,13 +149,63 @@ def preflight_link(path: Path, target: Path, label: str) -> bool:
     raise InstallError(f"{label} conflicts with existing path: {path}")
 
 
-def preflight_pet(path: Path, target: Path, label: str) -> bool:
+def preflight_pet(path: Path, target: Path, label: str) -> str:
     if not path_exists(path):
-        return True
-    if same_link(path, target) or same_tree(path, target):
-        return False
+        return "create"
+    if same_link(path, target):
+        return "keep"
+    if path.is_dir() and not path.is_symlink():
+        if same_tree(path, target) or is_kit_pet_copy(path, target):
+            return "migrate"
     raise InstallError(f"{label} conflicts with existing path: {path}")
 
+
+def is_kit_pet_copy(path: Path, source: Path) -> bool:
+    """Recognize an older pet copy by its manifest, without discarding local edits."""
+    try:
+        metadata = json.loads((path / "pet.json").read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return False
+    return isinstance(metadata, dict) and metadata.get("id") == source.name
+
+
+def managed_skill_link(path: Path, repo_root: Path) -> bool:
+    """Only remove links pointing at this checkout's skill directory."""
+    if not path.is_symlink():
+        return False
+    try:
+        target = path.resolve(strict=False)
+        source_root = (repo_root / "skills").resolve(strict=False)
+        return target.parent == source_root and target.name == path.name
+    except (OSError, RuntimeError):
+        return False
+
+
+def stale_managed_skill_links(
+    repo_root: Path, codex_home: Path, skills_home: Path, active: tuple[str, ...]
+) -> list[Path]:
+    stale = []
+    legacy_root = codex_home / "skills"
+    for directory in (legacy_root, skills_home):
+        if not directory.is_dir():
+            continue
+        for path in directory.iterdir():
+            if managed_skill_link(path, repo_root) and (
+                directory == legacy_root or path.name not in active
+            ):
+                stale.append(path)
+    return stale
+
+
+def pet_backup_path(codex_home: Path, name: str) -> Path:
+    """Backups live outside pets/, so Codex cannot load the old pet twice."""
+    base = codex_home / ".davis-agent-kit-backups" / "pets" / name
+    candidate = base
+    suffix = 2
+    while path_exists(candidate):
+        candidate = base.with_name(f"{name}-{suffix}")
+        suffix += 1
+    return candidate
 
 def legacy_conflicts(codex_home: Path, names: tuple[str, ...]) -> list[Path]:
     legacy_root = codex_home / "skills"
@@ -223,6 +286,9 @@ def check(repo_root: Path, codex_home: Path, skills_home: Path) -> list[str]:
         problems.append(f"legacy Codex skill still installed: {path}")
     for path in retired_conflicts(skills_home):
         problems.append(f"retired skill still installed: {path}")
+    for path in stale_managed_skill_links(repo_root, codex_home, skills_home, skills):
+        if path not in legacy_conflicts(codex_home, skills) and path not in retired_conflicts(skills_home):
+            problems.append(f"obsolete kit skill link still installed: {path}")
     for path, target, label in expected_links(repo_root, codex_home, skills_home, skills):
         if not same_link(path, target):
             problems.append(f"{label} is not the expected symlink: {path}")
@@ -245,30 +311,44 @@ def install(repo_root: Path, codex_home: Path, skills_home: Path) -> InstallResu
     if guidance_problem:
         raise InstallError(guidance_problem)
 
-    legacy = legacy_conflicts(codex_home, skills)
+    stale = stale_managed_skill_links(repo_root, codex_home, skills_home, skills)
+    legacy = [
+        path for path in legacy_conflicts(codex_home, skills)
+        if path not in stale
+    ]
     if legacy:
-        joined = ", ".join(str(path) for path in legacy)
         raise InstallError(
-            "legacy $CODEX_HOME/skills entries still load in Codex; "
-            f"remove these old kit links before migration: {joined}"
+            "unmanaged legacy $CODEX_HOME/skills entries need manual review: "
+            + ", ".join(str(path) for path in legacy)
         )
 
-    retired = retired_conflicts(skills_home)
+    retired = [
+        path for path in retired_conflicts(skills_home)
+        if path not in stale
+    ]
     if retired:
-        joined = ", ".join(str(path) for path in retired)
-        raise InstallError(f"retired skill still installed: {joined}")
+        raise InstallError(
+            "unmanaged retired skill entries need manual review: "
+            + ", ".join(str(path) for path in retired)
+        )
 
     links = expected_links(repo_root, codex_home, skills_home, skills)
     pet_links = expected_pets(repo_root, codex_home, pets)
-    to_create = []
+    to_create: list[tuple[Path, Path]] = []
+    to_migrate: list[tuple[Path, Path]] = []
     result = InstallResult()
+    # Complete all conflict checks before modifying any installed path.
     for path, target, label in links:
         if preflight_link(path, target, label):
             to_create.append((path, target))
         else:
             result.messages.append(f"KEEP {path}")
     for path, target, label in pet_links:
-        if preflight_pet(path, target, label):
+        action = preflight_pet(path, target, label)
+        if action == "create":
+            to_create.append((path, target))
+        elif action == "migrate":
+            to_migrate.append((path, target))
             to_create.append((path, target))
         else:
             result.messages.append(f"KEEP {path}")
@@ -278,6 +358,17 @@ def install(repo_root: Path, codex_home: Path, skills_home: Path) -> InstallResu
         ensure_dir(skills_home, result)
         if pets:
             ensure_dir(codex_home / "pets", result)
+        for path in stale:
+            target = os.readlink(path)
+            path.unlink()
+            result.removed_symlinks.append((path, target))
+            result.messages.append(f"REMOVE obsolete kit link {path}")
+        for path, _ in to_migrate:
+            backup = pet_backup_path(codex_home, path.name)
+            ensure_dir(backup.parent, result)
+            path.rename(backup)
+            result.moved_directories.append((path, backup))
+            result.messages.append(f"BACKUP old pet {path} -> {backup}")
         for path, target in to_create:
             path.symlink_to(target, target_is_directory=target.is_dir())
             result.created_links.append(path)
@@ -290,7 +381,6 @@ def install(repo_root: Path, codex_home: Path, skills_home: Path) -> InstallResu
         raise
 
     return result
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(

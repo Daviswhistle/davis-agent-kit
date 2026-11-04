@@ -36,6 +36,22 @@
 
 새 skill이나 pet을 개별적으로 골라 설치할 필요는 없습니다. 이 kit가 관리하는 항목은 설치기가 자동으로 발견합니다.
 
+## Claude Code (CLI · 데스크톱 Code)
+
+Claude Code의 로컬 작업 환경에도 동일한 키트 원본을 연결합니다.
+
+```bash
+python3 scripts/install_claude.py
+python3 scripts/install_claude.py --check  # 확인만 수행
+```
+
+- 전역 규칙: `~/.claude/rules/davis-agent-kit.md` → 이 저장소의 `AGENTS.md`
+- 사용자 스킬: `~/.claude/skills/<skill-name>` → 이 저장소의 `skills/<skill-name>`
+- 스킬은 `/software-engineering`처럼 명시적으로 호출하며 자동 실행되지 않습니다.
+- 기존 `~/.claude/CLAUDE.md`, `settings.json` 및 다른 규칙·스킬은 수정하지 않습니다. 충돌하면 중단합니다.
+- 경로를 바꾸려면 `--claude-home /path/to/.claude`를 사용합니다. macOS와 WSL은 각 환경에서 설치합니다.
+- 새 로컬 Claude Code 세션에서 적용됩니다. 일반 Claude 채팅과 Cowork는 지원 범위가 아닙니다.
+
 ## 사용
 
 이 kit의 스킬은 자동으로 선택하지 않습니다. 전용 절차가 필요할 때 `$skill-name`으로 명시적으로 호출합니다. 설치된 상태에서도 일반 작업의 기본 모델 문맥에 포함되지 않도록 각 스킬의 `agents/openai.yaml`에 `policy.allow_implicit_invocation: false`를 설정합니다. [OpenAI 공식 문서](https://learn.chatgpt.com/docs/build-skills#optional-metadata)
@@ -188,6 +204,7 @@ davis-agent-kit/
 - `skills/` — 반복 workflow와 그 workflow에만 필요한 references, agents, scripts, tests
 - `pets/` — Codex custom pets
 - `scripts/install_codex.py` — 전역 AGENTS, user skills, custom pets 설치
+- `scripts/install_claude.py` — Claude Code용 공통 rule·skill 연결
 - `scripts/validate_kit.py` — active skill 계약과 실행 가능한 tests/helpers 검증
 
 과거 의사결정 기록, raw model trace, 수동 평가 archive 같은 유지보수용 기록은 제품 트리에 두지 않고 Git history와 PR에서 관리합니다.

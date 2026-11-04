@@ -76,7 +76,6 @@ $section-store 이 프로젝트의 확인된 지식을 PROJECT.md 하나로 관�
 
 - `section-store` — 단일 Markdown 원본의 자동 색인, 안정적 ID 기반 부분 읽기·수정과 버전 충돌 검사
 - `translation-quality` — 비단순 한국어 번역, transcript·재무보고서 번역, source/numeric/format QA
-- `handoff-agent-builder` — Codex가 자동 발견하는 repo-local handoff skill 설계와 멀티턴 검증
 - `software-engineering` — 소프트웨어 변경의 구현·검증과 위임 시의 자원 후보, 필요할 때 CRA/TCA
 - `writing-quality` — 글쓰기 자체가 품질 병목인 원고·장문 분석·게시용 문서 작성과 편집
 
@@ -189,7 +188,6 @@ davis-agent-kit/
 ├── skills/
 │   ├── section-store/
 │   ├── translation-quality/
-│   ├── handoff-agent-builder/
 │   ├── software-engineering/
 │   └── writing-quality/
 ├── pets/

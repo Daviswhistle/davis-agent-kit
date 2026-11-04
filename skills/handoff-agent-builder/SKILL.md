@@ -1,6 +1,7 @@
 ---
 name: handoff-agent-builder
 description: Create or revise a repository-specific handoff/onboarding skill that actively teaches maintainers how to understand, run, inspect, and safely change the project. Not for ordinary README edits or project Q&A.
+disable-model-invocation: true
 ---
 
 # Handoff Agent Builder

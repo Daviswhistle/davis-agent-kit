@@ -1,6 +1,7 @@
 ---
 name: translation-quality
 description: Translate non-trivial documents into Korean or review and revise Korean translations. Use the applicable general, transcript, or formal-report workflow to preserve meaning, source coverage, terminology, and numbers.
+disable-model-invocation: true
 ---
 
 # Translation Quality

@@ -1,6 +1,7 @@
 ---
 name: section-store
 description: Read and update an explicitly selected indexed project knowledge source by stable section ID. Use an existing section-store PROJECT.md, or create a source when the user requests knowledge consolidation. Verify decision-critical facts against current evidence; does not change instruction precedence.
+disable-model-invocation: true
 ---
 
 # Section Store

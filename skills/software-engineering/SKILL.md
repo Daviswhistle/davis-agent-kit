@@ -27,6 +27,7 @@ These candidates apply only after delegation is independently warranted; do not 
 
 - bounded implementation worker: first candidate `gpt-6.1-tera`, Medium reasoning, default service tier
 - independent CRA reviewer: `gpt-6.1-sol`, Max reasoning, default service tier
+- independent CRA verifier: `gpt-6.1-sol`, Max reasoning, default service tier, separate from author and reviewer
 - explorer: cheapest available model that can answer the bounded discovery question reliably
 
 ## Local validation
@@ -47,7 +48,7 @@ Use CRA when the user explicitly requests it or independent commit-level review 
 
 Usually skip CRA for narrow mechanical changes already established by focused validation.
 
-When selected, read `references/cra-loop.md` for the native commit-review and amend loop.
+When selected, read `references/cra-loop.md` for the native commit review, independent verification of findings and amend loop.
 
 ## TCA
 

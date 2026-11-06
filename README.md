@@ -33,8 +33,13 @@
 - **Global instructions** — `${CODEX_HOME:-$HOME/.codex}/AGENTS.md`
 - **User skills** — `$HOME/.agents/skills/<skill-name>`
 - **Custom pets** — `pets/` 아래에서 `pet.json`을 가진 모든 펫
+- **Local board** — `~/.agents/BOARD.md`가 없으면 빈 템플릿을 독립 파일로 생성
 
 새 skill이나 pet을 개별적으로 골라 설치할 필요는 없습니다. 이 kit가 관리하는 항목은 설치기가 자동으로 발견합니다.
+
+보드는 여러 에이전트가 공동 작업할 때 쓰는 로컬 상태 파일입니다. 규칙은 [`AGENTS.md`](./AGENTS.md#로컬-공유-보드)에 있습니다. 기존 보드의 내용은 설치·갱신 시 보존하며, 저장소 템플릿과 연결하거나 동기화하지 않습니다. 심링크나 디렉터리가 같은 위치를 차지하면 덮어쓰지 않고 중단합니다. 개인별 `LOCAL.md`와 실제 보드는 커밋·게시하지 않습니다. 보드 렌더 서버나 연락 도구는 설치하지 않습니다.
+
+Codex 설치의 보드 위치는 `--skills-home`의 상위 디렉터리입니다(기본 `~/.agents/`). 보드만 별도 위치에 두려면 `--agents-home /path/to/agents`를 사용합니다. 사용자 지정 위치에서는 프로젝트 지침이나 `LOCAL.md`에 실제 보드 위치를 명시하세요.
 
 ## Claude Code (CLI · 데스크톱 Code)
 
@@ -47,6 +52,7 @@ python3 scripts/install_claude.py --check  # 확인만 수행
 
 - 전역 규칙: `~/.claude/rules/davis-agent-kit.md` → 이 저장소의 `AGENTS.md`
 - 사용자 스킬: `~/.claude/skills/<skill-name>` → 이 저장소의 `skills/<skill-name>`
+- 로컬 보드: Codex와 같은 `~/.agents/BOARD.md`를 생성하거나 기존 내용을 보존합니다. `--claude-home`을 바꾸면 그 옆 `.agents/`를 쓰며, `--agents-home`으로 따로 지정할 수 있습니다.
 - 스킬은 `/software-engineering`처럼 명시적으로 호출하며 자동 실행되지 않습니다.
 - 기존 `~/.claude/CLAUDE.md`, `settings.json` 및 다른 규칙·스킬은 수정하지 않습니다. 충돌하면 중단합니다.
 - 경로를 바꾸려면 `--claude-home /path/to/.claude`를 사용합니다. macOS와 WSL은 각 환경에서 설치합니다.
@@ -114,7 +120,7 @@ $section-store 이 프로젝트의 확인된 지식을 PROJECT.md 하나로 관�
 - 다른 프로젝트의 링크·파일·디렉터리, 소유를 확인할 수 없는 예전 스킬 및 사용자 override는 임의로 삭제하지 않습니다. 이 경우 충돌 경로를 출력하고 중단합니다.
 - `AGENTS.md`, 스킬, 펫은 설치 후 소스 파일을 직접 참조합니다. 저장소의 변경사항은 새 세션에서 반영되지만, 다른 PC에 있는 clone을 최신화하는 일까지 설치 명령이 대신하지는 않습니다.
 
-`--check`는 현재 checkout과 설치 상태가 일치하는지만 확인하며 수정하지 않습니다. 실제 Codex 세션의 전체 지침 로딩이나 프로젝트별 override는 검증 대상이 아닙니다.
+`--check`는 현재 checkout과 설치 상태가 일치하는지, 보드가 일반 파일로 있는지 확인하며 수정하지 않습니다. 사용자 보드의 내용을 템플릿과 비교하지 않습니다. 실제 Codex 세션의 전체 지침 로딩이나 프로젝트별 override는 검증 대상이 아닙니다.
 
 ## Advanced
 
@@ -191,6 +197,8 @@ davis-agent-kit/
 │   ├── software-engineering/
 │   └── writing-quality/
 ├── pets/
+├── templates/
+│   └── BOARD.md
 ├── scripts/
 ├── tests/
 └── .github/
@@ -201,6 +209,7 @@ davis-agent-kit/
 - `providers/agy/davis-agent-kit.md` — AGY에서 Gemini 계열 모델의 누락·검증 부족을 보정하는 선택형 전역 rule
 - `skills/` — 반복 workflow와 그 workflow에만 필요한 references, agents, scripts, tests
 - `pets/` — Codex custom pets
+- `templates/BOARD.md` — 설치 시 최초 한 번 복사하는 빈 로컬 보드
 - `scripts/install_codex.py` — 전역 AGENTS, user skills, custom pets 설치
 - `scripts/install_claude.py` — Claude Code용 공통 rule·skill 연결
 - `scripts/validate_kit.py` — active skill 계약과 실행 가능한 tests/helpers 검증

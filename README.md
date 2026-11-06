@@ -95,6 +95,16 @@ $section-store 이 프로젝트의 확인된 지식을 PROJECT.md 하나로 관�
 
 새 pet은 `pets/<id>/pet.json`과 sprite 파일을 추가하면 다음 설치부터 자동으로 포함됩니다. 루트 README나 설치 목록을 별도로 수정할 필요는 없습니다.
 
+## 로컬 에이전트 작업실
+
+Claude Code·Codex CLI 세션과 대화, 공유 채팅, Markdown 작업 보드를 함께 보려면 [Agent Workspace](./tools/agent-workspace/)를 실행합니다. Python 표준 라이브러리만 사용하며 별도 설치 없이 시작합니다.
+
+```bash
+python3 tools/agent-workspace/workspace.py
+```
+
+`127.0.0.1`에서만 열립니다. 실제 세션을 읽지 않는 데모, 설정, 보안 모델과 스크린샷은 패키지 README에 있습니다.
+
 ## 기본 동작 원칙
 
 한국어로 결론과 근거를 제시하고, 승인된 변경 작업은 필요한 검증·커밋·일반 push까지 마무리합니다. 행동별 권한과 별도 승인 기준은 전역 [`AGENTS.md`](./AGENTS.md)가 정합니다.

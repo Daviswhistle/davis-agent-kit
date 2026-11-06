@@ -50,7 +50,7 @@ def validate_skills(repo_root: Path) -> list[str]:
 
 
 def discover_test_suites(repo_root: Path) -> list[CommandCheck]:
-    dirs = [repo_root / "tests", *sorted(repo_root.glob("skills/*/tests"))]
+    dirs = [repo_root / "tests", *sorted(repo_root.glob("skills/*/tests")), *sorted(repo_root.glob("tools/*/tests"))]
     checks = []
     for test_dir in dirs:
         if test_dir.is_dir() and any(test_dir.glob("test*.py")):

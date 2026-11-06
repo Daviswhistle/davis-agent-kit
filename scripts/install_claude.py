@@ -14,6 +14,9 @@ from install_codex import (
     managed_skill_link,
     preflight_link,
     same_link,
+    board_problem,
+    preflight_board,
+    install_board,
 )
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[1]
@@ -40,9 +43,12 @@ def stale_skill_links(repo_root: Path, claude_home: Path, active: tuple[str, ...
     ]
 
 
-def check(repo_root: Path, claude_home: Path) -> list[str]:
+def check(repo_root: Path, claude_home: Path, agents_home: Path | None = None) -> list[str]:
     skills = discover_skills(repo_root)
     problems: list[str] = []
+    problem = board_problem(agents_home if agents_home is not None else claude_home.parent / ".agents")
+    if problem:
+        problems.append(problem)
     for path, target, label in expected_links(repo_root, claude_home, skills):
         if not same_link(path, target):
             problems.append(f"{label} is not the expected symlink: {path}")
@@ -51,7 +57,8 @@ def check(repo_root: Path, claude_home: Path) -> list[str]:
     return problems
 
 
-def install(repo_root: Path, claude_home: Path) -> InstallResult:
+def install(repo_root: Path, claude_home: Path, agents_home: Path | None = None) -> InstallResult:
+    agents_home = agents_home if agents_home is not None else claude_home.parent / ".agents"
     skills = discover_skills(repo_root)
     if not (repo_root / "AGENTS.md").is_file():
         raise InstallError(f"missing normative source: {repo_root / 'AGENTS.md'}")
@@ -59,6 +66,7 @@ def install(repo_root: Path, claude_home: Path) -> InstallResult:
     stale = stale_skill_links(repo_root, claude_home, skills)
     result = InstallResult()
     to_create = []
+    preflight_board(repo_root, agents_home)
     # All conflicts are checked before touching the user's Claude files.
     for path, target, label in links:
         if preflight_link(path, target, label):
@@ -77,7 +85,8 @@ def install(repo_root: Path, claude_home: Path) -> InstallResult:
             path.symlink_to(target, target_is_directory=target.is_dir())
             result.created_links.append(path)
             result.messages.append(f"LINK {path} -> {target}")
-        problems = check(repo_root, claude_home)
+        install_board(repo_root, agents_home, result)
+        problems = check(repo_root, claude_home, agents_home)
         if problems:
             raise InstallError("; ".join(problems))
     except (OSError, RuntimeError, InstallError):
@@ -91,19 +100,21 @@ def main() -> int:
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
     parser.add_argument("--claude-home", type=Path, default=Path(os.environ.get("CLAUDE_CONFIG_DIR") or "~/.claude"))
     parser.add_argument("--check", action="store_true", help="verify the installation without changing it")
+    parser.add_argument("--agents-home", type=Path, help="shared board home (default: .agents beside --claude-home)")
     args = parser.parse_args()
     repo_root = args.root.expanduser().resolve()
     claude_home = args.claude_home.expanduser().resolve(strict=False)
+    agents_home = args.agents_home.expanduser().resolve(strict=False) if args.agents_home else claude_home.parent / ".agents"
     try:
         if args.check:
-            problems = check(repo_root, claude_home)
+            problems = check(repo_root, claude_home, agents_home)
             if problems:
                 for problem in problems:
                     print(f"FAIL: {problem}")
                 return 1
             print("PASS: Davis Agent Kit Claude Code installation is correct")
             return 0
-        result = install(repo_root, claude_home)
+        result = install(repo_root, claude_home, agents_home)
     except (InstallError, OSError, RuntimeError) as exc:
         print(f"Install failed: {exc}", file=sys.stderr)
         return 1

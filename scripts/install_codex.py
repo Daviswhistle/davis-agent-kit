@@ -94,10 +94,16 @@ class InstallResult:
     messages: list[str] = field(default_factory=list)
     created_links: list[Path] = field(default_factory=list)
     created_dirs: list[Path] = field(default_factory=list)
+    created_files: list[Path] = field(default_factory=list)
     moved_directories: list[tuple[Path, Path]] = field(default_factory=list)
     removed_symlinks: list[tuple[Path, str]] = field(default_factory=list)
 
     def rollback(self) -> None:
+        for path in reversed(self.created_files):
+            try:
+                path.unlink(missing_ok=True)
+            except OSError:
+                pass
         for path in reversed(self.created_links):
             try:
                 if path.is_symlink():
@@ -147,6 +153,44 @@ def preflight_link(path: Path, target: Path, label: str) -> bool:
     if same_link(path, target):
         return False
     raise InstallError(f"{label} conflicts with existing path: {path}")
+
+
+def board_problem(agents_home: Path) -> str | None:
+    path = agents_home / "BOARD.md"
+    if path.is_symlink() or not path.is_file():
+        return f"local board must be an independent regular file: {path}"
+    return None
+
+
+def preflight_board(repo_root: Path, agents_home: Path) -> None:
+    if not (repo_root / "templates" / "BOARD.md").is_file():
+        raise InstallError("missing local board template")
+    path = agents_home / "BOARD.md"
+    if path_exists(path):
+        problem = board_problem(agents_home)
+        if problem:
+            raise InstallError(problem)
+
+
+def install_board(repo_root: Path, agents_home: Path, result: InstallResult) -> None:
+    path = agents_home / "BOARD.md"
+    if path_exists(path):
+        preflight_board(repo_root, agents_home)
+        result.messages.append(f"KEEP local board {path}")
+        return
+    content = (repo_root / "templates" / "BOARD.md").read_bytes()
+    ensure_dir(agents_home, result)
+    try:
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError:
+        # Another installer may have initialized the shared board meanwhile.
+        preflight_board(repo_root, agents_home)
+        result.messages.append(f"KEEP local board {path}")
+        return
+    result.created_files.append(path)
+    with os.fdopen(fd, "wb") as out:
+        out.write(content)
+    result.messages.append(f"CREATE local board {path}")
 
 
 def preflight_pet(path: Path, target: Path, label: str) -> str:
@@ -276,10 +320,13 @@ def global_guidance_problem(repo_root: Path, codex_home: Path) -> str | None:
     )
 
 
-def check(repo_root: Path, codex_home: Path, skills_home: Path) -> list[str]:
+def check(repo_root: Path, codex_home: Path, skills_home: Path, agents_home: Path | None = None) -> list[str]:
     skills = discover_skills(repo_root)
     pets = discover_pets(repo_root)
     problems = []
+    problem = board_problem(agents_home if agents_home is not None else skills_home.parent)
+    if problem:
+        problems.append(problem)
     if not (repo_root / "AGENTS.md").is_file():
         problems.append(f"missing normative source: {repo_root / 'AGENTS.md'}")
     for path in legacy_conflicts(codex_home, skills):
@@ -301,7 +348,8 @@ def check(repo_root: Path, codex_home: Path, skills_home: Path) -> list[str]:
     return problems
 
 
-def install(repo_root: Path, codex_home: Path, skills_home: Path) -> InstallResult:
+def install(repo_root: Path, codex_home: Path, skills_home: Path, agents_home: Path | None = None) -> InstallResult:
+    agents_home = agents_home if agents_home is not None else skills_home.parent
     skills = discover_skills(repo_root)
     pets = discover_pets(repo_root)
     if not (repo_root / "AGENTS.md").is_file():
@@ -337,6 +385,7 @@ def install(repo_root: Path, codex_home: Path, skills_home: Path) -> InstallResu
     to_create: list[tuple[Path, Path]] = []
     to_migrate: list[tuple[Path, Path]] = []
     result = InstallResult()
+    preflight_board(repo_root, agents_home)
     # Complete all conflict checks before modifying any installed path.
     for path, target, label in links:
         if preflight_link(path, target, label):
@@ -373,7 +422,8 @@ def install(repo_root: Path, codex_home: Path, skills_home: Path) -> InstallResu
             path.symlink_to(target, target_is_directory=target.is_dir())
             result.created_links.append(path)
             result.messages.append(f"LINK {path} -> {target}")
-        problems = check(repo_root, codex_home, skills_home)
+        install_board(repo_root, agents_home, result)
+        problems = check(repo_root, codex_home, skills_home, agents_home)
         if problems:
             raise InstallError("; ".join(problems))
     except (OSError, RuntimeError, InstallError):
@@ -400,6 +450,7 @@ def parse_args() -> argparse.Namespace:
         help="Codex user skills root (default: ~/.agents/skills)",
     )
     parser.add_argument("--check", action="store_true", help="verify the installed kit without changing it")
+    parser.add_argument("--agents-home", type=Path, help="shared board home (default: parent of --skills-home)")
     return parser.parse_args()
 
 
@@ -408,10 +459,11 @@ def main() -> int:
     repo_root = args.root.expanduser().resolve()
     codex_home = args.codex_home.expanduser().resolve(strict=False)
     skills_home = args.skills_home.expanduser().resolve(strict=False)
+    agents_home = args.agents_home.expanduser().resolve(strict=False) if args.agents_home else skills_home.parent
 
     try:
         if args.check:
-            problems = check(repo_root, codex_home, skills_home)
+            problems = check(repo_root, codex_home, skills_home, agents_home)
             if problems:
                 for problem in problems:
                     print(f"FAIL: {problem}")
@@ -420,7 +472,7 @@ def main() -> int:
             print("PASS: kit global instructions are not shadowed by an override")
             return 0
 
-        result = install(repo_root, codex_home, skills_home)
+        result = install(repo_root, codex_home, skills_home, agents_home)
     except (InstallError, OSError, RuntimeError) as exc:
         print(f"Install failed: {exc}", file=sys.stderr)
         return 1

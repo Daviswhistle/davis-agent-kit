@@ -78,6 +78,43 @@ Example `workspace.json`:
 python3 tools/agent-workspace/workspace.py --config workspace.json
 ```
 
+## Run as a user service (Linux / WSL with systemd)
+
+For continuous use, create `~/.config/systemd/user/agent-workspace.service` with the following content. Replace `/absolute/path/to/davis-agent-kit` with your checkout or installation directory. Use a Python 3.11+ executable; replace `/usr/bin/python3` if yours is elsewhere. This is an optional setup you perform yourself.
+
+```ini
+[Unit]
+Description=Local Agent Workspace
+
+[Service]
+Type=simple
+WorkingDirectory=/absolute/path/to/davis-agent-kit
+ExecStart=/usr/bin/python3 "/absolute/path/to/davis-agent-kit/tools/agent-workspace/workspace.py"
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+```
+
+Append `--config /absolute/path/to/workspace.json` or `--port PORT` to `ExecStart` if needed. Stop any manually started workspace on the same port before starting the service.
+
+```bash
+mkdir -p ~/.config/systemd/user
+# Save the unit above in ~/.config/systemd/user/agent-workspace.service first.
+systemctl --user daemon-reload
+systemctl --user enable --now agent-workspace.service
+systemctl --user status agent-workspace.service
+```
+
+To start the user service before login, enable lingering for your account (local policy may require administrator authorization):
+
+```bash
+loginctl enable-linger
+```
+
+On WSL this applies once the distribution and its systemd instance are running; it does not start a stopped distribution when Windows boots. The HTTP server renders the board on each page request, so a once-per-minute `render.py` cron job is unnecessary. `--render` is only for optional static exports.
+
 ## Board and operator completion
 
 The board uses the kit's [shared board template](../../templates/BOARD.md). Keep the Korean column names and metadata labels below: the parser uses them even when card titles are in English.
@@ -169,6 +206,8 @@ For Windows Chrome headless checks from WSL, start a demo server (8766) and a se
 ## Removal
 
 Press **Ctrl+C** in the terminal to stop the server. It installs no global package, service, or automatic startup entry. Disconnect any client hooks you configured before removing it. Removing a deployed copy of `tools/agent-workspace` leaves the configured board, chat, and session source files separate. If you use the kit checkout for other purposes, you do not need to delete the whole checkout to remove this package.
+
+If you created the optional user service, run `systemctl --user disable --now agent-workspace.service`, remove its unit file, and run `systemctl --user daemon-reload` before removing the package. Lingering is an account-wide setting; disable it with `loginctl disable-linger` only if you no longer need it for any user services.
 
 ## License
 

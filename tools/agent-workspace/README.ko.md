@@ -69,6 +69,43 @@ JSON 파일을 `--config FILE`로 지정합니다. 우선순위는 **명령 옵�
 }
 ```
 
+## 상시 실행 (systemd를 사용하는 Linux / WSL)
+
+상시 실행하려면 `~/.config/systemd/user/agent-workspace.service`에 아래 내용을 저장합니다. `/absolute/path/to/davis-agent-kit`은 실제 checkout 또는 설치 경로로 바꾸세요. Python 3.11 이상이 필요하며 실행 파일이 다른 곳에 있으면 `/usr/bin/python3`도 바꿉니다. 이 설정은 필요한 사용자가 직접 수행하는 선택 사항입니다.
+
+```ini
+[Unit]
+Description=Local Agent Workspace
+
+[Service]
+Type=simple
+WorkingDirectory=/absolute/path/to/davis-agent-kit
+ExecStart=/usr/bin/python3 "/absolute/path/to/davis-agent-kit/tools/agent-workspace/workspace.py"
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+```
+
+필요하면 `ExecStart` 뒤에 `--config /absolute/path/to/workspace.json`이나 `--port PORT`를 추가합니다. 같은 포트에서 수동으로 실행 중인 작업실이 있다면 서비스를 시작하기 전에 종료하세요.
+
+```bash
+mkdir -p ~/.config/systemd/user
+# 먼저 위 unit을 ~/.config/systemd/user/agent-workspace.service에 저장하세요.
+systemctl --user daemon-reload
+systemctl --user enable --now agent-workspace.service
+systemctl --user status agent-workspace.service
+```
+
+로그인 전에도 사용자 서비스를 시작하려면 현재 계정의 lingering을 켭니다. 시스템 정책에 따라 관리자 승인이 필요할 수 있습니다.
+
+```bash
+loginctl enable-linger
+```
+
+WSL에서는 배포판과 systemd가 실행 중일 때 적용되며, Windows 부팅 시 꺼진 배포판을 시작하는 설정은 아닙니다. HTTP 서버가 페이지 요청마다 보드를 렌더하므로 매분 `render.py`를 실행하는 cron은 필요하지 않습니다. `--render`는 선택적인 정적 내보내기용입니다.
+
 ## 보드와 운영자 완료
 
 보드 원본 형식은 키트의 [공유 보드 템플릿](../../templates/BOARD.md)과 같습니다. `## 진행`, `## 검토 대기`, `## 할 일`, `## 완료`, `## 기각` 아래에 `### B-번호 [프로젝트] 제목` 카드를 둡니다. 담당 세션은 `담당: codex:<uuid>` 또는 `담당: claude:<uuid>`입니다. 같은 줄의 `검토:`는 담당에서 제외하고, 여러 담당 행과 단계는 각 행의 검토자를 제외한 마지막 세션을 선택하며 보드에는 마지막 담당 행을 표시합니다.
@@ -142,6 +179,8 @@ Windows Chrome headless 검증은 WSL에서 데모(8766)와 별도 격리 시험
 ## 제거
 
 터미널에서 Ctrl+C로 서버를 종료하면 됩니다. 전역 패키지·서비스·자동 시작을 설치하지 않습니다. 직접 연결한 클라이언트 hook이 있으면 제거 전에 그 연결을 해제하세요. 배포한 `tools/agent-workspace` 복사본을 제거해도 설정된 보드·채팅·세션 원본은 별도로 보존됩니다. 키트 checkout을 다른 용도로 사용한다면 패키지 제거를 위해 checkout 전체를 지울 필요는 없습니다.
+
+선택적인 사용자 서비스를 등록했다면 `systemctl --user disable --now agent-workspace.service`로 종료·해제한 뒤 unit 파일을 제거하고 `systemctl --user daemon-reload`를 실행하세요. lingering은 계정 전체 설정이므로 다른 사용자 서비스에서도 더 이상 필요하지 않을 때만 `loginctl disable-linger`로 해제합니다.
 
 ## 라이선스
 

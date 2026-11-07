@@ -1,0 +1,6 @@
+interface:
+  display_name: "Agent Improvement Loop"
+  short_description: "Turn observed agent failures into tested harness changes"
+  default_prompt: "Use $agent-improvement-loop to compare trace evidence, feedback and a candidate harness against a reviewed regression suite."
+policy:
+  allow_implicit_invocation: false

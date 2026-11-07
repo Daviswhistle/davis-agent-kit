@@ -1,6 +1,7 @@
 """Read-only, bounded projections of local session logs and the agent-chat room."""
 from __future__ import annotations
 
+from collections import OrderedDict
 import fcntl
 import json
 import os
@@ -22,7 +23,8 @@ OPERATOR = 'codex:board-operator'  # CLI accepts only user or codex:/claude: ide
 UUID = r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}'
 SESSION = re.compile(rf'(codex|claude):({UUID})\Z')
 KST = timezone(timedelta(hours=9), 'KST')
-_cache = {}
+CACHE_LIMIT = 256
+_cache = OrderedDict()
 _lock = threading.RLock()
 
 # Same credential/account families as agent-chat.safe_text; display replaces values.
@@ -179,12 +181,16 @@ def process_sessions():
 
 def metadata(path, kind):
     st = path.stat()
-    key = (str(path), st.st_mtime_ns, st.st_size)
+    key = str(path)
+    version = (st.st_mtime_ns, st.st_size)
     with _lock:
-        if key in _cache:
-            return dict(_cache[key])
+        cached = _cache.get(key)
+        if cached and cached[0] == version:
+            _cache.move_to_end(key)
+            return dict(cached[1])
     tail, _, _ = read_events(path)
-    head, _, _ = read_events(path, before=min(st.st_size, 512_000))
+    # The tail already contains the entire head for small logs.
+    head = read_events(path, before=512_000)[0] if st.st_size > 768_000 else []
     model, last, preview = '미상', '', ''
     for ev in head + tail:
         pl = ev.get('payload') or ev.get('message') or {}
@@ -194,16 +200,27 @@ def metadata(path, kind):
             model = str(pl['model'])
         if ev.get('timestamp'):
             last = max(last, str(ev['timestamp']))
-    messages = project_messages(tail, kind)
-    for m in messages:
-        if m['role'] == 'assistant':
-            preview = m['text'].replace('\n', ' ')[:140]
+    # Only the final assistant preview is retained; do not project all tool output.
+    for event in reversed(tail):
+        if kind == 'codex':
+            message = codex_message(event)
+            if not message or message[1] != 'assistant':
+                continue
+        elif event.get('type') != 'assistant':
+            continue
+        messages = project_messages([event], kind)
+        assistant = next((m for m in reversed(messages) if m['role'] == 'assistant'), None)
+        if assistant:
+            preview = assistant['text'].replace('\n', ' ')[:140]
+            break
     data = {'model': mask(model), 'last_activity': last or datetime.fromtimestamp(st.st_mtime, timezone.utc).isoformat(),
             'preview': preview, 'mtime': st.st_mtime}
     with _lock:
-        if len(_cache) > 1024:
-            _cache.clear()
-        _cache[key] = data
+        # One current version per path; evict only the least recently used file.
+        _cache[key] = (version, data)
+        _cache.move_to_end(key)
+        while len(_cache) > CACHE_LIMIT:
+            _cache.popitem(last=False)
     return dict(data)
 
 

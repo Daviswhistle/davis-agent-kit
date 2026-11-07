@@ -17,6 +17,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, epilog='Independent room CLI: workspace.py chat --help')
     parser.add_argument('--config', type=Path, help='JSON configuration file')
     parser.add_argument('--port', type=int)
+    parser.add_argument('--idle-seconds', type=float, help='socket activation idle timeout (default 600; 0 disables)')
     parser.add_argument('--data-dir', type=Path)
     parser.add_argument('--demo', action='store_true', help='temporary synthetic data; never reads live sessions')
     parser.add_argument('--render', type=Path, metavar='OUTPUT', help='render a static board snapshot without a CSRF token')
@@ -26,10 +27,11 @@ def main():
         parser.error('unknown arguments: ' + ' '.join(rest))
     with tempfile.TemporaryDirectory(prefix='agent-workspace-demo-') if args.demo else __import__('contextlib').nullcontext() as demo_root:
         try:
-            config = Config.load(args.config, dict(port=args.port, data_dir=args.data_dir))
+            config = Config.load(args.config, dict(port=args.port, data_dir=args.data_dir, idle_seconds=args.idle_seconds))
             if demo_root:
                 from .demo import create
-                config = create(Path(demo_root), port=config.port, timezone=config.timezone)
+                from dataclasses import replace
+                config = replace(create(Path(demo_root), port=config.port, timezone=config.timezone), idle_seconds=config.idle_seconds)
             configure(config)
             if args.command == 'board':
                 from .board_cli import main as board_main

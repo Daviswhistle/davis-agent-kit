@@ -220,7 +220,7 @@ class HttpTests(unittest.TestCase):
         for name, value in [('BOARD', str(self.board)), ('APPROVALS', str(self.approvals)), ('LOCK', str(self.root / 'lock')), ('DONE_LOG', str(self.root / 'done.jsonl'))]:
             self.patches.enter_context(patch.object(serve, name, value))
         self.patches.enter_context(patch.object(render, 'render', return_value='<html>fixture</html>'))
-        self.server = serve.ThreadingHTTPServer(('127.0.0.1', 0), serve.Handler)
+        self.server = serve.WorkspaceServer(('127.0.0.1', 0), serve.Handler)
         self.port = self.server.server_port
         self.patches.enter_context(patch.object(serve, 'PORT', self.port))
         self.patches.enter_context(patch.object(serve.Handler, 'token', 'fixture-token'))

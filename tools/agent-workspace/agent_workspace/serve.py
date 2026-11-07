@@ -6,11 +6,15 @@ Session logs are projected read-only; chat writes go through the configured CLI.
 from __future__ import annotations
 
 import json
+import os
+import select
+import socket
+import time
 import secrets
 import threading
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlsplit
 
 from pathlib import Path
@@ -160,7 +164,7 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, UnicodeDecodeError, TimeoutError):
             return self._send(400, "{}")
         if not secrets.compare_digest(str(body.get("token", "")).encode(), self.token.encode()):
-            return self._send(403, json.dumps({"error": "페이지를 새로고침하세요"}, ensure_ascii=False))
+            return self._json(403, {'error': '서버가 재시작되었습니다. 토큰을 갱신한 뒤 다시 시도하세요.', 'code': 'csrf_expired'})
         if self.path == '/api/chat/send':
             try:
                 result = dashboard.send_message(body)
@@ -197,14 +201,98 @@ class Handler(BaseHTTPRequestHandler):
         return self._send(200, json.dumps({"ok": True}))
 
 
+def inherited_socket(port):
+    """Consume sd_listen_fds' single fd 3, ignoring another process's environment."""
+    pid = os.environ.pop('LISTEN_PID', None)
+    count = os.environ.pop('LISTEN_FDS', None)
+    os.environ.pop('LISTEN_FDNAMES', None)
+    os.environ.pop('LISTEN_PIDFDID', None)
+    if pid != str(os.getpid()):
+        return None
+    if count == '0' or count is None:
+        return None
+    if count != '1':
+        raise ValueError('Expected one activation socket')
+    listener = socket.socket(fileno=3)
+    try:
+        listener.set_inheritable(False)
+        if (listener.family != socket.AF_INET or listener.type != socket.SOCK_STREAM or
+                not listener.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN) or
+                listener.getsockname() != ('127.0.0.1', port)):
+            raise ValueError('Activation requires a listening 127.0.0.1 TCP socket on the configured port')
+        listener.setblocking(True)
+        return listener
+    except BaseException:
+        listener.close()
+        raise
+
+
+class WorkspaceServer(HTTPServer):
+    """Reuse at most four workers, with at most eight accepted requests in flight."""
+    def __init__(self, address, handler, listener=None):
+        from concurrent.futures import ThreadPoolExecutor
+        self._workers = ThreadPoolExecutor(max_workers=4, thread_name_prefix='workspace')
+        self._slots = threading.BoundedSemaphore(8)
+        self._activity = threading.Lock()
+        self.active_requests = 0
+        self.last_activity = time.monotonic()
+        super().__init__(address, handler, bind_and_activate=listener is None)
+        if listener is not None:
+            self.socket.close()
+            self.socket = listener
+            self.server_address = listener.getsockname()
+            self.server_name, self.server_port = 'localhost', self.server_address[1]
+
+    def process_request(self, request, client_address):
+        if not self._slots.acquire(blocking=False):
+            self.shutdown_request(request)
+            return
+        with self._activity:
+            self.active_requests += 1
+            self.last_activity = time.monotonic()
+        self._workers.submit(self._handle, request, client_address)
+
+    def _handle(self, request, address):
+        try:
+            # Bound incomplete headers as well as incomplete POST bodies.
+            request.settimeout(10)
+            self.finish_request(request, address)
+        except Exception:
+            self.handle_error(request, address)
+        finally:
+            self.shutdown_request(request)
+            with self._activity:
+                self.active_requests -= 1
+                self.last_activity = time.monotonic()
+            self._slots.release()
+
+    def run(self, idle_seconds=0):
+        # No periodic poll or timer thread. A request or the idle deadline wakes select.
+        while True:
+            with self._activity:
+                remaining = idle_seconds - (time.monotonic() - self.last_activity)
+                if idle_seconds and not self.active_requests and remaining <= 0:
+                    return
+                timeout = max(0.01, remaining) if idle_seconds and not self.active_requests else (idle_seconds or None)
+            if select.select([self], [], [], timeout)[0]:
+                self._handle_request_noblock()
+
+    def server_close(self):
+        super().server_close()
+        self._workers.shutdown(wait=True)
+
+
 def main(config=None):
-    setup(config if config is not None else Config.load())
+    config = config if config is not None else Config.load()
+    setup(config)
     Path(LOCK).parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     Handler.token = secrets.token_urlsafe(32)
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
+    listener = inherited_socket(PORT)
+    server = WorkspaceServer(("127.0.0.1", PORT), Handler, listener)
     print(f'Agent Workspace: http://localhost:{PORT} (127.0.0.1 only)', flush=True)
     try:
-        server.serve_forever()
+        # Standalone invocations remain running until Ctrl+C, including on macOS.
+        server.run(config.idle_seconds if listener is not None else 0)
     finally:
         server.server_close()
 

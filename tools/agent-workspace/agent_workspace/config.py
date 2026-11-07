@@ -15,6 +15,7 @@ class Config:
     chat_cli: Path
     port: int = 8765
     timezone: str = 'Asia/Seoul'
+    idle_seconds: float = 600
 
     @property
     def lock(self):
@@ -40,11 +41,15 @@ class Config:
             if 'AGENT_WORKSPACE_' + key.upper() in os.environ:
                 values[key] = os.environ['AGENT_WORKSPACE_' + key.upper()]
         values.update({k: v for k, v in (overrides or {}).items() if v is not None})
-        for key in allowed - {'port', 'timezone'}:
+        for key in allowed - {'port', 'timezone', 'idle_seconds'}:
             values[key] = Path(values[key]).expanduser().absolute()
         values['port'] = int(values.get('port', 8765))
         if not 1 <= values['port'] <= 65535:
             raise ValueError('포트는 1~65535입니다.')
+        values['idle_seconds'] = float(values['idle_seconds'])
+        import math
+        if not math.isfinite(values['idle_seconds']) or values['idle_seconds'] < 0:
+            raise ValueError('idle_seconds must be finite and nonnegative')
         from zoneinfo import ZoneInfo
         try:
             ZoneInfo(values.get('timezone', 'Asia/Seoul'))

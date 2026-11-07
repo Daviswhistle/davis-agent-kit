@@ -159,6 +159,18 @@ try {
     Wait-Js "!sending && document.getElementById('chat-messages').textContent.includes('identical isolated draft')"
     $checks.retyped_identical_draft_survives_receipt = Js "document.getElementById('chat-text').value==='identical isolated draft'"
     Js "window.fetch=window.sameDraftFetch;document.getElementById('chat-text').value=''" | Out-Null
+    Js "window.csrfFetch=window.fetch;window.csrfPosts=0;window.fetch=(path,opts)=>{if(path==='/api/chat/send')window.csrfPosts++;return window.csrfFetch(path,opts)};csrf='expired-fixture';document.getElementById('chat-text').value='restart preserved draft';document.getElementById('chat-form').requestSubmit()" | Out-Null
+    Wait-Js "!sending && document.getElementById('send-status').textContent.includes('다시 시도')"
+    $checks.expired_chat_preserves_draft_without_replay = Js "window.csrfPosts===1 && csrf!=='expired-fixture' && document.getElementById('chat-text').value==='restart preserved draft' && !chatPages.flatMap(p=>p.messages).some(m=>m.text==='restart preserved draft')"
+    Js "document.getElementById('chat-form').requestSubmit()" | Out-Null
+    Wait-Js "!sending && document.getElementById('chat-text').value===''"
+    $checks.expired_chat_explicit_retry_once = Js "window.csrfPosts===2 && chatPages.flatMap(p=>p.messages).filter(m=>m.text==='restart preserved draft').length===1"
+    Js "(async()=>{window.foreignCalls=[];window.fetch=async(path)=>{window.foreignCalls.push(path);return new Response(JSON.stringify({error:'foreign origin'}),{status:403})};await post('/api/done',{});window.fetch=window.csrfFetch})()" | Out-Null
+    $checks.foreign_403_never_refreshes_token = Js "window.foreignCalls.length===1"
+    Js "window.workingCsrf=csrf;csrf='expired-fixture';window.fetch=async(path,opts)=>path==='/'?new Response('',{status:503}):window.csrfFetch(path,opts);document.getElementById('chat-text').value='offline preserved draft';document.getElementById('chat-form').requestSubmit()" | Out-Null
+    Wait-Js "!sending && document.getElementById('send-status').textContent.includes('입력을 복사')"
+    $checks.failed_token_refresh_preserves_draft = Js "document.getElementById('chat-text').value==='offline preserved draft'"
+    Js "window.fetch=window.csrfFetch;csrf=window.workingCsrf;document.getElementById('chat-text').value=''" | Out-Null
     Js "(async()=>{window.gapFetch=window.fetch;window.gapMessage=i=>({id:'gap-'+i,from:'claude:demo',to:'all',text:'gap-message-'+i,ts:'demo'});chatPages=[{start:0,end:240,messages:Array.from({length:240},(_,i)=>window.gapMessage(i+1))}];chatExpanded=true;chatLatestEnd=240;window.fetch=async(path,opts)=>{if(!path.startsWith('/api/chat'))return window.gapFetch(path,opts);const end=Number(new URL(path,location.origin).searchParams.get('before')||480),start=Math.max(0,end-120);return new Response(JSON.stringify({before:start||null,end,messages:Array.from({length:end-start},(_,i)=>window.gapMessage(start+i+1))}),{status:200})};await refreshChat()})()" | Out-Null
     $checks.chat_gap_is_recoverable = Js "document.querySelectorAll('.chat-gap').length===1"
     Js "document.querySelector('.chat-gap').scrollIntoView({block:'start'});document.querySelector('.chat-gap').click()" | Out-Null
@@ -170,6 +182,9 @@ try {
     Wait-Js "!document.getElementById('board-view').hidden"
     Js "document.querySelector('button.done[data-kind=card]').click()" | Out-Null
     $checks.cancel_preserves_card = Js "document.querySelector('.board-column').textContent.includes('B-1')"
+    Js "window.confirm=()=>true;csrf='expired-fixture';document.querySelector('button.done[data-kind=card]').click()" | Out-Null
+    Wait-Js "document.getElementById('connection').textContent.includes('다시 시도') && !document.querySelector('button.done[data-kind=card]').disabled"
+    $checks.expired_done_preserves_card = Js "document.querySelector('.board-column').textContent.includes('B-1') && csrf!=='expired-fixture'"
     Js "window.confirm=()=>true;document.querySelector('button.done[data-kind=card]').click()" | Out-Null
     Wait-Js "document.querySelectorAll('.board-column')[3].textContent.includes('B-1')"
     $checks.complete_card = $true

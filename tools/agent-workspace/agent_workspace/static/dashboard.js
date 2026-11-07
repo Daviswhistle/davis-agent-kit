@@ -1,11 +1,28 @@
 'use strict';
 const $ = id => document.getElementById(id);
-const csrf = document.querySelector('meta[name="csrf-token"]')?.content || (typeof TOKEN !== 'undefined' ? TOKEN : '');
+let csrf = document.querySelector('meta[name="csrf-token"]')?.content || (typeof TOKEN !== 'undefined' ? TOKEN : '');
 const node = (tag, text, cls) => { const e = document.createElement(tag); if (text !== undefined) e.textContent = text; if (cls) e.className = cls; return e; };
 let sessionRows = [], detailId = '', detailBefore = null, detailMessages = [], detailVersion = 0;
 let chatBefore = null, chatPages = [], chatExpanded = false, chatLatestEnd = null, sending = false, polling = false, chatLoading = false;
 let draftRevision = 0;
 async function api(path) { const r = await fetch(path, {cache: 'no-store'}); if (!r.ok) throw new Error('조회 실패 (' + r.status + ')'); return r.json(); }
+async function post(path, body) {
+  const r = await fetch(path, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({...body, token: csrf})});
+  const j = await r.json();
+  if (r.status === 403 && j.code === 'csrf_expired') {
+    // The rejected write was never applied. Preserve drafts; let the user retry explicitly.
+    try {
+      const page = await fetch('/', {cache: 'no-store'});
+      if (!page.ok) throw new Error('token refresh failed');
+      const doc = new DOMParser().parseFromString(await page.text(), 'text/html');
+      const token = doc.querySelector('meta[name="csrf-token"]')?.content;
+      if (!token) throw new Error('missing token');
+      csrf = token;
+      j.error = '서버가 재시작되어 연결을 갱신했습니다. 입력은 보존했습니다. 다시 시도하세요.';
+    } catch { j.error = '연결을 갱신하지 못했습니다. 입력을 복사한 뒤 페이지를 새로고침하세요.'; }
+  }
+  return {r, j};
+}
 function showError(e) { $('connection').textContent = '연결을 확인하세요 · ' + e.message; $('retry').hidden = false; }
 function connected() { $('connection').textContent = '연결됨 · 세션 9초 / 채팅 3초 갱신'; $('retry').hidden = true; }
 function message(m) {
@@ -164,8 +181,8 @@ $('retry').onclick = () => { refreshSessions().then(connected).catch(showError);
 $('chat-form').onsubmit = async e => {
   e.preventDefault(); if (sending) return; sending = true; const submittedText = $('chat-text').value, submittedRevision = draftRevision; const button = e.target.querySelector('button'); button.disabled = true; $('send-status').textContent = '전송 확인 중…';
   try {
-    const r = await fetch('/api/chat/send', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({token: csrf, to: $('recipient').value, text: submittedText})});
-    const j = await r.json(), delivery = Array.isArray(j.receipt?.delivery) ? j.receipt.delivery : [], reasons = delivery.map(d => d?.reason).filter(Boolean).join(' · ');
+    const {j} = await post('/api/chat/send', {to: $('recipient').value, text: submittedText});
+    const delivery = Array.isArray(j.receipt?.delivery) ? j.receipt.delivery : [], reasons = delivery.map(d => d?.reason).filter(Boolean).join(' · ');
     $('send-status').textContent = j.stored ? '채팅방에 저장했습니다. 모델 수신 여부는 미확인입니다.' + (reasons ? ' ' + reasons : '') : j.error || reasons || '전송을 거부했습니다.';
     if (j.stored && $('chat-text').value === submittedText && draftRevision === submittedRevision) $('chat-text').value = ''; await refreshChat();
   } catch { $('send-status').textContent = '결과를 확인하지 못했습니다. 중복 전송 전에 내역을 확인하세요.'; }
@@ -176,8 +193,8 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('button.done'); if (!b) return; e.stopImmediatePropagation();
   if (!confirm((b.dataset.label || b.dataset.key) + ' 을(를) 완료로 옮길까요?')) return; b.disabled = true;
   try {
-    const r = await fetch('/api/done', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({kind: b.dataset.kind, id: b.dataset.key, title: b.dataset.key, approval_id: b.dataset.kind === 'approval' ? b.dataset.key : undefined, token: csrf})});
-    const j = await r.json(); if (!r.ok) throw new Error(j.error || '저장 실패 (' + r.status + ')');
+    const {r, j} = await post('/api/done', {kind: b.dataset.kind, id: b.dataset.key, title: b.dataset.key, approval_id: b.dataset.kind === 'approval' ? b.dataset.key : undefined});
+    if (!r.ok) throw new Error(j.error || '저장 실패 (' + r.status + ')');
     // Move focus outside the replaced board, then restore it to its heading.
     document.querySelector('[data-tab="board"]').focus(); await refreshBoard(); $('board-view').querySelector('h2')?.focus();
   } catch (err) { showError(err); b.disabled = false; }

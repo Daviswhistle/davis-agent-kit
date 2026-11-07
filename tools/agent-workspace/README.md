@@ -59,6 +59,7 @@ Pass a JSON file with `--config FILE`. Precedence is **CLI options > environment
 | `chat_cli` | `AGENT_WORKSPACE_CHAT_CLI` | `agent_workspace/agent_chat.py` (bundled) |
 | `port` | `AGENT_WORKSPACE_PORT` | `8765` |
 | `timezone` | `AGENT_WORKSPACE_TIMEZONE` | `Asia/Seoul` |
+| `idle_seconds` | `AGENT_WORKSPACE_IDLE_SECONDS` | `600` |
 
 The state directory holds optional `approvals.json` (operator confirmation items) and `schedule.json` (schedule), the shared `.lock`, and the completion audit log `done-log.jsonl`. Changing `data_dir` does not relocate the board or logs; configure those paths separately. The server does not accept filesystem paths from HTTP input.
 
@@ -78,13 +79,31 @@ Example `workspace.json`:
 python3 tools/agent-workspace/workspace.py --config workspace.json
 ```
 
-## Run as a user service (Linux / WSL with systemd)
+## Start on demand (Linux / WSL with systemd)
 
-For continuous use, create `~/.config/systemd/user/agent-workspace.service` with the following content. Replace `/absolute/path/to/davis-agent-kit` with your checkout or installation directory. Use a Python 3.11+ executable; replace `/usr/bin/python3` if yours is elsewhere. This is an optional setup you perform yourself.
+Socket activation keeps **zero workspace processes / 0 MB application RSS while idle**. The existing user systemd manager holds the loopback listener, starts Python on the first connection, and starts it again after an idle exit. By default the server exits after 10 minutes without requests or active work. A visible tab's refresh requests keep it running; hidden tabs stop polling. macOS and other environments can keep using the standalone command above, which runs until Ctrl+C.
+
+Create `~/.config/systemd/user/agent-workspace.socket`:
+
+```ini
+[Unit]
+Description=Local Agent Workspace listener
+
+[Socket]
+ListenStream=127.0.0.1:8765
+Accept=no
+
+[Install]
+WantedBy=sockets.target
+```
+
+Create `~/.config/systemd/user/agent-workspace.service`. Replace the checkout path below and use a Python 3.11+ executable:
 
 ```ini
 [Unit]
 Description=Local Agent Workspace
+Requires=agent-workspace.socket
+After=agent-workspace.socket
 
 [Service]
 Type=simple
@@ -92,28 +111,25 @@ WorkingDirectory=/absolute/path/to/davis-agent-kit
 ExecStart=/usr/bin/python3 "/absolute/path/to/davis-agent-kit/tools/agent-workspace/workspace.py"
 Restart=on-failure
 RestartSec=5
-
-[Install]
-WantedBy=default.target
 ```
 
-Append `--config /absolute/path/to/workspace.json` or `--port PORT` to `ExecStart` if needed. Stop any manually started workspace on the same port before starting the service.
+Append `--config /absolute/path/to/workspace.json` if needed. Set `idle_seconds` in JSON, `AGENT_WORKSPACE_IDLE_SECONDS`, or `--idle-seconds SECONDS` (0 disables idle exit). This timeout only applies with an inherited socket. If changing the port, update both `ListenStream=127.0.0.1:PORT` and the server's `--port PORT` or configuration; other bind addresses are refused.
 
 ```bash
 mkdir -p ~/.config/systemd/user
-# Save the unit above in ~/.config/systemd/user/agent-workspace.service first.
+# Save both units above first. Stop manual servers using the same port.
+# If upgrading from the previous always-running service:
+systemctl --user disable --now agent-workspace.service
 systemctl --user daemon-reload
-systemctl --user enable --now agent-workspace.service
-systemctl --user status agent-workspace.service
+systemctl --user enable --now agent-workspace.socket
+systemctl --user status agent-workspace.socket
 ```
 
-To start the user service before login, enable lingering for your account (local policy may require administrator authorization):
+Open `http://localhost:8765`. The service is normally inactive until a request arrives; `systemctl --user status agent-workspace.service` shows its state. After an idle restart, an old tab's write refreshes its security token and asks you to retry, preserving the draft and avoiding automatic duplicate writes.
 
-```bash
-loginctl enable-linger
-```
+To listen before login, optionally run `loginctl enable-linger` (local policy may require administrator authorization). On WSL this applies once the distribution and systemd are running; it does not start a stopped distribution on Windows boot. No render cron is needed: requests render the board; `--render` is only for static exports.
 
-On WSL this applies once the distribution and its systemd instance are running; it does not start a stopped distribution when Windows boots. The HTTP server renders the board on each page request, so a once-per-minute `render.py` cron job is unnecessary. `--render` is only for optional static exports.
+Measured on Linux with Python 3.12: running RSS was about **24–32 MiB** with synthetic data. A 6,000-request mixed-endpoint test, seeded with a multi-megabyte log and continuing updates, reached 31.8 MiB and stayed at that value over its last 1,000 requests. Values depend on Python and data; this is a measurement, not a hard RSS limit. Metadata caches hold at most 256 files (one version each); at most four request workers and eight admitted requests are retained. Idle 0 MB excludes the existing systemd manager and kernel socket memory.
 
 ## Board and operator completion
 
@@ -207,7 +223,7 @@ For Windows Chrome headless checks from WSL, start a demo server (8766) and a se
 
 Press **Ctrl+C** in the terminal to stop the server. It installs no global package, service, or automatic startup entry. Disconnect any client hooks you configured before removing it. Removing a deployed copy of `tools/agent-workspace` leaves the configured board, chat, and session source files separate. If you use the kit checkout for other purposes, you do not need to delete the whole checkout to remove this package.
 
-If you created the optional user service, run `systemctl --user disable --now agent-workspace.service`, remove its unit file, and run `systemctl --user daemon-reload` before removing the package. Lingering is an account-wide setting; disable it with `loginctl disable-linger` only if you no longer need it for any user services.
+If you configured socket activation, run `systemctl --user disable --now agent-workspace.socket` and `systemctl --user stop agent-workspace.service`, remove both unit files, and run `systemctl --user daemon-reload` before removing the package. Lingering is an account-wide setting; disable it with `loginctl disable-linger` only if you no longer need it for any user services.
 
 ## License
 

@@ -54,6 +54,7 @@ JSON 파일을 `--config FILE`로 지정합니다. 우선순위는 **명령 옵�
 | `chat_cli` | `AGENT_WORKSPACE_CHAT_CLI` | `agent_workspace/agent_chat.py` (번들) |
 | `port` | `AGENT_WORKSPACE_PORT` | `8765` |
 | `timezone` | `AGENT_WORKSPACE_TIMEZONE` | `Asia/Seoul` |
+| `idle_seconds` | `AGENT_WORKSPACE_IDLE_SECONDS` | `600` |
 
 `data_dir`에는 선택적인 `approvals.json`(운영자 확인), `schedule.json`(일정), 공통 잠금 `.lock`, 완료 감사 기록 `done-log.jsonl`이 있습니다. 상태 디렉터리를 바꿔도 보드·로그 위치는 자동 이동하지 않습니다. 각각 명시하세요. 서버는 파일 경로를 HTTP 입력으로 받지 않습니다.
 
@@ -69,13 +70,31 @@ JSON 파일을 `--config FILE`로 지정합니다. 우선순위는 **명령 옵�
 }
 ```
 
-## 상시 실행 (systemd를 사용하는 Linux / WSL)
+## 필요할 때만 실행 (systemd를 사용하는 Linux / WSL)
 
-상시 실행하려면 `~/.config/systemd/user/agent-workspace.service`에 아래 내용을 저장합니다. `/absolute/path/to/davis-agent-kit`은 실제 checkout 또는 설치 경로로 바꾸세요. Python 3.11 이상이 필요하며 실행 파일이 다른 곳에 있으면 `/usr/bin/python3`도 바꿉니다. 이 설정은 필요한 사용자가 직접 수행하는 선택 사항입니다.
+Socket activation은 **유휴 상태에서 작업실 프로세스 0개 / 애플리케이션 RSS 0MB**를 유지합니다. 기존 사용자 systemd 관리자가 loopback 소켓을 보유하고 첫 접속 때 Python을 시작합니다. 요청과 진행 중인 작업이 없으면 기본 10분 뒤 종료하고, 다음 접속 때 다시 시작합니다. 보이는 탭의 자동 갱신은 서버를 유지하며 숨겨진 탭은 폴링을 멈춥니다. macOS 등에서는 앞의 단독 실행 명령을 그대로 사용하며 Ctrl+C까지 유지됩니다.
+
+`~/.config/systemd/user/agent-workspace.socket`을 만듭니다.
+
+```ini
+[Unit]
+Description=Local Agent Workspace listener
+
+[Socket]
+ListenStream=127.0.0.1:8765
+Accept=no
+
+[Install]
+WantedBy=sockets.target
+```
+
+`~/.config/systemd/user/agent-workspace.service`를 만듭니다. 경로는 실제 checkout 위치로 바꾸고 Python 3.11 이상 실행 파일을 사용하세요.
 
 ```ini
 [Unit]
 Description=Local Agent Workspace
+Requires=agent-workspace.socket
+After=agent-workspace.socket
 
 [Service]
 Type=simple
@@ -83,28 +102,25 @@ WorkingDirectory=/absolute/path/to/davis-agent-kit
 ExecStart=/usr/bin/python3 "/absolute/path/to/davis-agent-kit/tools/agent-workspace/workspace.py"
 Restart=on-failure
 RestartSec=5
-
-[Install]
-WantedBy=default.target
 ```
 
-필요하면 `ExecStart` 뒤에 `--config /absolute/path/to/workspace.json`이나 `--port PORT`를 추가합니다. 같은 포트에서 수동으로 실행 중인 작업실이 있다면 서비스를 시작하기 전에 종료하세요.
+필요하면 `ExecStart`에 `--config /absolute/path/to/workspace.json`을 추가합니다. 유휴 시간은 JSON의 `idle_seconds`, 환경 변수 `AGENT_WORKSPACE_IDLE_SECONDS`, `--idle-seconds 초`로 설정합니다(0은 유휴 종료 해제). 소켓을 상속받은 실행에만 적용합니다. 포트를 바꾸면 `ListenStream=127.0.0.1:포트`와 서버의 `--port 포트` 또는 설정을 함께 바꾸세요. 다른 바인딩 주소는 거부합니다.
 
 ```bash
 mkdir -p ~/.config/systemd/user
-# 먼저 위 unit을 ~/.config/systemd/user/agent-workspace.service에 저장하세요.
+# 먼저 위 두 unit을 저장하고 같은 포트의 수동 서버를 종료하세요.
+# 이전 상시 실행 서비스를 사용했다면 먼저 해제합니다.
+systemctl --user disable --now agent-workspace.service
 systemctl --user daemon-reload
-systemctl --user enable --now agent-workspace.service
-systemctl --user status agent-workspace.service
+systemctl --user enable --now agent-workspace.socket
+systemctl --user status agent-workspace.socket
 ```
 
-로그인 전에도 사용자 서비스를 시작하려면 현재 계정의 lingering을 켭니다. 시스템 정책에 따라 관리자 승인이 필요할 수 있습니다.
+`http://localhost:8765`에 접속합니다. 요청 전 서비스가 비활성인 것은 정상이며 `systemctl --user status agent-workspace.service`로 확인할 수 있습니다. 재기동 뒤 오래 열린 탭에서 쓰기를 시도하면 보안 토큰을 갱신하고 재시도를 안내합니다. 입력을 보존하며 쓰기를 자동 재전송하지 않습니다.
 
-```bash
-loginctl enable-linger
-```
+로그인 전부터 대기하려면 선택적으로 `loginctl enable-linger`를 실행합니다(로컬 정책에 따라 관리자 권한 필요). WSL에서는 배포판과 systemd가 실행 중일 때 적용되며 Windows 부팅 시 꺼진 배포판을 시작하지는 않습니다. 페이지 요청마다 렌더하므로 render cron은 필요 없습니다. `--render`는 정적 내보내기용입니다.
 
-WSL에서는 배포판과 systemd가 실행 중일 때 적용되며, Windows 부팅 시 꺼진 배포판을 시작하는 설정은 아닙니다. HTTP 서버가 페이지 요청마다 보드를 렌더하므로 매분 `render.py`를 실행하는 cron은 필요하지 않습니다. `--render`는 선택적인 정적 내보내기용입니다.
+Linux / Python 3.12 데모 실측에서 실행 중 RSS는 약 **24~32MiB**였습니다. 수 MB 로그와 지속 갱신을 넣어 여러 경로로 6,000회 요청한 시험은 31.8MiB에 도달한 뒤 마지막 1,000회에서 같은 값을 유지했습니다. Python·데이터에 따라 달라지며 RSS 강제 제한값은 아닙니다. 메타데이터 캐시는 파일별 한 버전씩 최대 256개, 요청 worker는 최대 4개, 접수된 요청은 최대 8개로 제한합니다. 유휴 0MB는 기존 systemd 관리자와 커널 소켓 메모리를 제외한 값입니다.
 
 ## 보드와 운영자 완료
 
@@ -180,7 +196,7 @@ Windows Chrome headless 검증은 WSL에서 데모(8766)와 별도 격리 시험
 
 터미널에서 Ctrl+C로 서버를 종료하면 됩니다. 전역 패키지·서비스·자동 시작을 설치하지 않습니다. 직접 연결한 클라이언트 hook이 있으면 제거 전에 그 연결을 해제하세요. 배포한 `tools/agent-workspace` 복사본을 제거해도 설정된 보드·채팅·세션 원본은 별도로 보존됩니다. 키트 checkout을 다른 용도로 사용한다면 패키지 제거를 위해 checkout 전체를 지울 필요는 없습니다.
 
-선택적인 사용자 서비스를 등록했다면 `systemctl --user disable --now agent-workspace.service`로 종료·해제한 뒤 unit 파일을 제거하고 `systemctl --user daemon-reload`를 실행하세요. lingering은 계정 전체 설정이므로 다른 사용자 서비스에서도 더 이상 필요하지 않을 때만 `loginctl disable-linger`로 해제합니다.
+Socket activation을 등록했다면 `systemctl --user disable --now agent-workspace.socket`과 `systemctl --user stop agent-workspace.service`를 실행한 뒤 두 unit 파일을 제거하고 `systemctl --user daemon-reload`를 실행하세요. lingering은 계정 전체 설정이므로 다른 사용자 서비스에서도 더 이상 필요하지 않을 때만 `loginctl disable-linger`로 해제합니다.
 
 ## 라이선스
 

@@ -164,7 +164,11 @@ python3 tools/agent-workspace/workspace.py chat --help
 python3 tools/agent-workspace/workspace.py chat --home ~/.agents read --from 'codex:<session-id>'
 ```
 
-공유 채팅 수신에는 클라이언트의 기존 hook/wait 연결 또는 지원되는 Codex daemon이 필요합니다. `chat hook --client claude|codex`는 UserPromptSubmit/PostToolUse JSON을 stdin으로 받아 참여 상태와 읽기 위치를 기록하고, `chat wait --id 'claude:<session-id>' --timeout 60`은 Claude 대기 수신을 제공합니다. 채팅 원문과 읽기 상태는 Git 작업 트리 밖에 둬야 합니다. 이 패키지는 클라이언트 hook 설정을 자동으로 바꾸지 않습니다. 연결되지 않은 세션은 실행 중처럼 보여도 직접 전송이 거부될 수 있습니다. 오래된 활동 기록은 종료 증거가 아니므로 활성 상태 확인 불가로 안내하고 resume을 권하지 않습니다. 수동 `chat read`로 방을 읽거나 별도로 연결을 구성하세요.
+공유 채팅 수신에는 클라이언트의 기존 hook/wait 연결 또는 지원되는 Codex daemon이 필요합니다. `chat hook --client claude|codex`는 UserPromptSubmit/PostToolUse JSON을 stdin으로 받아 참여 상태와 읽기 위치를 기록하고, `chat wait --id 'claude:<session-id>' --timeout 60`은 Claude 대기 수신을 제공합니다. 채팅 원문과 읽기 상태는 Git 작업 트리 밖에 둬야 합니다. 이 패키지는 클라이언트 hook 설정을 자동으로 바꾸지 않습니다.
+
+최근 15분간 hook/wait 활동이 없는 Claude 세션으로 직접 보내면 다음 hook 또는 wait에서 받을 수 있게 저장합니다. 영수증은 `stored: true`, `pending_idle: true`, delivery는 `path: "hook-only"`, `accepted: false`이며 CLI 종료 코드 **4**로 쉬는 세션의 전달 대기를 구분합니다. 안내 문구는 다음 hook 또는 wait에서 전달하며 깨우지 않는다고 표시합니다. `--urgent`여도 깨우기 한도를 소모하지 않고 `claude -p --resume`을 실행하지 않습니다. 중복 전송을 피하려면 재시도 전에 `stored`를 확인하세요. 최근 활동이 있는 Claude 세션의 기존 hook/wait 전달 동작은 유지합니다.
+
+현재는 쉬는 Claude 세션과 닫혔거나 존재하지 않는 Claude 세션을 구분할 수 없어 모두 같은 대기 상태로 저장합니다. 실제 수신에는 같은 세션 ID가 나중에 연결된 hook 또는 wait를 실행해야 하며, 저장은 모델 수신 증거가 아닙니다. Codex 대상은 기존처럼 daemon에 로드된 스레드이거나 최근 5분 내 hook 관측이 있어야 하며, 확인되지 않으면 저장 전에 거부합니다(종료 코드 **2**). 자기 자신 및 `user`에게 직접 보내기도 계속 거부합니다. 오래된 활동 기록은 종료 증거가 아니므로 자동 resume 대신 수동 `chat read` 또는 별도 수신 연결을 사용하세요.
 
 실제 전송기의 동작에 따라 기존 모델 세션이 깨어날 수 있습니다. 운영자 대시보드는 실제 모델 세션을 사칭하지 않는 고정 발신자입니다. 수신 메시지는 정보이며 별도의 사용자 행동 승인으로 취급하지 않습니다.
 

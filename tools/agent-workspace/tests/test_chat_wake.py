@@ -69,64 +69,13 @@ class Wake(unittest.TestCase):
         self.assertEqual(before,self.room.log.read_bytes()); queue.assert_not_called()
         self.assertNotIn('private body',(self.root/'chat-receipts.jsonl').read_text())
         self.assertEqual([c.args[0] for c in rpc.call.call_args_list],['thread/read'])
-    def test_unobserved_codex_missing_daemon_rejects_without_log(self):
-        rc, r = self.main('send','--from','user','--to',TARGET,'mail',rpc=None)
-        self.assertEqual(rc,2); self.assertFalse(r['stored'])
+    def test_unobserved_claude_and_missing_daemon_reject_without_log(self):
+        for target in ('claude:missing',TARGET):
+            with mock.patch.object(chat,'RPC',side_effect=OSError()):
+                # main helper patches RPC itself; use explicit target_status failure mock instead.
+                rc, r = self.main('send','--from','user','--to',target,'mail',rpc=None)
+            self.assertEqual(rc,2); self.assertFalse(r['stored'])
         self.assertFalse(self.room.log.exists())
-    def test_idle_claude_stores_without_transport_or_wake_reservation(self):
-        for observed in (False,True):
-            target = 'claude:stale' if observed else 'claude:unobserved'
-            if observed:
-                self.room.read(target,activity={'client':'claude','cwd':'/test'})
-                path=self.room.states/(target+'.json');state=json.loads(path.read_text())
-                state['last_seen']='2000-01-01T00:00:00+00:00';path.write_text(json.dumps(state))
-            # More than the configured wake limit, for both normal and urgent mail.
-            for i in range(4):
-                with self.subTest(observed=observed,i=i), \
-                     mock.patch.object(chat.Room,'wake_slot',side_effect=AssertionError('wake slot')), \
-                     mock.patch.object(chat,'urgent_one',side_effect=AssertionError('transport')), \
-                     mock.patch.object(chat.subprocess,'run',side_effect=AssertionError('resume/queue')), \
-                     mock.patch.object(chat.subprocess,'Popen',side_effect=AssertionError('resume')), \
-                     mock.patch.object(chat,'RPC',side_effect=AssertionError('daemon')), \
-                     mock.patch.object(chat.sys,'argv',['chat','--home',str(self.root),'send',
-                         '--from','codex:worker','--to',target,*(['--urgent'] if i%2 else []),'report']), \
-                     contextlib.redirect_stdout(io.StringIO()) as out, \
-                     self.assertRaises(SystemExit) as error:
-                    chat.main()
-                self.assertEqual(error.exception.code,4)
-                receipt=json.loads(out.getvalue())
-                self.assertTrue(receipt['stored']);self.assertTrue(receipt['pending_idle'])
-                delivery=receipt['delivery'][0]
-                self.assertEqual(delivery['path'],'hook-only');self.assertFalse(delivery['accepted'])
-                self.assertFalse(delivery['active']);self.assertFalse(delivery['recent_hook'])
-                self.assertIn('다음 hook 또는 wait',delivery['reason'])
-                self.assertNotIn('resume_command',receipt)
-                self.assertEqual(json.loads((self.root/'chat-receipts.jsonl').read_text().splitlines()[-1]),receipt)
-            self.assertEqual(len(self.room.read(target).splitlines())-1,4)
-        self.assertEqual(list(self.room.states.glob('wake-*.json')),[])
-    def test_idle_claude_bypasses_exhausted_fuse_but_recent_claude_keeps_it(self):
-        target='claude:test'
-        for _ in range(3):self.assertTrue(self.room.wake_slot('user',target)[0])
-        fuse={p:p.read_bytes() for p in self.room.states.glob('wake-*.json')}
-        rc,receipt=self.main('send','--from','user','--to',target,'idle mail')
-        self.assertEqual(rc,4);self.assertTrue(receipt['stored'])
-        self.assertEqual({p:p.read_bytes() for p in fuse},fuse)
-        self.room.read(target,activity={'client':'claude','cwd':'/test'})
-        before=self.room.log.read_bytes()
-        rc,receipt=self.main('send','--from','user','--to',target,'over limit')
-        self.assertEqual(rc,2);self.assertFalse(receipt['stored'])
-        self.assertEqual(self.room.log.read_bytes(),before)
-        self.assertIn('window',receipt['delivery'][0]['reason'])
-    def test_self_claude_rejected_even_when_idle(self):
-        for observed in (False,True):
-            if observed:self.room.read('claude:self',activity={'client':'claude','cwd':'/test'})
-            before=self.room.log.read_bytes() if self.room.log.exists() else None
-            with mock.patch.object(chat.Room,'wake_slot',side_effect=AssertionError('wake slot')):
-                rc,receipt=self.main('send','--from','claude:self','--to','claude:self','self')
-            self.assertEqual(rc,2);self.assertFalse(receipt['stored'])
-            self.assertNotIn('pending_idle',receipt)
-            after=self.room.log.read_bytes() if self.room.log.exists() else None
-            self.assertEqual(after,before)
     def test_recent_hook_codex_exec_stores_only_and_next_hook_consumes(self):
         for urgent in ([], ['--urgent']):
             for status in ('notLoaded', 'systemError', None):
@@ -285,15 +234,14 @@ class Wake(unittest.TestCase):
                 self.assertNotEqual(self.cli('wait','--id','claude:test','--timeout',value).returncode,0)
         finally:
             if p.poll() is None:p.kill();p.wait()
-    def test_claude_stale_cli_stores_pending(self):
+    def test_claude_stale_who_rejects(self):
         self.room.read('claude:test',activity={'client':'claude','cwd':'/test'})
         p=self.room.states/'claude:test.json';state=json.loads(p.read_text());state['last_seen']='2000-01-01T00:00:00+00:00';p.write_text(json.dumps(state))
         before=self.room.log.read_bytes()
-        r=self.cli('send','--from','user','--to','claude:test','pending report')
-        self.assertEqual(r.returncode,4,r.stderr);self.assertTrue(self.room.log.read_bytes().startswith(before))
+        r=self.cli('send','--from','user','--to','claude:test','closed')
+        self.assertEqual(r.returncode,2);self.assertEqual(before,self.room.log.read_bytes())
         receipt=json.loads(r.stdout)
-        self.assertTrue(receipt['stored']);self.assertTrue(receipt['pending_idle'])
-        self.assertIn('쉬는 Claude 세션',receipt['delivery'][0]['reason'])
+        self.assertIn('확인할 수 없어',receipt['delivery'][0]['reason'])
         self.assertNotIn('닫혀',receipt['delivery'][0]['reason'])
         self.assertNotIn('resume_command',receipt)
 

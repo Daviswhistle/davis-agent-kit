@@ -12,7 +12,8 @@ class Local(unittest.TestCase):
   return subprocess.run([str(CLI),'--home',str(self.root),*args],capture_output=True,text=True)
  def send(self,text='hello',sender='user',to='all'):
   if to!='all':
-   # Stored-mail fixtures exercise reader compatibility independently of admission.
+   # Legacy stored-mail fixtures exercise reader compatibility. New CLI sends
+   # require an active recipient; transport/admission is covered in test_chat_wake.py.
    mod.Room(self.root).append({'id':str(uuid.uuid4()),'ts':'test','from':sender,'to':to,'kind':'msg','text':text})
    return
   p=self.runcli('send','--from',sender,'--to',to,text); self.assertEqual(p.returncode,0,p.stderr)
@@ -118,33 +119,6 @@ class Local(unittest.TestCase):
   value=json.loads(p.stdout)['hookSpecificOutput']['additionalContext']
   self.assertTrue(value.startswith(mod.HEADER));self.assertLessEqual(len(value),4000)
   return [json.loads(line) for line in value.splitlines()[1:]]
- def test_idle_claude_cli_mail_consumed_once_by_next_hook_or_wait(self):
-  for stale in (False,True):
-   for first in ('hook','wait'):
-    with self.subTest(stale=stale,first=first):
-     session=f'idle-{stale}-{first}';target='claude:'+session
-     if stale:
-      self.assertEqual(self.hook('claude',session).stdout,'')
-      path=self.root/('chat-state/'+target+'.json');state=json.loads(path.read_text())
-      state['last_seen']='2000-01-01T00:00:00+00:00';path.write_text(json.dumps(state))
-     sent=self.runcli('send','--from','codex:worker','--to',target,'saved report '+session)
-     self.assertEqual(sent.returncode,4,sent.stderr)
-     receipt=json.loads(sent.stdout)
-     self.assertTrue(receipt['stored']);self.assertTrue(receipt['pending_idle'])
-     stored=[json.loads(line) for line in (self.root/'chat.jsonl').read_text().splitlines()]
-     self.assertEqual(stored[-1]['id'],receipt['id'])
-     if first=='hook':
-      rows=self.context_rows(self.hook('claude',session))
-     else:
-      result=self.runcli('wait','--id',target,'--timeout','0')
-      self.assertEqual(result.returncode,0,result.stderr)
-      rows=[json.loads(line) for line in result.stdout.splitlines()[1:]]
-     self.assertEqual([m['id'] for m in rows],[receipt['id']])
-     self.assertEqual(rows[0]['text'],'saved report '+session)
-     # Both readers share consumption, irrespective of which received first.
-     self.assertEqual(self.hook('claude',session).stdout,'')
-     waited=self.runcli('wait','--id',target,'--timeout','0')
-     self.assertEqual(waited.returncode,124,waited.stderr);self.assertEqual(waited.stdout,'')
  def test_prejoin_all_hidden_first_hook(self):
   self.send('PREJOIN_BROADCAST')
   snapshot=(self.root/'chat.jsonl').read_bytes()

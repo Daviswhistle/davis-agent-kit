@@ -621,13 +621,14 @@ def main(argv=None):
                 except (OSError, RuntimeError, TimeoutError):
                     pass
             activity = target_status(args.to, recent, rpc) if direct else {}
+            pending_idle = direct and args.to.startswith('claude:') and not activity['active']
             reason = None
             if direct:
-                if not activity['active']:
-                    reason = '대상 활성 상태를 확인할 수 없어 보내지 않음. hook/wait 연결과 세션 상태를 확인하세요.'
-                elif who == args.to:
-                    reason = '자기 자신에게는 깨우기 메시지를 보내지 않음'
-                else:
+                if who == args.to:
+                    reason = '자기 자신에게는 직접 메시지를 보내지 않음'
+                elif not activity['active'] and not pending_idle:
+                    reason = 'Codex 대상 활성 상태를 확인할 수 없어 저장하지 않음. hook 연결과 세션 상태를 확인하세요.'
+                elif not pending_idle:
                     allowed, wake_reason = room.wake_slot(who, args.to)
                     if not allowed:
                         reason = wake_reason + '; 깨우기 상한 초과로 보내지 않음'
@@ -647,7 +648,12 @@ def main(argv=None):
                     '같은 id를 hook에서 다시 보면 중복 행동하지 마세요.\n')
             hook_only = (direct and args.to.startswith('codex:') and activity['recent_hook']
                          and activity['daemon_status'] not in ('idle', 'active'))
-            if hook_only:
+            if pending_idle:
+                receipt['pending_idle'] = True
+                receipt['delivery'] = [{'to': args.to, 'path': 'hook-only', 'accepted': False,
+                                        'reason': '쉬는 Claude 세션: 다음 hook 또는 wait에서 전달, 깨우지 않음',
+                                        'meaning': 'stored for next hook or wait; not proof of model receipt', **activity}]
+            elif hook_only:
                 receipt['delivery'] = [{'to': args.to, 'path': 'hook-only', 'accepted': False,
                                         'reason': '최근 5분 hook 관측; 다음 hook에서 전달, 깨우지 않음',
                                         'meaning': 'stored for next hook; not proof of model receipt', **activity}]
@@ -658,6 +664,8 @@ def main(argv=None):
                                         **(activity if direct else {'recent_hook': True})} for t in targets]
             room.append(receipt, receipt=True)
             print(json.dumps(receipt, ensure_ascii=False))
+            if pending_idle:
+                sys.exit(4)
             if direct and args.to.startswith('codex:') and not hook_only and not receipt['delivery'][0]['accepted']:
                 sys.exit(3)
         finally:

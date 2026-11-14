@@ -105,6 +105,15 @@ python3 tools/agent-workspace/workspace.py
 
 `127.0.0.1`에서만 열립니다. 실제 세션을 읽지 않는 데모, 설정, 보안 모델과 스크린샷은 패키지 README에 있습니다.
 
+## 역할과 과제 전달
+
+여러 에이전트가 협업할 때 [역할 규약](./roles/README.md)을 명시적으로 읽고 총괄·팀장·작업자·검토자 역할을 선택합니다. 모델과 실행 도구에 관계없이 사용하며, 역할 지정 자체로 에이전트를 실행하거나 권한을 추가하지 않습니다.
+
+- [TASK 템플릿](./templates/TASK.md): 목적·범위·권한·완료 기준·담당·보고 대상
+- [REPORT 템플릿](./templates/REPORT.md): 결과·검증 근거·한계·후속과 수용 상태
+
+역할 파일과 템플릿은 이 저장소에서 읽는 자료이며 설치기가 별도 복사하거나 자동 실행하지 않습니다. 실제 TASK·REPORT와 개인 운영 기록은 프로젝트가 정한 비공개 위치에 둡니다. 다른 기기와 공유할 때는 해당 비공개 저장소에 실제 반영됐는지 확인합니다.
+
 ## 기본 동작 원칙
 
 한국어로 결론과 근거를 제시하고, 승인된 변경 작업은 필요한 검증·커밋·일반 push까지 마무리합니다. 행동별 권한과 별도 승인 기준은 전역 [`AGENTS.md`](./AGENTS.md)가 정합니다.
@@ -207,8 +216,13 @@ davis-agent-kit/
 │   ├── software-engineering/
 │   └── writing-quality/
 ├── pets/
+├── roles/
+│   ├── README.md
+│   └── chief.md, lead.md, worker.md, reviewer.md
 ├── templates/
-│   └── BOARD.md
+│   ├── BOARD.md
+│   ├── TASK.md
+│   └── REPORT.md
 ├── scripts/
 ├── tests/
 └── .github/
@@ -219,7 +233,9 @@ davis-agent-kit/
 - `providers/agy/davis-agent-kit.md` — AGY에서 Gemini 계열 모델의 누락·검증 부족을 보정하는 선택형 전역 rule
 - `skills/` — 반복 workflow와 그 workflow에만 필요한 references, agents, scripts, tests
 - `pets/` — Codex custom pets
+- `roles/` — 역할을 명시적으로 맡았을 때 읽는 공통 전달 규약과 역할별 책임
 - `templates/BOARD.md` — 설치 시 최초 한 번 복사하는 빈 로컬 보드
+- `templates/TASK.md`, `templates/REPORT.md` — 비공개 과제와 결과 문서를 작성하는 템플릿
 - `scripts/install_codex.py` — 전역 AGENTS, user skills, custom pets 설치
 - `scripts/install_claude.py` — Claude Code용 공통 rule·skill 연결
 - `scripts/validate_kit.py` — active skill 계약과 실행 가능한 tests/helpers 검증

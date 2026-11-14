@@ -83,9 +83,18 @@ $section-store 이 프로젝트의 확인된 지식을 PROJECT.md 하나로 관�
 - `section-store` — 단일 Markdown 원본의 자동 색인, 안정적 ID 기반 부분 읽기·수정과 버전 충돌 검사
 - `translation-quality` — 비단순 한국어 번역, transcript·재무보고서 번역, source/numeric/format QA
 - `software-engineering` — 소프트웨어 변경의 구현·검증과 위임 시의 자원 후보, 필요할 때 CRA/TCA
+- `agent-improvement-loop` — 실제 실행 기록·피드백을 회귀 평가로 전환하고 하네스 변경 전후 결과를 비교
 - `writing-quality` — 글쓰기 자체가 품질 병목인 원고·장문 분석·게시용 문서 작성과 편집
 
 명시적으로 호출한 스킬의 `SKILL.md`와 필요한 reference만 읽습니다. 스킬과 helper는 설치 상태로 유지하며, 전역 지침에서 특정 workflow·모델·위임을 강제하지 않습니다.
+
+실제 에이전트 실패를 기록하고 개선안의 회귀 여부를 비교하려면:
+
+```text
+$agent-improvement-loop 실행 기록과 검토된 피드백을 이용해 하네스 개선안을 평가해줘.
+```
+
+이 스킬은 실행 중인 에이전트를 자동으로 계측하지 않습니다. 기존 추적 시스템에서 얻은 결과물을 입력으로 받아 평가하며, 별도 승인 없이 병합·배포하지 않습니다.
 
 ## Custom pets
 
@@ -205,6 +214,7 @@ davis-agent-kit/
 │   ├── section-store/
 │   ├── translation-quality/
 │   ├── software-engineering/
+│   ├── agent-improvement-loop/
 │   └── writing-quality/
 ├── pets/
 ├── templates/

@@ -22,13 +22,13 @@ Follow the user and applicable `AGENTS.md` for action permissions. A local commi
 
 ## Native review
 
-Default: `gpt-6.1-sol`, `max` reasoning, `default` (non-Fast) service tier and runtime default context. Do not enlarge context to fit a task; use coherent, independently reviewable task boundaries instead.
+Default: `gpt-6.2-sol`, `max` reasoning, `default` (non-Fast) service tier and runtime default context. Do not enlarge context to fit a task; use coherent, independently reviewable task boundaries instead.
 
 Run in the foreground against the current task SHA:
 
 ```bash
 COMMIT_SHA="$(git rev-parse HEAD)"
-CRA_REVIEW_MODEL="${CRA_REVIEW_MODEL:-gpt-6.1-sol}"
+CRA_REVIEW_MODEL="${CRA_REVIEW_MODEL:-gpt-6.2-sol}"
 CRA_REVIEW_EFFORT="${CRA_REVIEW_EFFORT:-max}"
 
 codex review --commit "$COMMIT_SHA" \
@@ -57,7 +57,7 @@ The author writes a verification packet and does not argue for or against findin
 Run in the foreground:
 
 ```bash
-CRA_VERIFY_MODEL="${CRA_VERIFY_MODEL:-gpt-6.1-sol}"
+CRA_VERIFY_MODEL="${CRA_VERIFY_MODEL:-gpt-6.2-sol}"
 CRA_VERIFY_EFFORT="${CRA_VERIFY_EFFORT:-max}"
 
 codex exec --ephemeral -s read-only \

@@ -25,9 +25,9 @@ Do not create workflow ceremony merely because a task is difficult or has many s
 
 These candidates apply only after delegation is independently warranted; do not delegate just to use a candidate:
 
-- bounded implementation worker: first candidate `gpt-6.1-tera`, Medium reasoning, default service tier
-- independent CRA reviewer: `gpt-6.1-sol`, Max reasoning, default service tier
-- independent CRA verifier: `gpt-6.1-sol`, Max reasoning, default service tier, separate from author and reviewer
+- bounded implementation worker: first candidate `gpt-6.2-sol`, Medium reasoning, default service tier
+- independent CRA reviewer: `gpt-6.2-sol`, Max reasoning, default service tier
+- independent CRA verifier: `gpt-6.2-sol`, Max reasoning, default service tier, separate from author and reviewer
 - explorer: cheapest available model that can answer the bounded discovery question reliably
 
 ## Local validation

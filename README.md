@@ -68,19 +68,10 @@ python3 scripts/install_claude.py --check  # 확인만 수행
 $software-engineering 이 변경을 구현하고 검증해줘.
 ```
 
-프로젝트의 확인된 맥락을 필요한 구간만 읽고 갱신하려면:
-
-```text
-$section-store 이 프로젝트의 확인된 지식을 PROJECT.md 하나로 관리하고 필요한 섹션만 읽게 해줘.
-```
-
-`PROJECT.md`가 있다는 이유만으로 스킬을 자동 호출하거나 새 원본을 만들지 않습니다. 스킬을 선택한 작업에서는 색인으로 필요한 섹션을 찾고, 결정을 바꾸는 사실을 현재 근거와 대조합니다. 프로젝트가 이 도구를 계속 사용하려면 해당 프로젝트 지침에 필요한 사용 계약을 둡니다.
-
 ## Skills
 
 현재 포함된 주요 skill은 다음과 같습니다.
 
-- `section-store` — 단일 Markdown 원본의 자동 색인, 안정적 ID 기반 부분 읽기·수정과 버전 충돌 검사
 - `translation-quality` — 비단순 한국어 번역, transcript·재무보고서 번역, source/numeric/format QA
 - `software-engineering` — 소프트웨어 변경의 구현·검증과 위임 시의 자원 후보, 필요할 때 CRA/TCA
 - `writing-quality` — 글쓰기 자체가 품질 병목인 원고·장문 분석·게시용 문서 작성과 편집
@@ -134,28 +125,6 @@ python3 tools/agent-workspace/workspace.py
 
 ## Advanced
 
-### 단일 파일 프로젝트 지식
-
-프로젝트 지식·규칙·결정을 하나의 원본과 자동 색인으로 관리하려면:
-
-```text
-$section-store 이 프로젝트의 확인된 지식을 PROJECT.md 하나로 관리하고 필요한 섹션만 읽게 해줘.
-```
-
-기존 원본이 section-store 마커를 사용한다면 직접 실행할 수도 있습니다.
-
-```bash
-python3 ~/.agents/skills/section-store/scripts/store.py build --source PROJECT.md
-python3 ~/.agents/skills/section-store/scripts/store.py list --source PROJECT.md --query "검증"
-python3 ~/.agents/skills/section-store/scripts/store.py read --source PROJECT.md --id validation
-```
-
-`PROJECT.md.index.json`은 재생성 가능한 색인입니다. 원본의 의미·요약은 작성자가 명시하고, 줄·byte 범위와 해시는 코드가 계산합니다. helper를 통한 본문 수정은 색인도 갱신하며 직접 편집한 뒤에는 `build`가 필요합니다. 오래된 색인이나 버전 충돌은 거부합니다. 전체 파일을 모델에 전달하지 않지만 원본 버전 확인용 전체 파일 해시 I/O는 수행합니다.
-
-색인 검증은 문서 내용과 코드·운영 상태의 일치를 보증하지 않습니다. 핵심 사실에 근거 위치·확인 버전 또는 결과 시점·적용 범위를 기록하고, 관련 근거가 바뀌면 본문과 검색 메타데이터도 갱신합니다.
-
-원본 형식, 생성·수정 명령과 복구 경계는 [`section-store`](./skills/section-store/SKILL.md)를 참고하세요. 기존 코드나 전역 지침을 자동으로 하나의 파일로 합치지는 않습니다.
-
 ### 모델 운용 범위
 
 - `software-engineering`의 직무별 자원 후보와 launcher 설정은 위임이 별도로 타당할 때만 적용합니다. 후보를 쓰기 위해 worker를 만들지 않습니다.
@@ -202,7 +171,6 @@ davis-agent-kit/
 │   └── agy/
 │       └── davis-agent-kit.md
 ├── skills/
-│   ├── section-store/
 │   ├── translation-quality/
 │   ├── software-engineering/
 │   └── writing-quality/

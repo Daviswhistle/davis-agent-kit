@@ -2,3 +2,5 @@ interface:
   display_name: "Software Engineering"
   short_description: "Implement and verify software changes"
   default_prompt: "Use $software-engineering to implement and verify this change."
+policy:
+  allow_implicit_invocation: false

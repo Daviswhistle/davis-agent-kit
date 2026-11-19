@@ -1,6 +1,7 @@
 ---
 name: writing-quality
 description: Draft or revise Korean or English manuscripts, long-form research, and reader-facing messages when structure, voice, or editorial quality materially affects success. Skip ordinary factual Q&A unless writing or revision is explicitly requested.
+disable-model-invocation: true
 ---
 
 # Writing Quality

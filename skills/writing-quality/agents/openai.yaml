@@ -2,3 +2,5 @@ interface:
   display_name: "Writing Quality"
   short_description: "Draft and review polished text and research"
   default_prompt: "Use $writing-quality to draft or revise this text."
+policy:
+  allow_implicit_invocation: false

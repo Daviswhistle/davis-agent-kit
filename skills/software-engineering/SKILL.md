@@ -1,7 +1,6 @@
 ---
 name: software-engineering
 description: Use for software implementation, modification, debugging, refactoring, or code review. Use CRA or TCA when warranted.
-disable-model-invocation: true
 ---
 
 # Software Engineering

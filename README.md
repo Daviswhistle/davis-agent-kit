@@ -1,6 +1,6 @@
 # Davis Agent Kit
 
-한국어 협업·행동 권한·완료 기준을 담은 짧은 전역 지침, 명시적으로 호출하는 skills와 custom pets 묶음입니다. 일반 작업은 Codex 기본 하네스로 수행합니다.
+한국어 협업·행동 권한·완료 기준을 담은 짧은 전역 지침, 작업에 따라 선택하는 skills와 custom pets 묶음입니다. 일반 작업은 Codex 기본 하네스로 수행합니다.
 
 ## 설치
 
@@ -53,14 +53,14 @@ python3 scripts/install_claude.py --check  # 확인만 수행
 - 전역 규칙: `~/.claude/rules/davis-agent-kit.md` → 이 저장소의 `AGENTS.md`
 - 사용자 스킬: `~/.claude/skills/<skill-name>` → 이 저장소의 `skills/<skill-name>`
 - 로컬 보드: Codex와 같은 `~/.agents/BOARD.md`를 생성하거나 기존 내용을 보존합니다. `--claude-home`을 바꾸면 그 옆 `.agents/`를 쓰며, `--agents-home`으로 따로 지정할 수 있습니다.
-- 스킬은 `/software-engineering`처럼 명시적으로 호출하며 자동 실행되지 않습니다.
+- 스킬은 작업과 관련될 때 Claude가 선택할 수 있으며, `/software-engineering`처럼 직접 호출할 수도 있습니다.
 - 기존 `~/.claude/CLAUDE.md`, `settings.json` 및 다른 규칙·스킬은 수정하지 않습니다. 충돌하면 중단합니다.
 - 경로를 바꾸려면 `--claude-home /path/to/.claude`를 사용합니다. macOS와 WSL은 각 환경에서 설치합니다.
 - 새 로컬 Claude Code 세션에서 적용됩니다. 일반 Claude 채팅과 Cowork는 지원 범위가 아닙니다.
 
 ## 사용
 
-이 kit의 스킬은 자동으로 선택하지 않습니다. 전용 절차가 필요할 때 `$skill-name`으로 명시적으로 호출합니다. 설치된 상태에서도 일반 작업의 기본 모델 문맥에 포함되지 않도록 각 스킬의 `agents/openai.yaml`에 `policy.allow_implicit_invocation: false`를 설정합니다. [OpenAI 공식 문서](https://learn.chatgpt.com/docs/build-skills#optional-metadata)
+스킬은 이름과 설명을 통해 탐색되며, 모델이 작업과 관련성이 있을 때 선택할 수 있습니다. 사용자가 `$skill-name`으로 직접 지정할 수도 있습니다. 전체 스킬 본문과 참조 자료는 필요할 때만 읽고, 선택 여부가 실행 권한을 넓히지는 않습니다.
 
 소프트웨어 변경에 구현·검증·필요한 독립 리뷰 절차를 적용하려면:
 
@@ -85,7 +85,7 @@ $section-store 이 프로젝트의 확인된 지식을 PROJECT.md 하나로 관�
 - `software-engineering` — 소프트웨어 변경의 구현·검증과 위임 시의 자원 후보, 필요할 때 CRA/TCA
 - `writing-quality` — 글쓰기 자체가 품질 병목인 원고·장문 분석·게시용 문서 작성과 편집
 
-명시적으로 호출한 스킬의 `SKILL.md`와 필요한 reference만 읽습니다. 스킬과 helper는 설치 상태로 유지하며, 전역 지침에서 특정 workflow·모델·위임을 강제하지 않습니다.
+선택된 스킬의 `SKILL.md`와 필요한 reference만 읽습니다. 스킬과 helper는 설치 상태로 유지하며, 전역 지침에서 특정 workflow·모델·위임을 강제하지 않습니다.
 
 ## Custom pets
 

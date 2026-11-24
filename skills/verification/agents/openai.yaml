@@ -1,0 +1,6 @@
+interface:
+  display_name: "Verification"
+  short_description: "Build reproducible real-behavior and invariant checks"
+  default_prompt: "Use $verification to make this behavior repeatably verifiable."
+policy:
+  allow_implicit_invocation: false

@@ -75,8 +75,13 @@ $software-engineering 이 변경을 구현하고 검증해줘.
 - `translation-quality` — 비단순 한국어 번역, transcript·재무보고서 번역, source/numeric/format QA
 - `software-engineering` — 소프트웨어 변경의 구현·검증과 위임 시의 자원 후보, 필요할 때 CRA/TCA
 - `writing-quality` — 글쓰기 자체가 품질 병목인 원고·장문 분석·게시용 문서 작성과 편집
+- `correct` — 반복 오류의 원인을 찾아 구조·검증으로 재발을 방지
+- `verification` — 실제 사용자 경로의 재현 가능한 검증 및 중요한 불변조건 검증
+- `experiment` — 가설 비교, 측정 기반 개선, 블라인드 에이전트 평가
 
 명시적으로 호출한 스킬의 `SKILL.md`와 필요한 reference만 읽습니다. 스킬과 helper는 설치 상태로 유지하며, 전역 지침에서 특정 workflow·모델·위임을 강제하지 않습니다.
+
+위 세 신규 스킬의 방법론은 [pstack](https://github.com/cursor/plugins/tree/main/pstack)의 correct, verification, hillclimb, benchmark, eval에서 착안해 이 키트의 권한·비용·검증 기준에 맞게 독립적으로 작성했습니다. 외부 플러그인이나 모델을 필수 의존성으로 추가하지 않습니다.
 
 ## Custom pets
 
@@ -173,7 +178,10 @@ davis-agent-kit/
 ├── skills/
 │   ├── translation-quality/
 │   ├── software-engineering/
-│   └── writing-quality/
+│   ├── writing-quality/
+│   ├── correct/
+│   ├── verification/
+│   └── experiment/
 ├── pets/
 ├── templates/
 │   └── BOARD.md

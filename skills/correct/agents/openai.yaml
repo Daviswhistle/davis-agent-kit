@@ -1,0 +1,6 @@
+interface:
+  display_name: "Correct"
+  short_description: "Eliminate recurring failures at their cause"
+  default_prompt: "Use $correct to diagnose and prevent this recurring failure."
+policy:
+  allow_implicit_invocation: false

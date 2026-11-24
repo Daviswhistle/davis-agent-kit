@@ -19,7 +19,7 @@ For software changes:
 5. decide whether CRA is warranted after local validation;
 6. use TCA only when multiple independently reviewable task commits materially improve correctness, recovery or reviewability.
 
-Do not create workflow ceremony merely because a task is difficult or has many steps.
+Do not create workflow ceremony merely because a task is difficult or has many steps. When a repeated failure needs structural prevention, a project lacks a repeatable check of real behavior or critical invariants, or alternatives need empirical comparison, use the relevant method from the correct, verification or experiment skill if it materially helps the task. Those skills remain explicitly invocable; do not make them mandatory phases or duplicate CRA/TCA.
 
 ## Delegated software resource candidates
 

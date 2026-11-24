@@ -1,0 +1,6 @@
+interface:
+  display_name: "Experiment"
+  short_description: "Compare alternatives and validate improvements"
+  default_prompt: "Use $experiment to test these alternatives against a baseline."
+policy:
+  allow_implicit_invocation: false
